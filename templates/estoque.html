@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastros & Estoque - Almoxarifado Valenet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; color: #333; }
+        .sidebar { background-color: #1e293b; min-height: 100vh; color: #fff; position: fixed; width: 250px; top: 0; left: 0; padding-top: 20px; }
+        .sidebar a { color: #cbd5e1; text-decoration: none; display: block; padding: 12px 20px; font-weight: 500; transition: 0.2s; }
+        .sidebar a:hover, .sidebar a.active { background-color: #334155; color: #fff; border-left: 4px solid #3b82f6; }
+        .main-content { margin-left: 250px; padding: 30px; }
+    </style>
+</head>
+<body>
+
+    <!-- Menu Lateral Mantido Igualzinho -->
+    <div class="sidebar">
+        <div class="text-center mb-4">
+            <h5 class="fw-bold text-white"><i class="fa-solid fa-boxes-stacked text-primary me-2"></i> Valenet</h5>
+            <small class="text-muted">Almoxarifado & Logística</small>
+        </div>
+        <hr class="border-secondary">
+        <a href="/"><i class="fa-solid fa-house me-2"></i> Início / Painel</a>
+        <a href="/modulo/Requisições"><i class="fa-solid fa-clipboard-list me-2"></i> Requisições / Separação</a>
+        <a href="/modulo/Inventário"><i class="fa-solid fa-warehouse me-2"></i> Inventário</a>
+        <a href="/modulo/Expedição"><i class="fa-solid fa-truck-fast me-2"></i> Expedição</a>
+        <a href="/modulo/Recebimento"><i class="fa-solid fa-box-open me-2"></i> Recebimento</a>
+        <a href="/modulo/Cadastros" class="active"><i class="fa-solid fa-address-book me-2"></i> Cadastros & Estoque</a>
+        <a href="/modulo/Melhorias / PDCA"><i class="fa-solid fa-chart-line me-2"></i> Melhorias / PDCA</a>
+        <a href="/modulo/Indicadores"><i class="fa-solid fa-chart-pie me-2"></i> Indicadores</a>
+        <a href="/modulo/Relatórios"><i class="fa-solid fa-file-lines me-2"></i> Relatórios</a>
+        <a href="/modulo/Configurações"><i class="fa-solid fa-gear me-2"></i> Configurações</a>
+        <hr class="border-secondary mt-4">
+        <a href="/logout" class="text-danger"><i class="fa-solid fa-right-from-bracket me-2"></i> Sair</a>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold m-0"><i class="fa-solid fa-warehouse text-primary me-2"></i> Gestão de Estoque e Endereços</h3>
+                <p class="text-muted small m-0">Cadastre o endereçamento de materiais ou importe em massa por planilha</p>
+            </div>
+            <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Painel</a>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Cadastro Manual -->
+            <div class="col-md-7">
+                <div class="card border-0 shadow-sm p-4 h-100">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-plus-circle text-primary me-2"></i> Novo Item / Endereço</h5>
+                    <form method="POST">
+                        <input type="hidden" name="acao_estoque" value="cadastrar_manual">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Rua / Corredor</label>
+                                <input type="text" name="rua" class="form-control form-control-sm" placeholder="Ex: Rua A" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Prateleira / Posição</label>
+                                <input type="text" name="prateleira" class="form-control form-control-sm" placeholder="Ex: P-03" required>
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Código do Material</label>
+                                <input type="text" name="codigo_material" class="form-control form-control-sm" placeholder="Ex: CAB-DROP" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">Quantidade</label>
+                                <input type="number" name="quantidade" class="form-control form-control-sm" placeholder="Ex: 50" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Descrição do Material</label>
+                            <input type="text" name="descricao" class="form-control form-control-sm" placeholder="Ex: Cabo Óptico Drop Compacto" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-save me-1"></i> Salvar Endereço e Material</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Importação de Planilha -->
+            <div class="col-md-5">
+                <div class="card border-0 shadow-sm p-4 h-100 bg-light">
+                    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-file-excel text-success me-2"></i> Importar Planilha</h5>
+                    <p class="text-muted small">Colunas exigidas na planilha: <code>Rua</code>, <code>Prateleira</code>, <code>Codigo</code> (ou Código), <code>Descricao</code> (ou Descrição) e <code>Quantidade</code>.</p>
+                    <form method="POST" enctype="multipart/form-data" class="mt-auto">
+                        <input type="hidden" name="acao_estoque" value="importar_excel">
+                        <div class="mb-3">
+                            <input type="file" name="arquivo_excel" class="form-control form-control-sm" accept=".xlsx, .xls, .csv" required>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm w-100"><i class="fa-solid fa-upload me-1"></i> Importar Dados</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de Listagem -->
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold text-dark mb-3">Itens Cadastrados no Estoque</h5>
+            {% if estoque_itens %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rua</th>
+                            <th>Prateleira</th>
+                            <th>Código</th>
+                            <th>Descrição</th>
+                            <th>Quantidade</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in estoque_itens %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ item.rua }}</span></td>
+                            <td class="fw-semibold">{{ item.prateleira }}</td>
+                            <td><code>{{ item.codigo_material }}</code></td>
+                            <td>{{ item.descricao }}</td>
+                            <td><span class="badge bg-primary">{{ item.quantidade }}</span></td>
+                            <td>
+                                <a href="/deletar_estoque/{{ item.id }}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="fa-solid fa-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted mb-0">Nenhum item ou endereço cadastrado no estoque ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

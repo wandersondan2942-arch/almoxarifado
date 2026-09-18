@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurações - Almoxarifado Valenet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; color: #2d3748; }
+        .config-container { max-width: 800px; margin: 40px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="config-container">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                <div>
+                    <h4 class="fw-bold m-0"><i class="fa-solid fa-gear text-primary me-2"></i> Configurações do Sistema</h4>
+                    <small class="text-muted">Gerencie parâmetros operacionais e preferências do Almoxarifado Valenet</small>
+                </div>
+                <a href="/" class="btn btn-outline-primary btn-sm fw-bold"><i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Painel</a>
+            </div>
+
+            <form>
+                <h6 class="fw-bold text-muted text-uppercase fs-7 mb-3">Parâmetros Operacionais</h6>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="notif" checked>
+                    <label class="form-check-label fw-semibold" for="notif">Ativar alertas sonoros para ocorrências de Alta Prioridade</label>
+                </div>
+                <div class="mb-3 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="auto_arq" checked>
+                    <label class="form-check-label fw-semibold" for="auto_arq">Arquivar atividades concluídas automaticamente após 24 horas</label>
+                </div>
+                <div class="mb-4 form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="sync_erp" checked>
+                    <label class="form-check-label fw-semibold" for="sync_erp">Sincronização em tempo real com o banco de dados central Valenet</label>
+                </div>
+
+                <h6 class="fw-bold text-muted text-uppercase fs-7 mb-3">Identidade da Unidade</h6>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Filial / Base</label>
+                        <input type="text" class="form-control" value="Valenet - Itabira (MG)" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Responsável Técnico</label>
+                        <input type="text" class="form-control" value="Wanderson F." readonly>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary fw-bold px-4 mt-3" onclick="alert('Configurações salvas com sucesso!')">Salvar Alterações</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

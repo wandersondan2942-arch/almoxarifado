@@ -1,17 +1,25 @@
 import os
 import sqlite3
-import pandas as pd
+import psycopg2
+import psycopg2.extras
 from flask import Flask, render_template, request, redirect, url_for, g, session
 
 app = Flask(__name__)
 app.secret_key = 'valenet_sistema_operacional_2026'
-DATABASE = 'database.db'
+
+# Lê a variável de ambiente do Render para o PostgreSQL
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
+        if DATABASE_URL:
+            # Se houver URL do Render, liga-se ao PostgreSQL
+            db = g._database = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+        else:
+            # Caso contrário, continua a usar o SQLite local para testes
+            db = g._database = sqlite3.connect('database.db')
+            db.row_factory = sqlite3.Row
     return db
 
 @app.teardown_appcontext

@@ -94,16 +94,24 @@ def init_db():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     erro = None
+    db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT * FROM usuarios WHERE nome = %s AND senha = %s", (nome, senha))
-    user = cur.fetchone()
-    cur.close()
-    if user:
-        session['usuario'] = user['nome']
-        return redirect(url_for('index'))
-    else:
-        erro = "Usuário ou senha inválidos!"
-        return render_template('login.html', erro=erro)
+    
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        senha = request.form.get('senha')
+        
+        cur.execute("SELECT * FROM usuarios WHERE nome = %s AND senha = %s", (nome, senha))
+        user = cur.fetchone()
+        cur.close()
+        
+        if user:
+            session['usuario'] = user['nome']
+            return redirect(url_for('index'))
+        else:
+            erro = "Usuário ou senha inválidos!"
+            
+    return render_template('login.html', erro=erro)
 
 @app.route('/cadastro_usuario', methods=['GET', 'POST'])
 def cadastro_usuario():

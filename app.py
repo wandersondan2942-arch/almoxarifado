@@ -169,46 +169,47 @@ def index():
             db.commit()
             return redirect(url_for('index'))
             busca = request.args.get('q', '')
-    if busca:
-        cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
+        if busca:
+            cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
                     (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
-        atividades = cur.fetchall()
-    else:
-        cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
-        atividades = cur.fetchall()
-
-    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
-    total_req = cur.fetchone()[0]
-
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
-    inv_total_reg = cur.fetchone()[0]
-    
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
-    inv_conc = cur.fetchone()[0]
-    
-    inv_total_reg = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
-    inv_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]
-    inv_total = 5 if inv_total_reg < 5 else inv_total_reg # Mantém a base 5 exigida
-    
-    exp_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'").fetchone()[0]
-    rec_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'").fetchone()[0]
-    total_oco = cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'").fetchone()[0]
-
-    # Percentuais para os círculos à direita
-    total_ativ = cur.execute("SELECT COUNT(*) FROM atividades").fetchone()[0]
-    total_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
-    perc_atendidas = int((total_conc / total_ativ) * 100) if total_ativ > 0 else 0
-
-    perc_inventario = int((inv_conc / inv_total) * 100) if inv_total > 0 else 0
-
-    exp_total = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'").fetchone()[0]
-    exp_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluído'").fetchone()[0]
-    perc_expedicao = int((exp_conc / exp_total) * 100) if exp_total > 0 else 0
-
-    usuarios = cur.execute("SELECT * FROM usuarios").fetchall()
-
-    return render_template('index.html', 
+            atividades = cur.fetchall()
+        else:
+            cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
+            atividades = cur.fetchall()
+            cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+            total_req = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
+            inv_total_reg = cur.fetchone()[0]
+            
+            
+            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
+            inv_conc = cur.fetchone()[0]
+            
+            
+            inv_total_reg = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
+            inv_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]
+            inv_total = 5 if inv_total_reg < 5 else inv_total_reg # Mantém a base 5 exigida
+            
+            
+            exp_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'").fetchone()[0]
+            rec_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'").fetchone()[0]
+            total_oco = cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'").fetchone()[0]
+            
+            
+            
+            total_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
+            perc_atendidas = int((total_conc / total_ativ) * 100) if total_ativ > 0 else 0
+            
+            
+            perc_inventario = int((inv_conc / inv_total) * 100) if inv_total > 0 else 0
+            
+            exp_total = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'").fetchone()[0]
+            exp_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluído'").fetchone()[0]
+            perc_expedicao = int((exp_conc / exp_total) * 100) if exp_total > 0 else 0
+            
+            usuarios = cur.execute("SELECT * FROM usuarios").fetchall()
+        return render_template('index.html', 
                            atividades=atividades, 
                            mensagens_chat=mensagens_chat,
                            total_req=total_req,

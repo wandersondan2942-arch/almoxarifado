@@ -30,8 +30,8 @@ def close_connection(exception):
 
 def init_db():
     with app.app_context():
-        db = get_db()
-        cur=db.cursor()
+    db = get_db()
+    cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY SERIAL,
@@ -39,7 +39,7 @@ cur.execute('''
                 senha TEXT NOT NULL
             )
         ''')
-        cur=db.cursor()
+        cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS atividades (
                 id INTEGER PRIMARY KEY SERIAL,
@@ -52,7 +52,7 @@ cur.execute('''
                 status TEXT DEFAULT 'Pendente'
             )
         ''')
-        cur=db.cursor()
+        cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS chat (
                 id INTEGER PRIMARY KEY SERIAL,
@@ -61,7 +61,7 @@ cur.execute('''
                 horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        cur=db.cursor()
+        cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS melhorias (
                 id INTEGER PRIMARY KEY SERIAL,
@@ -72,7 +72,7 @@ cur.execute('''
                 status TEXT DEFAULT 'Em Andamento'
             )
         ''')
-        cur=db.cursor()
+        cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS estoque (
                 id INTEGER PRIMARY KEY SERIAL,
@@ -87,8 +87,8 @@ cur.execute('''
  cur.execute('SELECT COUNT(*) FROM usuarios')
     user_count = cur.fetchone()[0]
     if user_count == 0:
-        cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
-        db.commit()
+    cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
+    db.commit()
 
     cur.close()
 @app.route('/login', methods=['GET', 'POST'])

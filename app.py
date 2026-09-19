@@ -100,10 +100,10 @@ def login():
     cur.close()
     if user:
         session['usuario'] = user['nome']
-    return redirect(url_for('index'))
+        return redirect(url_for('index'))
     else:
-            erro = "Usuário ou senha inválidos!"
-    return render_template('login.html', erro=erro)
+        erro = "Usuário ou senha inválidos!"
+        return render_template('login.html', erro=erro)
 
 @app.route('/cadastro_usuario', methods=['GET', 'POST'])
 def cadastro_usuario():

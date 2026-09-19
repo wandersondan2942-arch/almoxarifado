@@ -293,6 +293,35 @@ def modulo(nome):
         itens = cur.fetchall()
         
     return render_template('modulo.html', nome=nome_limpo)
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+    total_req = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
+    inv_total_reg = cur.fetchone()[0]
+
+    
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
+    inv_conc = cur.fetchone()[0]
+    
+    # Se tiveres outras categorias (Expedição, Recebimentos, etc.), podes calcular aqui também:
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Em andamento'")
+    exp_andamento = cur.fetchone()[0]
+
+    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+    mensagens_chat = cur.fetchall()
+    
+    cur.close()
+    
+    # Passa todas estas variáveis para o HTML:
+    return render_template(
+        'index.html', 
+        atividades=atividades, 
+        mensagens_chat=mensagens_chat,
+        total_req=total_req,
+        inv_conc=inv_conc,
+        inv_total=inv_total_reg,
+        exp_andamento=exp_andamento
+    )
 
 @app.route('/deletar/<int:id>')
 def deletar(id):

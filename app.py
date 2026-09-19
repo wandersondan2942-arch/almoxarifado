@@ -100,7 +100,7 @@ def login():
     cur.close()
     if user:
         session['usuario'] = user['nome']
-            return redirect(url_for('index'))
+    return redirect(url_for('index'))
         else:
             erro = "Usuário ou senha inválidos!"
     return render_template('login.html', erro=erro)
@@ -144,7 +144,7 @@ def index():
                 cur.execute("INSERT INTO chat (remetente, mensagem) VALUES (%s, %s)", (usuario_atual, mensagem))
                 db.commit()
                 cur.close()
-                return redirect(url_for('index'))
+            return redirect(url_for('index'))
         
         num_requisicao = request.form.get('num_requisicao')
         prioridade = request.form.get('prioridade')

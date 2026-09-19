@@ -31,14 +31,16 @@ def close_connection(exception):
 def init_db():
     with app.app_context():
         db = get_db()
-        db.execute('''
+        cur = db.cursor()
+cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT UNIQUE NOT NULL,
                 senha TEXT NOT NULL
             )
         ''')
-        db.execute('''
+        cur = db.cursor()
+cur.execute('''
             CREATE TABLE IF NOT EXISTS atividades (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 num_requisicao TEXT,
@@ -50,7 +52,8 @@ def init_db():
                 status TEXT DEFAULT 'Pendente'
             )
         ''')
-        db.execute('''
+        cur = db.cursor()
+cur.execute('''
             CREATE TABLE IF NOT EXISTS chat (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 remetente TEXT NOT NULL,
@@ -58,7 +61,8 @@ def init_db():
                 horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        db.execute('''
+        cur = db.cursor()
+cur.execute('''
             CREATE TABLE IF NOT EXISTS melhorias (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 titulo TEXT NOT NULL,
@@ -68,7 +72,8 @@ def init_db():
                 status TEXT DEFAULT 'Em Andamento'
             )
         ''')
-        db.execute('''
+        cur = db.cursor()
+cur.execute('''
             CREATE TABLE IF NOT EXISTS estoque (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 rua TEXT,

@@ -98,8 +98,8 @@ def login():
     cur.execute("SELECT * FROM usuarios WHERE nome = %s AND senha = %s", (nome, senha))
     user = cur.fetchone()
     cur.close()
-        if user:
-            session['usuario'] = user['nome']
+    if user:
+        session['usuario'] = user['nome']
             return redirect(url_for('index'))
         else:
             erro = "Usuário ou senha inválidos!"

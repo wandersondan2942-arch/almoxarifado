@@ -154,8 +154,9 @@ def index():
                 db.commit()
                 cur.close()
                 return redirect(url_for('index'))
-        else:
-            # Lógica para adicionar nova atividade (se vier deste formulário)
+
+    else:
+            # Captura segura dos dados do formulário
             num_requisicao = request.form.get('num_requisicao')
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
@@ -164,12 +165,18 @@ def index():
             prazo = request.form.get('prazo')
             
             if atividade:
-                cur.execute('''
-                    INSERT INTO atividades (num_requisicao, prioridade, atividade, categoria, responsavel, prazo, status)
-                    VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')
-                ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
-                db.commit()
-                cur.close()
+                try:
+                    cur.execute('''
+                        INSERT INTO atividades (num_requisicao, prioridade, atividade, categoria, responsavel, prazo, status)
+                        VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')
+                    ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
+                    db.commit()
+                except Exception as e:
+                    db.rollback()
+                    print(f"Erro ao inserir atividade: {e}")
+                finally:
+                    cur.close()
+                
                 return redirect(url_for('index'))
 
     # Método GET (ou carregamento padrão da página)

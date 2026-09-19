@@ -34,7 +34,7 @@ def init_db():
         cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY SERIAL,
                 nome TEXT UNIQUE NOT NULL,
                 senha TEXT NOT NULL
             )
@@ -42,7 +42,7 @@ cur.execute('''
         cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS atividades (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY SERIAL,
                 num_requisicao TEXT,
                 prioridade TEXT NOT NULL,
                 atividade TEXT NOT NULL,
@@ -55,7 +55,7 @@ cur.execute('''
         cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS chat (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY SERIAL,
                 remetente TEXT NOT NULL,
                 mensagem TEXT NOT NULL,
                 horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -64,7 +64,7 @@ cur.execute('''
         cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS melhorias (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY SERIAL,
                 titulo TEXT NOT NULL,
                 descricao TEXT NOT NULL,
                 autor TEXT NOT NULL,
@@ -75,7 +75,7 @@ cur.execute('''
         cur = db.cursor()
 cur.execute('''
             CREATE TABLE IF NOT EXISTS estoque (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY SERIAL,
                 rua TEXT,
                 prateleira TEXT,
                 codigo_material TEXT,
@@ -84,13 +84,13 @@ cur.execute('''
             )
         ''')
         
-        user_count = db.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
-        if user_count == 0:
-            db.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', '1234')")
-            db.commit()
+ cur.execute('SELECT COUNT(*) FROM usuarios')
+    user_count = cur.fetchone()[0]
+    if user_count == 0:
+        cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
+        db.commit()
 
-init_db()
-
+    cur.close()
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     erro = None

@@ -101,7 +101,7 @@ def login():
     if user:
         session['usuario'] = user['nome']
     return redirect(url_for('index'))
-        else:
+    else:
             erro = "Usuário ou senha inválidos!"
     return render_template('login.html', erro=erro)
 

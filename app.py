@@ -142,101 +142,51 @@ def index():
         
     db = get_db()
     usuario_atual = session['usuario']
+    cur = db.cursor()
 
     if request.method == 'POST':
         acao_chat = request.form.get('acao_chat')
+        
         if acao_chat == 'enviar':
             mensagem = request.form.get('mensagem')
             if mensagem:
-                cur = db.cursor()
                 cur.execute("INSERT INTO chat (remetente, mensagem) VALUES (%s, %s)", (usuario_atual, mensagem))
                 db.commit()
                 cur.close()
                 return redirect(url_for('index'))
-    cur = db.cursor()
-    busca = request.args.get('q', '')
-            if busca:
-                cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
-                    (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
-                atividades = cur.fetchall()
-            else:
-                cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
-                atividades = cur.fetchall()
-                cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-                mensagens_chat = cur.fetchall()
-                cur.close()
-            return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
-        num_requisicao = request.form.get('num_requisicao')
-        prioridade = request.form.get('prioridade')
-        atividade = request.form.get('atividade')
-        categoria = request.form.get('categoria')
-        responsavel = request.form.get('responsavel')
-        prazo = request.form.get('prazo')
-        
-        if atividade:
-            cur.execute('''
-                INSERT INTO atividades (num_requisicao, prioridade, atividade, categoria, responsavel, prazo, status)
-                VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')
-            ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
-            db.commit()
-            return redirect(url_for('index'))
-            busca = request.args.get('q', '')
-        if busca:
-            cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
-                    (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
-            atividades = cur.fetchall()
         else:
-            cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
-            atividades = cur.fetchall()
-            cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
-            total_req = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
-            inv_total_reg = cur.fetchone()[0]
+            # Lógica para adicionar nova atividade (se vier deste formulário)
+            num_requisicao = request.form.get('num_requisicao')
+            prioridade = request.form.get('prioridade')
+            atividade = request.form.get('atividade')
+            categoria = request.form.get('categoria')
+            responsavel = request.form.get('responsavel')
+            prazo = request.form.get('prazo')
             
-            
-            cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
-            inv_conc = cur.fetchone()[0]
-            
-            
-            inv_total_reg = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
-            inv_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]
-            inv_total = 5 if inv_total_reg < 5 else inv_total_reg # Mantém a base 5 exigida
-            
-            
-            exp_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'").fetchone()[0]
-            rec_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'").fetchone()[0]
-            total_oco = cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'").fetchone()[0]
-            
-            
-            
-            total_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
-            perc_atendidas = int((total_conc / total_ativ) * 100) if total_ativ > 0 else 0
-            
-            
-            perc_inventario = int((inv_conc / inv_total) * 100) if inv_total > 0 else 0
-            
-            exp_total = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'").fetchone()[0]
-            exp_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluído'").fetchone()[0]
-            perc_expedicao = int((exp_conc / exp_total) * 100) if exp_total > 0 else 0
-            
-            usuarios = cur.execute("SELECT * FROM usuarios").fetchall()
-        return render_template('index.html', 
-                           atividades=atividades, 
-                           mensagens_chat=mensagens_chat,
-                           total_req=total_req,
-                           inv_conc=inv_conc,
-                           inv_total=inv_total,
-                           exp_pend=exp_pend,
-                           rec_pend=rec_pend,
-                           total_oco=total_oco,
-                           perc_atendidas=perc_atendidas,
-                           perc_inventario=perc_inventario,
-                           perc_expedicao=perc_expedicao,
-                           usuarios=usuarios,
-                           usuario_atual=usuario_atual,
-                           busca=busca)
+            if atividade:
+                cur.execute('''
+                    INSERT INTO atividades (num_requisicao, prioridade, atividade, categoria, responsavel, prazo, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')
+                ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
+                db.commit()
+                cur.close()
+                return redirect(url_for('index'))
 
+    # Método GET (ou carregamento padrão da página)
+    busca = request.args.get('q', '')
+    if busca:
+        cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
+                    (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
+        atividades = cur.fetchall()
+    else:
+        cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
+        atividades = cur.fetchall()
+
+    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+    mensagens_chat = cur.fetchall()
+    
+    cur.close()
+    return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])
 def modulo(nome):
     if 'usuario' not in session:

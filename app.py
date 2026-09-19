@@ -287,6 +287,8 @@ def modulo(nome):
         'Expedição': 'Expedição',
         'Recebimento': 'Recebimento'
     }
+    # Certifica-te de definir a variável antes de usá-la na query ou no template:
+    cat_filro = request.args.get('categoria', '')
     cat_filtro = categoria_map.get(nome_limpo)
     if cat_filro:
         cur.execute("SELECT * FROM atividades WHERE categoria = %s ORDER BY id DESC", (cat_filtro,))

@@ -87,8 +87,8 @@ def init_db():
     cur.execute('SELECT COUNT(*) FROM usuarios')
     user_count = cur.fetchone()[0]
     if user_count == 0:
-    cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
-    db.commit()
+        cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
+        db.commit()
 
     cur.close()
 @app.route('/login', methods=['GET', 'POST'])

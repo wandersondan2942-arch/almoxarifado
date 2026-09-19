@@ -153,7 +153,19 @@ def index():
                 db.commit()
                 cur.close()
             return redirect(url_for('index'))
-        
+               cur = db.cursor()
+               busca = request.args.get('q', '')
+            if busca:
+                cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
+                    (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
+                atividades = cur.fetchall()
+            else:
+                cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
+                atividades = cur.fetchall()
+                cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+                mensagens_chat = cur.fetchall()
+                cur.close()
+            return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
         num_requisicao = request.form.get('num_requisicao')
         prioridade = request.form.get('prioridade')
         atividade = request.form.get('atividade')

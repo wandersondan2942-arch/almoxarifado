@@ -34,7 +34,7 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY SERIAL,
+                id SERIAL PRIMARY KEY,
                 nome TEXT UNIQUE NOT NULL,
                 senha TEXT NOT NULL
             )
@@ -42,7 +42,7 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
             CREATE TABLE IF NOT EXISTS atividades (
-                id INTEGER PRIMARY KEY SERIAL,
+                id SERIAL PRIMARY KEY,
                 num_requisicao TEXT,
                 prioridade TEXT NOT NULL,
                 atividade TEXT NOT NULL,
@@ -55,7 +55,7 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
             CREATE TABLE IF NOT EXISTS chat (
-                id INTEGER PRIMARY KEY SERIAL,
+                id SERIAL PRIMARY KEY,
                 remetente TEXT NOT NULL,
                 mensagem TEXT NOT NULL,
                 horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -64,7 +64,7 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
             CREATE TABLE IF NOT EXISTS melhorias (
-                id INTEGER PRIMARY KEY SERIAL,
+                id SERIAL PRIMARY KEY,
                 titulo TEXT NOT NULL,
                 descricao TEXT NOT NULL,
                 autor TEXT NOT NULL,
@@ -75,7 +75,7 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
             CREATE TABLE IF NOT EXISTS estoque (
-                id INTEGER PRIMARY KEY SERIAL,
+                id SERIAL PRIMARY KEY,
                 rua TEXT,
                 prateleira TEXT,
                 codigo_material TEXT,
@@ -94,11 +94,10 @@ def init_db():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     erro = None
-    db = get_db()
-    if request.method == 'POST':
-        nome = request.form.get('nome')
-        senha = request.form.get('senha')
-        user = db.execute("SELECT * FROM usuarios WHERE nome = ? AND senha = ?", (nome, senha)).fetchone()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM usuarios WHERE nome = %s AND senha = %s", (nome, senha))
+    user = cur.fetchone()
+    cur.close()
         if user:
             session['usuario'] = user['nome']
             return redirect(url_for('index'))
@@ -114,11 +113,13 @@ def cadastro_usuario():
         nome = request.form.get('nome')
         senha = request.form.get('senha')
         try:
-            db.execute("INSERT INTO usuarios (nome, senha) VALUES (?, ?)", (nome, senha))
+            cur = db.cursor()
+            cur.execute("INSERT INTO usuarios (nome, senha) VALUES (%s, %s)", (nome, senha))
             db.commit()
+            cur.close()
             return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            erro = "Este usuário já está cadastrado!"
+        except psycopg2.IntegrityError:
+            erro = "Este utilizador já está cadastrado!"
     return render_template('cadastro_usuario.html', erro=erro)
 
 @app.route('/logout')
@@ -139,9 +140,11 @@ def index():
         if acao_chat == 'enviar':
             mensagem = request.form.get('mensagem')
             if mensagem:
-                db.execute("INSERT INTO chat (remetente, mensagem) VALUES (?, ?)", (usuario_atual, mensagem))
+                cur = db.cursor()
+                cur.execute("INSERT INTO chat (remetente, mensagem) VALUES (%s, %s)", (usuario_atual, mensagem))
                 db.commit()
-            return redirect(url_for('index'))
+                cur.close()
+                return redirect(url_for('index'))
         
         num_requisicao = request.form.get('num_requisicao')
         prioridade = request.form.get('prioridade')
@@ -151,44 +154,44 @@ def index():
         prazo = request.form.get('prazo')
         
         if atividade:
-            db.execute('''
+            cur.execute('''
                 INSERT INTO atividades (num_requisicao, prioridade, atividade, categoria, responsavel, prazo, status)
-                VALUES (?, ?, ?, ?, ?, ?, 'Pendente')
+                VALUES (%s, %s, %s, %s, %s, %s, 'Pendente')
             ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
             db.commit()
             return redirect(url_for('index'))
 
     busca = request.args.get('q', '')
     if busca:
-        atividades = db.execute("SELECT * FROM atividades WHERE (atividade LIKE ? OR categoria LIKE ? OR responsavel LIKE ? OR num_requisicao LIKE ?) AND status = 'Pendente' ORDER BY id DESC", (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%')).fetchall()
+        atividades = cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s) AND status = 'Pendente' ORDER BY id DESC", (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%')).fetchall()
     else:
-        atividades = db.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC").fetchall()
+        atividades = cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC").fetchall()
 
-    mensagens_chat = db.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15").fetchall()
+    mensagens_chat = cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15").fetchall()
 
     # Contagens para os Cards do Topo
-    total_req = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'").fetchone()[0]
+    total_req = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'").fetchone()[0]
     
-    inv_total_reg = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
-    inv_conc = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]
+    inv_total_reg = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
+    inv_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]
     inv_total = 5 if inv_total_reg < 5 else inv_total_reg # Mantém a base 5 exigida
     
-    exp_pend = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'").fetchone()[0]
-    rec_pend = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'").fetchone()[0]
-    total_oco = db.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'").fetchone()[0]
+    exp_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'").fetchone()[0]
+    rec_pend = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'").fetchone()[0]
+    total_oco = cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'").fetchone()[0]
 
     # Percentuais para os círculos à direita
-    total_ativ = db.execute("SELECT COUNT(*) FROM atividades").fetchone()[0]
-    total_conc = db.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
+    total_ativ = cur.execute("SELECT COUNT(*) FROM atividades").fetchone()[0]
+    total_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
     perc_atendidas = int((total_conc / total_ativ) * 100) if total_ativ > 0 else 0
 
     perc_inventario = int((inv_conc / inv_total) * 100) if inv_total > 0 else 0
 
-    exp_total = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'").fetchone()[0]
-    exp_conc = db.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluído'").fetchone()[0]
+    exp_total = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'").fetchone()[0]
+    exp_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluído'").fetchone()[0]
     perc_expedicao = int((exp_conc / exp_total) * 100) if exp_total > 0 else 0
 
-    usuarios = db.execute("SELECT * FROM usuarios").fetchall()
+    usuarios = cur.execute("SELECT * FROM usuarios").fetchall()
 
     return render_template('index.html', 
                            atividades=atividades, 
@@ -216,9 +219,23 @@ def modulo(nome):
     if 'Configurações' in nome_limpo:
         return render_template('configuracoes.html')
     elif 'Indicadores' in nome_limpo:
-        total_geral = db.execute("SELECT COUNT(*) FROM atividades").fetchone()[0]
-        concluidas = db.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'").fetchone()[0]
-        pendentes = db.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Pendente'").fetchone()[0]
+        db = get_db()
+        cur = db.cursor()
+        nome_limpo = nome.replace('%20', ' ')
+
+    if 'Configurações' in nome_limpo:
+        return render_template('configuracoes.html')
+    elif 'Indicadores' in nome_limpo:
+        cur.execute("SELECT COUNT(*) FROM atividades")
+        total_geral = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'")
+        concluidas = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Pendente'")
+        pendentes = cur.fetchone()[0]
+        
+        return render_template('indicadores.html', total_geral=total_geral, concluidas=concluidas, pendentes=pendentes)
         return render_template('indicadores.html', total_geral=total_geral, concluidas=concluidas, pendentes=pendentes)
     elif 'PDCA' in nome_limpo or 'Melhorias' in nome_limpo:
         if request.method == 'POST':
@@ -227,14 +244,15 @@ def modulo(nome):
             etapa = request.form.get('etapa')
             autor = session['usuario']
             if titulo:
-                db.execute("INSERT INTO melhorias (titulo, descricao, autor, etapa) VALUES (?, ?, ?, ?)", (titulo, descricao, autor, etapa))
+                cur.execute("INSERT INTO melhorias (titulo, descricao, autor, etapa) VALUES (%s, %s, %s, %s, %s)", (titulo, descricao, autor, etapa))
                 db.commit()
+                cur.close()
             return redirect(url_for('modulo', nome='Melhorias / PDCA'))
         
-        melhorias = db.execute("SELECT * FROM melhorias ORDER BY id DESC").fetchall()
+        melhorias = cur.execute("SELECT * FROM melhorias ORDER BY id DESC").fetchall()
         return render_template('pdca.html', melhorias=melhorias)
     elif 'Relatórios' in nome_limpo:
-        itens = db.execute("SELECT * FROM atividades ORDER BY id DESC").fetchall()
+        itens = cur.execute("SELECT * FROM atividades ORDER BY id DESC").fetchall()
         return render_template('relatorios.html', itens=itens)
     elif 'Estoque' in nome_limpo or 'Cadastros' in nome_limpo:
         if request.method == 'POST':
@@ -249,9 +267,10 @@ def modulo(nome):
                 except ValueError:
                     qtd = 0
                 
-                db.execute("INSERT INTO estoque (rua, prateleira, codigo_material, descricao, quantidade) VALUES (?, ?, ?, ?, ?)",
+                cur.execute("INSERT INTO estoque (rua, prateleira, codigo_material, descricao, quantidade) VALUES (%s,%s,%s,%s,%s)",
                            (rua, prateleira, codigo, descricao, qtd))
                 db.commit()
+                cur.close()
                 return redirect(url_for('modulo', nome='Estoque'))
                 
             elif acao == 'importar_excel' and 'arquivo_excel' in request.files:
@@ -271,15 +290,17 @@ def modulo(nome):
                             val_qtd = row.get('Quantidade', row.get('Qtd', 0))
                             qtd = int(float(val_qtd)) if pd.notna(val_qtd) else 0
                             
-                            db.execute("INSERT INTO estoque (rua, prateleira, codigo_material, descricao, quantidade) VALUES (?, ?, ?, ?, ?)",
+                            cur.execute("INSERT INTO estoque (rua, prateleira, codigo_material, descricao, quantidade) VALUES (%s,%s,%s,%s,%s)",
                                        (rua, prateleira, codigo, descricao, qtd))
                         db.commit()
+                        cur.close()
                     except Exception as e:
                         print(f"Erro ao importar Excel: {e}")
                     return redirect(url_for('modulo', nome='Estoque'))
-
-        usuarios = db.execute("SELECT * FROM usuarios").fetchall()
-        estoque_itens = db.execute("SELECT * FROM estoque ORDER BY id DESC").fetchall()
+                    cur.execute("SELECT * FROM usuarios")
+                    usuarios = cur.fetchall()
+                    cur.execute("SELECT * FROM estoque ORDER BY id DESC")
+                    estoque_items = cur.fetchall()
         return render_template('estoque.html', usuarios=usuarios, estoque_itens=estoque_itens)
     
     categoria_map = {
@@ -289,17 +310,18 @@ def modulo(nome):
         'Recebimento': 'Recebimento'
     }
     cat_filtro = categoria_map.get(nome_limpo)
-    if cat_filtro:
-        itens = db.execute("SELECT * FROM atividades WHERE categoria = ? ORDER BY id DESC", (cat_filtro,)).fetchall()
-        return render_template('modulo_especifico.html', nome=nome_limpo, itens=itens)
+    if cat_filro:
+        cur.execute("SELECT * FROM atividades WHERE categoria = %s ORDER BY id DESC", (cat_filtro,))
+        itens = cur.fetchall()
         
     return render_template('modulo.html', nome=nome_limpo)
 
 @app.route('/deletar/<int:id>')
 def deletar(id):
     db = get_db()
-    db.execute("UPDATE atividades SET status = 'Concluído' WHERE id = ?", (id,))
+    cur.execute("UPDATE atividades SET status = 'Concluído' WHERE id = %s,", (id,))
     db.commit()
+    cur.close()
     return redirect(request.referrer or url_for('index'))
 
 @app.route('/deletar_estoque/<int:id>')

@@ -181,11 +181,46 @@ def index():
     else:
         cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
         atividades = cur.fetchall()
-
-    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-    mensagens_chat = cur.fetchall()
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+        total_req = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
+        inv_total_reg = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
+        inv_conc = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
+        exp_andamento = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
+        rec_aguardando = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
+        ocorrencias_alta = cur.fetchone()[0]
+        
+        
+        cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+        mensagens_chat = cur.fetchall()
     
     cur.close()
+    
+    return render_template(
+        'index.html', 
+        atividades=atividades, 
+        mensagens_chat=mensagens_chat,
+        total_req=total_req,
+        inv_conc=inv_conc,
+        inv_total=inv_total_reg,
+        exp_andamento=exp_andamento,
+        rec_aguardando=rec_aguardando,
+        ocorrencias_alta=ocorrencias_alta
+    )
     return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])
 def modulo(nome):

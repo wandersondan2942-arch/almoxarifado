@@ -152,9 +152,9 @@ def index():
                 cur.execute("INSERT INTO chat (remetente, mensagem) VALUES (%s, %s)", (usuario_atual, mensagem))
                 db.commit()
                 cur.close()
-            return redirect(url_for('index'))
-                cur = db.cursor()
-                busca = request.args.get('q', '')
+                return redirect(url_for('index'))
+    cur = db.cursor()
+    busca = request.args.get('q', '')
             if busca:
                 cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
                     (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))

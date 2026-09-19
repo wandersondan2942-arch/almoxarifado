@@ -82,9 +82,10 @@ def init_db():
                 quantidade INTEGER
             )
         ''')
-        
     cur.execute('SELECT COUNT(*) FROM usuarios')
-    user_count = cur.fetchone()[0]
+    resultado = cur.fetchone()
+    user_count = resultado['count'] if isinstance(resultado, dict) else resultado[0]
+    
     if user_count == 0:
         cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
         db.commit()

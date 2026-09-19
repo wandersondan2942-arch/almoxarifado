@@ -29,11 +29,10 @@ def close_connection(exception):
         db.close()
 
 def init_db():
-    with app.app_context():
-       db = get_db()
-       cur = db.cursor()
-       cur.execute('''
-            CREATE TABLE IF NOT EXISTS usuarios (
+    db = get_db()
+    cur = db.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
                 nome TEXT UNIQUE NOT NULL,
                 senha TEXT NOT NULL

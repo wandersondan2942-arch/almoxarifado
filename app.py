@@ -305,8 +305,10 @@ def deletar(id):
 @app.route('/deletar_estoque/<int:id>')
 def deletar_estoque(id):
     db = get_db()
-    db.execute("DELETE FROM estoque WHERE id = ?", (id,))
+    cur = db.cursor()
+    cur.execute("DELETE FROM estoque WHERE id = %s", (id,))
     db.commit()
+    cur.close()
     return redirect(url_for('modulo', nome='Estoque'))
 
 if __name__ == '__main__':

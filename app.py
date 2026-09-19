@@ -87,7 +87,7 @@ def init_db():
     user_count = resultado['count'] if isinstance(resultado, dict) else resultado[0]
     
     if user_count == 0:
-        cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', 'sua_senha_aqui')")
+        cur.execute("INSERT INTO usuarios (nome, senha) VALUES ('Wanderson Fernandes', '1234')")
         db.commit()
 
     cur.close()

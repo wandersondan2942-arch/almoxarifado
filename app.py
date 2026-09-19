@@ -168,17 +168,24 @@ def index():
             ''', (num_requisicao, prioridade, atividade, categoria, responsavel, prazo))
             db.commit()
             return redirect(url_for('index'))
-
-    busca = request.args.get('q', '')
+            busca = request.args.get('q', '')
     if busca:
-        atividades = cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s) AND status = 'Pendente' ORDER BY id DESC", (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%')).fetchall()
+        cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
+                    (f'%{busca}%', f'%{busca}%', f'%{busca}%', f'%{busca}%'))
+        atividades = cur.fetchall()
     else:
-        atividades = cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC").fetchall()
+        cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
+        atividades = cur.fetchall()
 
-    mensagens_chat = cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15").fetchall()
+    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+    total_req = cur.fetchone()[0]
 
-    # Contagens para os Cards do Topo
-    total_req = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'").fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
+    inv_total_reg = cur.fetchone()[0]
+    
+    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
+    inv_conc = cur.fetchone()[0]
     
     inv_total_reg = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'").fetchone()[0]
     inv_conc = cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'").fetchone()[0]

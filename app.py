@@ -30,9 +30,9 @@ def close_connection(exception):
 
 def init_db():
     with app.app_context():
-    db = get_db()
-    cur = db.cursor()
-    cur.execute('''
+       db = get_db()
+       cur = db.cursor()
+       cur.execute('''
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
                 nome TEXT UNIQUE NOT NULL,

@@ -669,107 +669,233 @@ def index():
 
     fechar_cursor(cursor)
 
+ # =====================================================
+# INDICADORES
+# =====================================================
+
+def contar(sql, parametros=()):
+
+    try:
+
+        cursor = executar(
+            sql,
+            parametros
+        )
+
+        valor = obter_valor(cursor)
+
+        fechar_cursor(cursor)
+
+        return valor
+
+    except Exception as erro:
+
+        print(f"Erro ao calcular indicador: {erro}")
+
+        return 0
+
+
+# -----------------------------------------------------
+# REQUISIÇÕES PENDENTES
+# -----------------------------------------------------
+
+total_req = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Separação'
+    AND status = 'Pendente'
+    """
+)
+
+
+# -----------------------------------------------------
+# INVENTÁRIO
+# -----------------------------------------------------
+
+inv_total = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Inventário'
+    """
+)
+
+
+inv_concluido = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Inventário'
+    AND status = 'Concluído'
+    """
+)
+
+
+# -----------------------------------------------------
+# EXPEDIÇÃO
+# -----------------------------------------------------
+
+exp_pend = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Expedição'
+    AND status = 'Pendente'
+    """
+)
+
+
+exp_total = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Expedição'
+    """
+)
+
+
+exp_concluido = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Expedição'
+    AND status = 'Concluído'
+    """
+)
+
+
+# -----------------------------------------------------
+# RECEBIMENTO
+# -----------------------------------------------------
+
+rec_pend = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE categoria = 'Recebimento'
+    AND status = 'Pendente'
+    """
+)
+
+
+# -----------------------------------------------------
+# OCORRÊNCIAS
+# -----------------------------------------------------
+
+total_oco = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE prioridade = 'Alta'
+    AND status = 'Pendente'
+    """
+)
+
+
+# -----------------------------------------------------
+# INDICADOR: ATENDIDAS
+# -----------------------------------------------------
+
+total_atividades = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    """
+)
+
+
+atividades_concluidas = contar(
+    """
+    SELECT COUNT(*)
+    FROM atividades
+    WHERE status = 'Concluído'
+    """
+)
+
+
+if total_atividades > 0:
+
+    perc_atendidas = round(
+        (atividades_concluidas / total_atividades) * 100
+    )
+
+else:
+
+    perc_atendidas = 0
+
+
+# -----------------------------------------------------
+# INDICADOR: INVENTÁRIO
+# -----------------------------------------------------
+
+if inv_total > 0:
+
+    perc_inventario = round(
+        (inv_concluido / inv_total) * 100
+    )
+
+else:
+
+    perc_inventario = 0
+
+
+# -----------------------------------------------------
+# INDICADOR: EXPEDIÇÃO
+# -----------------------------------------------------
+
+if exp_total > 0:
+
+    perc_expedicao = round(
+        (exp_concluido / exp_total) * 100
+    )
+
+else:
+
+    perc_expedicao = 0
+
     # =====================================================
-    # INDICADORES
-    # =====================================================
+# USUÁRIOS PARA O FORMULÁRIO DE NOVA ATIVIDADE
+# =====================================================
 
-    def contar(sql, parametros=()):
+cursor = executar(
+    """
+    SELECT *
+    FROM usuarios
+    ORDER BY nome
+    """
+)
 
-        try:
+usuarios = cursor.fetchall()
 
-            cursor = executar(
-                sql,
-                parametros
-            )
-
-            valor = obter_valor(
-                cursor
-            )
-
-            fechar_cursor(cursor)
-
-            return valor
-
-        except Exception:
-
-            return 0
-
-    total_req = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Separação'
-        AND status = 'Pendente'
-        """
-    )
-
-    inv_total = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        """
-    )
-
-    inv_concluido = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        AND status = 'Concluído'
-        """
-    )
-
-    exp_andamento = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        AND status = 'Pendente'
-        """
-    )
-
-    rec_aguardando = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Recebimento'
-        AND status = 'Pendente'
-        """
-    )
-
-    ocorrencias_alta = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE prioridade = 'Alta'
-        AND status = 'Pendente'
-        """
-    )
+fechar_cursor(cursor)
 
     # =====================================================
     # RENDERIZA PAINEL
     # =====================================================
 
-    return render_template(
-        "index.html",
+   return render_template(
+    "index.html",
+       
+    atividades=atividades,
 
-        atividades=atividades,
+    mensagens_chat=mensagens_chat,
 
-        mensagens_chat=mensagens_chat,
+    usuarios=usuarios,
 
-        total_req=total_req,
+    busca=busca,
 
-        inv_conc=inv_concluido,
+    total_req=total_req,
+    inv_conc=inv_concluido,
+    inv_total=inv_total,
+    exp_pend=exp_pend,
+    rec_pend=rec_pend,
+    total_oco=total_oco,
 
-        inv_total=inv_total,
-
-        exp_andamento=exp_andamento,
-
-        rec_aguardando=rec_aguardando,
-
-        ocorrencias_alta=ocorrencias_alta
-    )
+    perc_atendidas=perc_atendidas,
+    perc_inventario=perc_inventario,
+    perc_expedicao=perc_expedicao
+)
 
 
 # =========================================================

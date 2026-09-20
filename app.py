@@ -872,6 +872,7 @@ def index():
         SELECT COUNT(*)
         FROM atividades
         WHERE categoria = 'Inventário'
+        AND status NOT IN ('Concluído', 'Arquivada')
         """
     )
 

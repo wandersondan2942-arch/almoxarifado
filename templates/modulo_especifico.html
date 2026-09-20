@@ -2,66 +2,57 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>{{ nome }} - Almoxarifado Valenet</title>
+    <title>Módulo: {{ nome_modulo | capitalize }}</title>
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; color: #2d3748; }
-        .wrapper { max-width: 1000px; margin: 40px auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 </head>
-<body>
-    <div class="container">
-        <div class="wrapper">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
-                <div>
-                    <h4 class="fw-bold m-0"><i class="fa-solid fa-folder-open text-primary me-2"></i> Módulo: {{ nome }}</h4>
-                    <small class="text-muted">Gerenciamento operacional específico integrado ao banco de dados</small>
-                </div>
-                <a href="/" class="btn btn-outline-primary btn-sm fw-bold"><i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Painel</a>
+<body class="bg-light">
+
+    <div class="container my-5">
+        <div class="card shadow-sm p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3><i class="bi bi-folder2-open text-primary"></i> Módulo: {{ nome_modulo | capitalize }}</h3>
+                <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm">Voltar ao Painel Operacional</a>
             </div>
 
+            {% if registros %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-                    <thead class="table-light text-muted">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
                         <tr>
-                            <th>Prioridade</th>
-                            <th>Descrição / Atividade</th>
+                            <th>ID</th>
+                            <th>Atividade</th>
+                            <th>Categoria</th>
                             <th>Responsável</th>
-                            <th>Prazo</th>
                             <th>Status</th>
-                            <th class="text-end">Ação</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in itens %}
+                        {% for r in registros %}
                         <tr>
+                            <td>#{{ r[0] }}</td>
+                            <td>{{ r[1] }}</td>
+                            <td>{{ r[2] }}</td>
+                            <td>{{ r[3] }}</td>
                             <td>
-                                <span class="badge {% if item.prioridade == 'Alta' %}bg-danger{% elif item.prioridade == 'Média' %}bg-warning text-dark{% else %}bg-info text-dark{% endif %}">
-                                    {{ item.prioridade }}
+                                <span class="badge {% if r[4] == 'Concluído' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ r[4] }}
                                 </span>
                             </td>
-                            <td class="fw-semibold">{{ item.atividade }}</td>
-                            <td>{{ item.responsavel }}</td>
-                            <td class="text-muted">{{ item.prazo }}</td>
-                            <td>
-                                <span class="badge {% if item.status == 'Concluído' %}bg-success{% else %}bg-secondary{% endif %}">
-                                    {{ item.status }}
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a href="/deletar/{{ item.id }}" class="btn btn-sm btn-outline-success" title="Marcar como Concluído"><i class="fa-solid fa-check"></i></a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-4">Nenhum registro encontrado neste módulo.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-2">Nenhum registro encontrado para este módulo.</p>
+            </div>
+            {% endif %}
         </div>
     </div>
+
 </body>
 </html>

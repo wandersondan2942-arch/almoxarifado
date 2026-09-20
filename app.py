@@ -390,34 +390,16 @@ def ocorrencias():
     cur.close()
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('inventarios.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('expedicoes.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('recebimentos.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
-
-@app.route('/modulo/<nome_modulo>')
-def modulo_especifico(nome_modulo):
-    cur = db.cursor()
-    
-    # Tratamento para aceitar variações e acentos comuns no menu
-    if nome_modulo.lower() in ['requisicoes', 'requisições']:
-        # Busca tanto por Requisições quanto por itens de Separação pendentes, ajustando ao seu banco
-        cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria LIKE '%Requisi%' OR categoria LIKE '%Sepra%'")
-    else:
-        cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = %s", (nome_modulo,))
-        
-    registros = cur.fetchall()
-    cur.close()
-    
-    usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('modulo_especifico.html', registros=registros, usuario_atual=usuario_atual, nome_modulo=nome_modulo)
-
+    return render_template('ocorrencias.html', registros=registros, usuario_atual=usuario_atual)
 with app.app_context():
     init_db()
 

@@ -832,19 +832,15 @@ else:
 # -----------------------------------------------------
 
 if exp_total > 0:
-
     perc_expedicao = round(
         (exp_concluido / exp_total) * 100
     )
-
 else:
-
     perc_expedicao = 0
 
     # =====================================================
 # USUÁRIOS PARA O FORMULÁRIO DE NOVA ATIVIDADE
 # =====================================================
-
 cursor = executar(
     """
     SELECT *
@@ -861,7 +857,7 @@ fechar_cursor(cursor)
     # RENDERIZA PAINEL
     # =====================================================
 
-    return render_template(
+return render_template(
         "index.html",
        
     atividades=atividades,

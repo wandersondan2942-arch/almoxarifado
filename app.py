@@ -348,8 +348,8 @@ def deletar_estoque(id):
 
 @app.route('/modulo/<nome_modulo>')
 def modulo_especifico(nome_modulo):
-    # ATENÇÃO: Substitua 'conn' pelo nome real da sua variável de conexão (ex: db, mysql, conexao, etc.)
-    cur = conn.cursor() 
+    conn = get_db()
+    cur = conn.cursor()
     
     termo = nome_modulo.strip()
     

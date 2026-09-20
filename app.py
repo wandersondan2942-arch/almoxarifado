@@ -218,17 +218,29 @@ def index():
     cur.close()
     
     return render_template(
-        'index.html', 
-        atividades=atividades, 
-        mensagens_chat=mensagens_chat,
-        total_req=total_req,
-        inv_conc=inv_conc,
-        inv_total=inv_total_reg,
-        exp_andamento=exp_andamento,
-        rec_aguardando=rec_aguardando,
-        ocorrencias_alta=ocorrencias_alta
-    )
+        # Contagens seguras para os Cards do Topo e Indicadores
+    def obtem_contagem(query):
+        try:
+            cur.execute(query)
+            res = cur.fetchone()
+            if not res:
+                return 0
+            if isinstance(res, dict):
+                return list(res.values())[0]
+            return res[0]
+        except Exception:
+            return 0
+
+    total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+    inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
+    inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
+    exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
+    rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
+    ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
     return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
+
+
+
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])
 def modulo(nome):
     if 'usuario' not in session:

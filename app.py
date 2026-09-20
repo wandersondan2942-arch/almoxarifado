@@ -230,7 +230,7 @@ def index():
             return res[0]
         except Exception:
             return 0
-
+    )
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")

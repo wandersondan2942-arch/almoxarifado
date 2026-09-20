@@ -348,11 +348,55 @@ def deletar_estoque(id):
 
 @app.route('/requisicoes')
 def requisicoes():
-    cur = db.cursor() # Ajuste para a sua conexão de base de dados
+    cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
     cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Requisições'")
     registros = cur.fetchall()
     cur.close()
+    
+    usuario_atual = session.get('usuario', 'Wanderson Tito')
+    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+
+@app.route('/inventario')
+def inventarios():
+    cur = db.cursor()
+    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Inventarios'")
+    registros = cur.fetchall()
+    cur.close()
+
+@app.route('/expedicoes')
+def expedicoes():
+    cur = db.cursor()
+    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Expedições'")
+    registros = cur.fetchall()
+    cur.close()
+
+@app.route('/recebimentos')
+def recebimentos():
+    cur = db.cursor()
+    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Recebimentos'")
+    registros = cur.fetchall()
+    cur.close()
+
+@app.route('/ocorrencias')
+def ocorrencias():
+    cur = db.cursor()
+    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Ocorreoncias'")
+    registros = cur.fetchall()
+    cur.close()
+    
+    usuario_atual = session.get('usuario', 'Wanderson Tito')
+    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    
+    usuario_atual = session.get('usuario', 'Wanderson Tito')
+    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    
+    usuario_atual = session.get('usuario', 'Wanderson Tito')
+    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
     return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)

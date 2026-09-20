@@ -208,11 +208,19 @@ def index():
 
     # Contadores corrigidos para refletir corretamente os cards do painel principal
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
+    total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Em andamento'")
+    total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Concluido'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
     exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'")
+    exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Em andamento'")
+    exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Concluido'")
     rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'")
+    rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Em andamento'")
+    rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Concluido'")
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
+    ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Em andamento'")
+    ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Concluido'")
     
     cur.close()
     

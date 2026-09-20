@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from datetime import datetime, timedelta, timezone
 
 import psycopg2
 import psycopg2.extras
@@ -26,31 +27,27 @@ app.secret_key = os.environ.get(
     "chave-temporaria-apenas-para-desenvolvimento"
 )
 
-
-# =========================================================
-# CONFIGURAÇÃO DO BANCO
-# =========================================================
-
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+
+# =========================================================
+# BANCO DE DADOS
+# =========================================================
 
 def usando_postgresql():
     return bool(DATABASE_URL)
 
 
 def get_db():
-    """
-    Render:
-        PostgreSQL
-
-    Computador local:
-        SQLite
-    """
 
     db = getattr(g, "_database", None)
 
     if db is not None:
         return db
+
+    # -----------------------------------------
+    # RENDER / POSTGRESQL
+    # -----------------------------------------
 
     if usando_postgresql():
 
@@ -68,6 +65,10 @@ def get_db():
             cursor_factory=psycopg2.extras.RealDictCursor
         )
 
+    # -----------------------------------------
+    # COMPUTADOR LOCAL / SQLITE
+    # -----------------------------------------
+
     else:
 
         db = sqlite3.connect(
@@ -84,25 +85,33 @@ def get_db():
 @app.teardown_appcontext
 def close_connection(exception):
 
-    db = getattr(g, "_database", None)
+    db = getattr(
+        g,
+        "_database",
+        None
+    )
 
     if db is not None:
         db.close()
 
 
 # =========================================================
-# FUNÇÕES AUXILIARES DO BANCO
+# EXECUTAR SQL
 # =========================================================
 
 def executar(sql, parametros=()):
-    """
-    Executa SQL compatível com SQLite e PostgreSQL.
-    """
 
     db = get_db()
 
+    # PostgreSQL usa %s
+    # SQLite usa ?
+
     if not usando_postgresql():
-        sql = sql.replace("%s", "?")
+
+        sql = sql.replace(
+            "%s",
+            "?"
+        )
 
     cursor = db.cursor()
 
@@ -127,7 +136,10 @@ def obter_valor(cursor):
         return 0
 
     if isinstance(resultado, dict):
-        return list(resultado.values())[0]
+
+        return list(
+            resultado.values()
+        )[0]
 
     return resultado[0]
 
@@ -135,23 +147,26 @@ def obter_valor(cursor):
 def fechar_cursor(cursor):
 
     if cursor:
+
         cursor.close()
 
 
 # =========================================================
-# CONTEXTO DO USUÁRIO
+# USUÁRIO DISPONÍVEL NOS TEMPLATES
 # =========================================================
 
 @app.context_processor
 def inject_user():
 
     return {
-        "usuario_atual": session.get("usuario")
+        "usuario_atual": session.get(
+            "usuario"
+        )
     }
 
 
 # =========================================================
-# CONTADOR
+# CONTADORES
 # =========================================================
 
 def contar(sql, parametros=()):
@@ -163,9 +178,13 @@ def contar(sql, parametros=()):
             parametros
         )
 
-        valor = obter_valor(cursor)
+        valor = obter_valor(
+            cursor
+        )
 
-        fechar_cursor(cursor)
+        fechar_cursor(
+            cursor
+        )
 
         return valor
 
@@ -179,7 +198,7 @@ def contar(sql, parametros=()):
 
 
 # =========================================================
-# CRIAÇÃO DO BANCO
+# CRIAÇÃO / ATUALIZAÇÃO DO BANCO
 # =========================================================
 
 def init_db():
@@ -189,20 +208,24 @@ def init_db():
     cursor = db.cursor()
 
     # =====================================================
-    # POSTGRESQL
+    # USUÁRIOS
+    # =====================================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id INTEGER PRIMARY KEY,
+            nome TEXT NOT NULL,
+            senha TEXT NOT NULL
+        )
+    """)
+
+    # =====================================================
+    # ATIVIDADES
     # =====================================================
 
     if usando_postgresql():
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                nome TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL
-            )
-        """)
-
-        cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
                 id SERIAL PRIMARY KEY,
                 num_requisicao TEXT,
@@ -211,56 +234,21 @@ def init_db():
                 categoria TEXT NOT NULL,
                 responsavel TEXT NOT NULL,
                 prazo TEXT NOT NULL,
-                status TEXT DEFAULT 'Pendente'
+                status TEXT DEFAULT 'Pendente',
+                concluido_em TIMESTAMP
             )
         """)
+
+        # Garante que bancos antigos também recebam a coluna
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat (
-                id SERIAL PRIMARY KEY,
-                remetente TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
         """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS melhorias (
-                id SERIAL PRIMARY KEY,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                autor TEXT NOT NULL,
-                etapa TEXT DEFAULT 'Planejar (Plan)',
-                status TEXT DEFAULT 'Em Andamento'
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id SERIAL PRIMARY KEY,
-                rua TEXT,
-                prateleira TEXT,
-                codigo_material TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0
-            )
-        """)
-
-    # =====================================================
-    # SQLITE
-    # =====================================================
 
     else:
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL
-            )
-        """)
-
-        cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 num_requisicao TEXT,
@@ -269,86 +257,211 @@ def init_db():
                 categoria TEXT NOT NULL,
                 responsavel TEXT NOT NULL,
                 prazo TEXT NOT NULL,
-                status TEXT DEFAULT 'Pendente'
+                status TEXT DEFAULT 'Pendente',
+                concluido_em TEXT
             )
         """)
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                remetente TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        # ---------------------------------------------
+        # MIGRAÇÃO DO SQLITE
+        # ---------------------------------------------
 
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS melhorias (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                autor TEXT NOT NULL,
-                etapa TEXT DEFAULT 'Planejar (Plan)',
-                status TEXT DEFAULT 'Em Andamento'
-            )
+            PRAGMA table_info(atividades)
         """)
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                rua TEXT,
-                prateleira TEXT,
-                codigo_material TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0
+        colunas = cursor.fetchall()
+
+        nomes_colunas = []
+
+        for coluna in colunas:
+
+            nomes_colunas.append(
+                coluna[1]
             )
-        """)
+
+        if "concluido_em" not in nomes_colunas:
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN concluido_em TEXT
+            """)
+
+    # =====================================================
+    # CHAT
+    # =====================================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS chat (
+            id INTEGER PRIMARY KEY,
+            remetente TEXT NOT NULL,
+            mensagem TEXT NOT NULL,
+            horario TEXT NOT NULL
+        )
+    """)
+
+    # =====================================================
+    # MELHORIAS / PDCA
+    # =====================================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS melhorias (
+            id INTEGER PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            descricao TEXT,
+            autor TEXT NOT NULL,
+            etapa TEXT DEFAULT 'Planejar (Plan)',
+            status TEXT DEFAULT 'Em Andamento'
+        )
+    """)
+
+    # =====================================================
+    # ESTOQUE
+    # =====================================================
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS estoque (
+            id INTEGER PRIMARY KEY,
+            rua TEXT NOT NULL,
+            prateleira TEXT NOT NULL,
+            codigo_material TEXT NOT NULL,
+            descricao TEXT NOT NULL,
+            quantidade INTEGER DEFAULT 0
+        )
+    """)
 
     # =====================================================
     # USUÁRIO INICIAL
     # =====================================================
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM usuarios"
-    )
+    if usando_postgresql():
 
-    quantidade_usuarios = obter_valor(
-        cursor
-    )
+        cursor.execute("""
+            SELECT id
+            FROM usuarios
+            WHERE nome = %s
+        """, (
+            "Wanderson Fernandes",
+        ))
 
-    if quantidade_usuarios == 0:
+    else:
+
+        cursor.execute("""
+            SELECT id
+            FROM usuarios
+            WHERE nome = ?
+        """, (
+            "Wanderson Fernandes",
+        ))
+
+    usuario = cursor.fetchone()
+
+    if not usuario:
 
         if usando_postgresql():
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO usuarios
                 (nome, senha)
                 VALUES (%s, %s)
-                """,
-                (
-                    "Wanderson Fernandes",
-                    "1234"
-                )
-            )
+            """, (
+                "Wanderson Fernandes",
+                "1234"
+            ))
 
         else:
 
-            cursor.execute(
-                """
+            cursor.execute("""
                 INSERT INTO usuarios
                 (nome, senha)
                 VALUES (?, ?)
-                """,
-                (
-                    "Wanderson Fernandes",
-                    "1234"
-                )
-            )
+            """, (
+                "Wanderson Fernandes",
+                "1234"
+            ))
 
     db.commit()
 
-    fechar_cursor(cursor)
+    cursor.close()
+
+
+# =========================================================
+# ARQUIVAMENTO AUTOMÁTICO
+# =========================================================
+
+def arquivar_atividades_expiradas():
+
+    try:
+
+        db = get_db()
+
+        # -------------------------------------------------
+        # POSTGRESQL
+        # -------------------------------------------------
+
+        if usando_postgresql():
+
+            cursor = db.cursor()
+
+            cursor.execute("""
+                UPDATE atividades
+                SET status = 'Arquivada'
+                WHERE status = 'Concluído'
+                AND concluido_em IS NOT NULL
+                AND concluido_em <=
+                    CURRENT_TIMESTAMP - INTERVAL '24 hours'
+            """)
+
+        # -------------------------------------------------
+        # SQLITE
+        # -------------------------------------------------
+
+        else:
+
+            cursor = db.cursor()
+
+            limite = (
+                datetime.now(timezone.utc)
+                - timedelta(hours=24)
+            )
+
+            limite_texto = limite.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+            cursor.execute("""
+                UPDATE atividades
+                SET status = 'Arquivada'
+                WHERE status = 'Concluído'
+                AND concluido_em IS NOT NULL
+                AND concluido_em <= ?
+            """, (
+                limite_texto,
+            ))
+
+        quantidade = cursor.rowcount
+
+        db.commit()
+
+        cursor.close()
+
+        if quantidade > 0:
+
+            print(
+                f"{quantidade} atividade(s) "
+                "arquivada(s) automaticamente."
+            )
+
+    except Exception as erro:
+
+        try:
+            get_db().rollback()
+        except Exception:
+            pass
+
+        print(
+            f"Erro no arquivamento automático: {erro}"
+        )
 
 
 # =========================================================
@@ -366,7 +479,7 @@ def login():
     if request.method == "POST":
 
         nome = request.form.get(
-            "nome",
+            "usuario",
             ""
         ).strip()
 
@@ -375,32 +488,37 @@ def login():
             ""
         ).strip()
 
-        cursor = executar(
-            """
+        cursor = executar("""
             SELECT *
             FROM usuarios
             WHERE nome = %s
             AND senha = %s
-            """,
-            (
-                nome,
-                senha
-            )
+        """, (
+            nome,
+            senha
+        ))
+
+        usuario = cursor.fetchone()
+
+        fechar_cursor(
+            cursor
         )
 
-        user = cursor.fetchone()
+        if usuario:
 
-        fechar_cursor(cursor)
-
-        if user:
-
-            session["usuario"] = user["nome"]
+            session["usuario"] = (
+                usuario["nome"]
+                if isinstance(usuario, dict)
+                else usuario["nome"]
+            )
 
             return redirect(
                 url_for("index")
             )
 
-        erro = "Usuário ou senha inválidos!"
+        erro = (
+            "Usuário ou senha inválidos!"
+        )
 
     return render_template(
         "login.html",
@@ -418,6 +536,13 @@ def login():
 )
 def cadastro_usuario():
 
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    mensagem = None
     erro = None
 
     if request.method == "POST":
@@ -434,47 +559,44 @@ def cadastro_usuario():
 
         if not nome or not senha:
 
-            erro = "Preencha todos os campos."
+            erro = (
+                "Preencha nome e senha."
+            )
 
         else:
 
             try:
 
-                cursor = executar(
-                    """
+                cursor = executar("""
                     INSERT INTO usuarios
                     (nome, senha)
                     VALUES (%s, %s)
-                    """,
-                    (
-                        nome,
-                        senha
-                    )
-                )
+                """, (
+                    nome,
+                    senha
+                ))
 
                 get_db().commit()
 
-                fechar_cursor(cursor)
-
-                return redirect(
-                    url_for("login")
+                fechar_cursor(
+                    cursor
                 )
 
-            except Exception as erro_banco:
+                mensagem = (
+                    "Usuário cadastrado com sucesso!"
+                )
+
+            except Exception as e:
 
                 get_db().rollback()
 
-                print(
-                    f"Erro ao cadastrar usuário: {erro_banco}"
-                )
-
                 erro = (
-                    "Não foi possível cadastrar "
-                    "este usuário."
+                    f"Erro ao cadastrar usuário: {e}"
                 )
 
     return render_template(
         "cadastro_usuario.html",
+        mensagem=mensagem,
         erro=erro
     )
 
@@ -483,13 +605,12 @@ def cadastro_usuario():
 # LOGOUT
 # =========================================================
 
-@app.route("/logout")
+@app.route(
+    "/logout"
+)
 def logout():
 
-    session.pop(
-        "usuario",
-        None
-    )
+    session.clear()
 
     return redirect(
         url_for("login")
@@ -512,25 +633,29 @@ def index():
             url_for("login")
         )
 
-    usuario_atual = session["usuario"]
+    # =====================================================
+    # PRIMEIRO:
+    # VERIFICA SE EXISTEM CONCLUÍDAS HÁ MAIS DE 24 HORAS
+    # =====================================================
 
-    db = get_db()
+    arquivar_atividades_expiradas()
 
     # =====================================================
-    # POST
+    # NOVA ATIVIDADE / CHAT
     # =====================================================
 
     if request.method == "POST":
 
-        acao_chat = request.form.get(
-            "acao_chat"
+        tipo = request.form.get(
+            "tipo",
+            ""
         )
 
-        # =================================================
+        # -------------------------------------------------
         # CHAT
-        # =================================================
+        # -------------------------------------------------
 
-        if acao_chat == "enviar":
+        if tipo == "chat":
 
             mensagem = request.form.get(
                 "mensagem",
@@ -539,307 +664,264 @@ def index():
 
             if mensagem:
 
-                cursor = executar(
-                    """
-                    INSERT INTO chat
-                    (remetente, mensagem)
-                    VALUES (%s, %s)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem
-                    )
+                agora = datetime.now(
+                    timezone.utc
+                ).strftime(
+                    "%Y-%m-%d %H:%M:%S"
                 )
 
-                db.commit()
+                cursor = executar("""
+                    INSERT INTO chat
+                    (remetente, mensagem, horario)
+                    VALUES (%s, %s, %s)
+                """, (
+                    session["usuario"],
+                    mensagem,
+                    agora
+                ))
 
-                fechar_cursor(cursor)
+                get_db().commit()
+
+                fechar_cursor(
+                    cursor
+                )
 
             return redirect(
                 url_for("index")
             )
 
-        # =================================================
+        # -------------------------------------------------
         # NOVA ATIVIDADE
-        # =================================================
-
-        num_requisicao = request.form.get(
-            "num_requisicao"
-        )
-
-        prioridade = request.form.get(
-            "prioridade"
-        )
+        # -------------------------------------------------
 
         atividade = request.form.get(
-            "atividade"
-        )
+            "atividade",
+            ""
+        ).strip()
+
+        num_requisicao = request.form.get(
+            "num_requisicao",
+            ""
+        ).strip()
+
+        prioridade = request.form.get(
+            "prioridade",
+            "Média"
+        ).strip()
 
         categoria = request.form.get(
-            "categoria"
-        )
+            "categoria",
+            "Separação"
+        ).strip()
 
-        responsavel = (
-            request.form.get("responsavel")
-            or usuario_atual
-        )
+        responsavel = request.form.get(
+            "responsavel",
+            ""
+        ).strip()
 
         prazo = request.form.get(
-            "prazo"
-        )
+            "prazo",
+            ""
+        ).strip()
 
-        if atividade:
+        if atividade and responsavel and prazo:
 
-            try:
-
-                cursor = executar(
-                    """
-                    INSERT INTO atividades
-                    (
-                        num_requisicao,
-                        prioridade,
-                        atividade,
-                        categoria,
-                        responsavel,
-                        prazo,
-                        status
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        'Pendente'
-                    )
-                    """,
-                    (
-                        num_requisicao,
-                        prioridade,
-                        atividade,
-                        categoria,
-                        responsavel,
-                        prazo
-                    )
+            cursor = executar("""
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    prioridade,
+                    atividade,
+                    categoria,
+                    responsavel,
+                    prazo,
+                    status,
+                    concluido_em
                 )
+                VALUES
+                (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                num_requisicao,
+                prioridade,
+                atividade,
+                categoria,
+                responsavel,
+                prazo,
+                "Pendente",
+                None
+            ))
 
-                db.commit()
+            get_db().commit()
 
-                fechar_cursor(cursor)
-
-            except Exception as erro:
-
-                db.rollback()
-
-                print(
-                    f"Erro ao inserir atividade: {erro}"
-                )
+            fechar_cursor(
+                cursor
+            )
 
         return redirect(
             url_for("index")
         )
 
     # =====================================================
-    # LISTAGEM DE ATIVIDADES
+    # PESQUISA
     # =====================================================
 
-    busca = request.args.get(
+    pesquisa = request.args.get(
         "q",
         ""
     ).strip()
 
-    if busca:
+    if pesquisa:
 
-        cursor = executar(
-            """
+        termo = f"%{pesquisa}%"
+
+        cursor = executar("""
             SELECT *
             FROM atividades
-            WHERE
+            WHERE status = 'Pendente'
+            AND (
                 atividade LIKE %s
                 OR categoria LIKE %s
                 OR responsavel LIKE %s
                 OR num_requisicao LIKE %s
-            ORDER BY id DESC
-            """,
-            (
-                f"%{busca}%",
-                f"%{busca}%",
-                f"%{busca}%",
-                f"%{busca}%"
             )
-        )
+            ORDER BY id DESC
+        """, (
+            termo,
+            termo,
+            termo,
+            termo
+        ))
 
     else:
 
-        cursor = executar(
-            """
+        cursor = executar("""
             SELECT *
             FROM atividades
             WHERE status = 'Pendente'
             ORDER BY id DESC
-            """
-        )
+        """)
 
     atividades = cursor.fetchall()
 
-    fechar_cursor(cursor)
+    fechar_cursor(
+        cursor
+    )
 
     # =====================================================
     # CHAT
     # =====================================================
 
-    cursor = executar(
-        """
+    cursor = executar("""
         SELECT *
         FROM chat
         ORDER BY id DESC
         LIMIT 15
-        """
+    """)
+
+    mensagens = cursor.fetchall()
+
+    fechar_cursor(
+        cursor
     )
-
-    mensagens_chat = cursor.fetchall()
-
-    fechar_cursor(cursor)
 
     # =====================================================
     # INDICADORES
     # =====================================================
 
-    # -----------------------------------------------------
-    # REQUISIÇÕES PENDENTES
-    # -----------------------------------------------------
-
-    total_req = contar(
-        """
+    total_req = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Separação'
+        WHERE categoria = %s
         AND status = 'Pendente'
-        """
-    )
+    """, (
+        "Separação",
+    ))
 
-    # -----------------------------------------------------
-    # INVENTÁRIO
-    # -----------------------------------------------------
-
-    inv_total = contar(
-        """
+    inv_total = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Inventário'
-        """
-    )
+        WHERE categoria = %s
+    """, (
+        "Inventário",
+    ))
 
-    inv_concluido = contar(
-        """
+    inv_concluido = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Inventário'
+        WHERE categoria = %s
         AND status = 'Concluído'
-        """
-    )
+    """, (
+        "Inventário",
+    ))
 
-    # -----------------------------------------------------
-    # EXPEDIÇÃO
-    # -----------------------------------------------------
-
-    exp_pend = contar(
-        """
+    exp_pend = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Expedição'
+        WHERE categoria = %s
         AND status = 'Pendente'
-        """
-    )
+    """, (
+        "Expedição",
+    ))
 
-    exp_total = contar(
-        """
+    exp_total = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Expedição'
-        """
-    )
+        WHERE categoria = %s
+    """, (
+        "Expedição",
+    ))
 
-    exp_concluido = contar(
-        """
+    exp_concluido = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Expedição'
+        WHERE categoria = %s
         AND status = 'Concluído'
-        """
-    )
+    """, (
+        "Expedição",
+    ))
 
-    # -----------------------------------------------------
-    # RECEBIMENTO
-    # -----------------------------------------------------
-
-    rec_pend = contar(
-        """
+    rec_pend = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE categoria = 'Recebimento'
+        WHERE categoria = %s
         AND status = 'Pendente'
-        """
-    )
+    """, (
+        "Recebimento",
+    ))
 
-    # -----------------------------------------------------
-    # OCORRÊNCIAS
-    # -----------------------------------------------------
-
-    total_oco = contar(
-        """
+    total_oco = contar("""
         SELECT COUNT(*)
         FROM atividades
-        WHERE prioridade = 'Alta'
+        WHERE prioridade = %s
         AND status = 'Pendente'
-        """
-    )
+    """, (
+        "Alta",
+    ))
 
-    # -----------------------------------------------------
-    # ATIVIDADES
-    # -----------------------------------------------------
-
-    total_atividades = contar(
-        """
+    total_atividades = contar("""
         SELECT COUNT(*)
         FROM atividades
-        """
-    )
+    """)
 
-    atividades_concluidas = contar(
-        """
+    atividades_concluidas = contar("""
         SELECT COUNT(*)
         FROM atividades
         WHERE status = 'Concluído'
-        """
-    )
+    """)
 
-    # -----------------------------------------------------
-    # PERCENTUAL ATENDIDAS
-    # -----------------------------------------------------
+    atividades_arquivadas = contar("""
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = 'Arquivada'
+    """)
 
-    if total_atividades > 0:
-
-        perc_atendidas = round(
-            (
-                atividades_concluidas
-                / total_atividades
-            ) * 100
-        )
-
-    else:
-
-        perc_atendidas = 0
-
-    # -----------------------------------------------------
-    # PERCENTUAL INVENTÁRIO
-    # -----------------------------------------------------
+    # =====================================================
+    # PERCENTUAIS
+    # =====================================================
 
     if inv_total > 0:
 
-        perc_inventario = round(
+        percentual_inventario = round(
             (
                 inv_concluido
                 / inv_total
@@ -848,15 +930,11 @@ def index():
 
     else:
 
-        perc_inventario = 0
-
-    # -----------------------------------------------------
-    # PERCENTUAL EXPEDIÇÃO
-    # -----------------------------------------------------
+        percentual_inventario = 0
 
     if exp_total > 0:
 
-        perc_expedicao = round(
+        percentual_expedicao = round(
             (
                 exp_concluido
                 / exp_total
@@ -865,26 +943,26 @@ def index():
 
     else:
 
-        perc_expedicao = 0
+        percentual_expedicao = 0
 
     # =====================================================
     # USUÁRIOS
     # =====================================================
 
-    cursor = executar(
-        """
+    cursor = executar("""
         SELECT *
         FROM usuarios
         ORDER BY nome
-        """
-    )
+    """)
 
     usuarios = cursor.fetchall()
 
-    fechar_cursor(cursor)
+    fechar_cursor(
+        cursor
+    )
 
     # =====================================================
-    # RENDERIZA PAINEL
+    # RENDERIZA O PAINEL
     # =====================================================
 
     return render_template(
@@ -892,29 +970,37 @@ def index():
 
         atividades=atividades,
 
-        mensagens_chat=mensagens_chat,
+        mensagens=mensagens,
 
         usuarios=usuarios,
 
-        busca=busca,
+        pesquisa=pesquisa,
 
         total_req=total_req,
 
-        inv_conc=inv_concluido,
-
         inv_total=inv_total,
 
+        inv_concluido=inv_concluido,
+
+        percentual_inventario=percentual_inventario,
+
         exp_pend=exp_pend,
+
+        exp_total=exp_total,
+
+        exp_concluido=exp_concluido,
+
+        percentual_expedicao=percentual_expedicao,
 
         rec_pend=rec_pend,
 
         total_oco=total_oco,
 
-        perc_atendidas=perc_atendidas,
+        total_atividades=total_atividades,
 
-        perc_inventario=perc_inventario,
+        atividades_concluidas=atividades_concluidas,
 
-        perc_expedicao=perc_expedicao
+        atividades_arquivadas=atividades_arquivadas
     )
 
 
@@ -923,8 +1009,7 @@ def index():
 # =========================================================
 
 @app.route(
-    "/modulo/<path:nome>",
-    methods=["GET", "POST"]
+    "/modulo/<path:nome>"
 )
 def modulo(nome):
 
@@ -934,339 +1019,27 @@ def modulo(nome):
             url_for("login")
         )
 
-    nome_limpo = nome
-
-    # =====================================================
-    # CONFIGURAÇÕES
-    # =====================================================
-
-    if "Configurações" in nome_limpo:
-
-        return render_template(
-            "configuracoes.html"
-        )
-
-    # =====================================================
-    # INDICADORES
-    # =====================================================
-
-    if "Indicadores" in nome_limpo:
-
-        total_geral = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            """
-        )
-
-        concluidas = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE status = 'Concluído'
-            """
-        )
-
-        pendentes = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE status = 'Pendente'
-            """
-        )
-
-        return render_template(
-            "indicadores.html",
-
-            total_geral=total_geral,
-
-            concluidas=concluidas,
-
-            pendentes=pendentes
-        )
-
-    # =====================================================
-    # PDCA / MELHORIAS
-    # =====================================================
-
-    if (
-        "PDCA" in nome_limpo
-        or "Melhorias" in nome_limpo
-    ):
-
-        if request.method == "POST":
-
-            titulo = request.form.get(
-                "titulo"
-            )
-
-            descricao = request.form.get(
-                "descricao"
-            )
-
-            etapa = request.form.get(
-                "etapa"
-            )
-
-            autor = session["usuario"]
-
-            if titulo:
-
-                cursor = executar(
-                    """
-                    INSERT INTO melhorias
-                    (
-                        titulo,
-                        descricao,
-                        autor,
-                        etapa
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        titulo,
-                        descricao,
-                        autor,
-                        etapa
-                    )
-                )
-
-                get_db().commit()
-
-                fechar_cursor(cursor)
-
-            return redirect(
-                url_for(
-                    "modulo",
-                    nome="Melhorias / PDCA"
-                )
-            )
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM melhorias
-            ORDER BY id DESC
-            """
-        )
-
-        melhorias = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "pdca.html",
-            melhorias=melhorias
-        )
-
-    # =====================================================
-    # RELATÓRIOS
-    # =====================================================
-
-    if "Relatórios" in nome_limpo:
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            ORDER BY id DESC
-            """
-        )
-
-        itens = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "relatorios.html",
-            itens=itens
-        )
-
-    # =====================================================
-    # ESTOQUE
-    # =====================================================
-
-    if (
-        "Estoque" in nome_limpo
-        or "Cadastros" in nome_limpo
-    ):
-
-        if request.method == "POST":
-
-            acao = request.form.get(
-                "acao_estoque"
-            )
-
-            # ---------------------------------------------
-            # CADASTRO MANUAL
-            # ---------------------------------------------
-
-            if acao == "cadastrar_manual":
-
-                rua = request.form.get(
-                    "rua"
-                )
-
-                prateleira = request.form.get(
-                    "prateleira"
-                )
-
-                codigo = request.form.get(
-                    "codigo_material"
-                )
-
-                descricao = request.form.get(
-                    "descricao"
-                )
-
-                try:
-
-                    quantidade = int(
-                        request.form.get(
-                            "quantidade",
-                            0
-                        )
-                    )
-
-                except ValueError:
-
-                    quantidade = 0
-
-                cursor = executar(
-                    """
-                    INSERT INTO estoque
-                    (
-                        rua,
-                        prateleira,
-                        codigo_material,
-                        descricao,
-                        quantidade
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        rua,
-                        prateleira,
-                        codigo,
-                        descricao,
-                        quantidade
-                    )
-                )
-
-                get_db().commit()
-
-                fechar_cursor(cursor)
-
-                return redirect(
-                    url_for(
-                        "modulo",
-                        nome="Estoque"
-                    )
-                )
-
-        # ---------------------------------------------
-        # USUÁRIOS
-        # ---------------------------------------------
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            ORDER BY nome
-            """
-        )
-
-        usuarios = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        # ---------------------------------------------
-        # ESTOQUE
-        # ---------------------------------------------
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM estoque
-            ORDER BY id DESC
-            """
-        )
-
-        estoque_items = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "estoque.html",
-
-            usuarios=usuarios,
-
-            estoque_items=estoque_items
-        )
-
-    # =====================================================
-    # MÓDULOS OPERACIONAIS
-    # =====================================================
-
-    categoria_map = {
-
-        "Requisições": "Separação",
-
-        "Inventário": "Inventário",
-
-        "Expedição": "Expedição",
-
-        "Recebimento": "Recebimento"
-    }
-
-    categoria = categoria_map.get(
-        nome_limpo
-    )
-
-    itens = []
-
-    if categoria:
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = %s
-            ORDER BY id DESC
-            """,
-            (
-                categoria,
-            )
-        )
-
-        itens = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
     return render_template(
-        "modulo.html",
-
-        nome=nome_limpo,
-
-        itens=itens
+        "index.html",
+        modulo=nome
     )
 
 
 # =========================================================
 # CONCLUIR ATIVIDADE
+#
+# IMPORTANTE:
+# O nome da rota continua sendo /deletar/<id>
+# porque provavelmente seu HTML/JavaScript já chama essa rota.
+#
+# MAS ELA NÃO DELETA.
+#
+# Apenas muda:
+#
+# Pendente
+#     ↓
+# Concluído
+#
 # =========================================================
 
 @app.route(
@@ -1280,20 +1053,33 @@ def deletar(id):
             url_for("login")
         )
 
-    cursor = executar(
-        """
-        UPDATE atividades
-        SET status = 'Concluído'
-        WHERE id = %s
-        """,
-        (
-            id,
-        )
+    agora = datetime.now(
+        timezone.utc
     )
+
+    concluido_em = agora.strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    cursor = executar("""
+        UPDATE atividades
+
+        SET
+            status = 'Concluído',
+            concluido_em = %s
+
+        WHERE id = %s
+        AND status = 'Pendente'
+    """, (
+        concluido_em,
+        id
+    ))
 
     get_db().commit()
 
-    fechar_cursor(cursor)
+    fechar_cursor(
+        cursor
+    )
 
     return redirect(
         request.referrer
@@ -1302,7 +1088,7 @@ def deletar(id):
 
 
 # =========================================================
-# EXCLUIR ITEM DO ESTOQUE
+# EXCLUIR ESTOQUE
 # =========================================================
 
 @app.route(
@@ -1316,25 +1102,22 @@ def deletar_estoque(id):
             url_for("login")
         )
 
-    cursor = executar(
-        """
+    cursor = executar("""
         DELETE FROM estoque
         WHERE id = %s
-        """,
-        (
-            id,
-        )
-    )
+    """, (
+        id,
+    ))
 
     get_db().commit()
 
-    fechar_cursor(cursor)
+    fechar_cursor(
+        cursor
+    )
 
     return redirect(
-        url_for(
-            "modulo",
-            nome="Estoque"
-        )
+        request.referrer
+        or url_for("index")
     )
 
 
@@ -1353,15 +1136,13 @@ with app.app_context():
 
 if __name__ == "__main__":
 
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
     app.run(
         host="0.0.0.0",
-        port=port,
-        debug=False
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
+        debug=True
     )

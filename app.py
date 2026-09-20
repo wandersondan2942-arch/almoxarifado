@@ -217,10 +217,6 @@ def init_db():
             )
         """)
 
-        # -------------------------------------------------
-        # GARANTE A COLUNA EM BANCOS JÁ EXISTENTES
-        # -------------------------------------------------
-
         cursor.execute("""
             ALTER TABLE atividades
             ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
@@ -284,10 +280,6 @@ def init_db():
                 concluido_em TEXT
             )
         """)
-
-        # -------------------------------------------------
-        # VERIFICA SE O BANCO SQLITE ANTIGO TEM A COLUNA
-        # -------------------------------------------------
 
         cursor.execute("""
             PRAGMA table_info(atividades)
@@ -865,6 +857,9 @@ def index():
 
     # -----------------------------------------------------
     # INVENTÁRIO
+    #
+    # inv_total = somente pendentes
+    # Usado no CARD
     # -----------------------------------------------------
 
     inv_total = contar(
@@ -872,9 +867,15 @@ def index():
         SELECT COUNT(*)
         FROM atividades
         WHERE categoria = 'Inventário'
-        AND status NOT IN ('Concluído', 'Arquivada')
+        AND status = 'Pendente'
         """
     )
+
+    # -----------------------------------------------------
+    # INVENTÁRIO CONCLUÍDO
+    #
+    # Usado no INDICADOR DO DIA
+    # -----------------------------------------------------
 
     inv_concluido = contar(
         """
@@ -886,7 +887,24 @@ def index():
     )
 
     # -----------------------------------------------------
-    # EXPEDIÇÃO
+    # TOTAL DE INVENTÁRIOS ATIVOS
+    #
+    # Pendente + Concluído
+    #
+    # Arquivada NÃO entra.
+    # -----------------------------------------------------
+
+    inv_total_indicador = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        AND status IN ('Pendente', 'Concluído')
+        """
+    )
+
+    # -----------------------------------------------------
+    # EXPEDIÇÃO PENDENTE
     # -----------------------------------------------------
 
     exp_pend = contar(
@@ -898,13 +916,9 @@ def index():
         """
     )
 
-    exp_total = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        """
-    )
+    # -----------------------------------------------------
+    # EXPEDIÇÃO CONCLUÍDA
+    # -----------------------------------------------------
 
     exp_concluido = contar(
         """
@@ -912,6 +926,21 @@ def index():
         FROM atividades
         WHERE categoria = 'Expedição'
         AND status = 'Concluído'
+        """
+    )
+
+    # -----------------------------------------------------
+    # TOTAL EXPEDIÇÃO PARA O INDICADOR
+    #
+    # Pendente + Concluído
+    # -----------------------------------------------------
+
+    exp_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status IN ('Pendente', 'Concluído')
         """
     )
 
@@ -942,15 +971,24 @@ def index():
     )
 
     # -----------------------------------------------------
-    # ATIVIDADES
+    # ATIVIDADES ATIVAS
+    #
+    # Pendente + Concluído
+    #
+    # Arquivadas ficam fora do indicador do dia.
     # -----------------------------------------------------
 
     total_atividades = contar(
         """
         SELECT COUNT(*)
         FROM atividades
+        WHERE status IN ('Pendente', 'Concluído')
         """
     )
+
+    # -----------------------------------------------------
+    # ATIVIDADES CONCLUÍDAS
+    # -----------------------------------------------------
 
     atividades_concluidas = contar(
         """
@@ -959,6 +997,10 @@ def index():
         WHERE status = 'Concluído'
         """
     )
+
+    # -----------------------------------------------------
+    # ATIVIDADES ARQUIVADAS
+    # -----------------------------------------------------
 
     atividades_arquivadas = contar(
         """
@@ -970,6 +1012,17 @@ def index():
 
     # -----------------------------------------------------
     # PERCENTUAL ATENDIDAS
+    #
+    # Exemplo:
+    #
+    # 1 pendente + 1 concluída
+    # = 1 / 2 = 50%
+    #
+    # 1 concluída
+    # = 1 / 1 = 100%
+    #
+    # Depois de arquivar:
+    # 0 / 0 = 0%
     # -----------------------------------------------------
 
     if total_atividades > 0:
@@ -987,14 +1040,22 @@ def index():
 
     # -----------------------------------------------------
     # PERCENTUAL INVENTÁRIO
+    #
+    # Usa Pendente + Concluído.
+    #
+    # Assim:
+    #
+    # 1 pendente = 0%
+    # 1 concluído = 100%
+    # após arquivar = 0%
     # -----------------------------------------------------
 
-    if inv_total > 0:
+    if inv_total_indicador > 0:
 
         perc_inventario = round(
             (
                 inv_concluido
-                / inv_total
+                / inv_total_indicador
             ) * 100
         )
 
@@ -1110,6 +1171,7 @@ def modulo(nome):
             """
             SELECT COUNT(*)
             FROM atividades
+            WHERE status IN ('Pendente', 'Concluído')
             """
         )
 

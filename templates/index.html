@@ -247,7 +247,7 @@
                         <div class="mb-2">
                             <label class="form-label small fw-semibold">Responsável</label>
                             <select name="responsavel" class="form-select form-select-sm">
-                                <option value="{{ usuario_atual }}" selected>{{ usuario_atual }} (Atual)</option>
+                                <option value="{{ usuario_atual }}" selected>{{ usuario_atual }}</option>
                                 {% for u in usuarios %}
                                 <option value="{{ u[0] }}">{{ u[0] }}</option>
                                 {% endfor %}

@@ -345,61 +345,34 @@ def deletar_estoque(id):
     db.commit()
     cur.close()
     return redirect(url_for('modulo', nome='Estoque'))
-
-@app.route('/separacoes')
-def separacoes():
+@app.route('/modulo/<nome_modulo>')
+def modulo_especifico(nome_modulo):
     cur = db.cursor()
-    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Separacoes'")
+    
+    # Normaliza o nome para tratar acentos e maiúsculas/minúsculas
+    termo = nome_modulo.strip()
+    
+    # Se o módulo acessado for Requisições, busca por variações comuns salvas no banco ('Separação' ou 'Requisições')
+    if termo.lower() in ['requisicoes', 'requisições']:
+        cur.execute("""
+            SELECT id, atividade, categoria, responsavel, status 
+            FROM atividades 
+            WHERE categoria ILIKE '%Sepra%' OR categoria ILIKE '%Requis%'
+        """)
+    else:
+        # Para os demais módulos (Inventário, Expedição, etc.), busca exata ignorando maiúsculas/minúsculas
+        cur.execute("""
+            SELECT id, atividade, categoria, responsavel, status 
+            FROM atividades 
+            WHERE categoria ILIKE %s
+        """, (f"%{termo}%",))
+        
     registros = cur.fetchall()
     cur.close()
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('modulo_especifico.html', registros=registros, usuario_atual=usuario_atual, nome_modulo=nome_modulo)
 
-@app.route('/inventarios')
-def inventarios():
-    cur = db.cursor()
-    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Inventarios'")
-    registros = cur.fetchall()
-    cur.close()
-
-@app.route('/expedicao')
-def expedicao():
-    cur = db.cursor()
-    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Expedicao'")
-    registros = cur.fetchall()
-    cur.close()
-
-@app.route('/recebimento')
-def recebimento():
-    cur = db.cursor()
-    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Recebimento'")
-    registros = cur.fetchall()
-    cur.close()
-
-@app.route('/ocorrencias')
-def ocorrencias():
-    cur = db.cursor()
-    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Ocorrencias'")
-    registros = cur.fetchall()
-    cur.close()
-    
-    usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('inventario.html', registros=registros, usuario_atual=usuario_atual)
-    
-    usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('expedicao.html', registros=registros, usuario_atual=usuario_atual)
-    
-    usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('recebimento.html', registros=registros, usuario_atual=usuario_atual)
-    
-    usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('ocorrencias.html', registros=registros, usuario_atual=usuario_atual)
 with app.app_context():
     init_db()
 

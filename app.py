@@ -861,7 +861,7 @@ fechar_cursor(cursor)
     # RENDERIZA PAINEL
     # =====================================================
 
-   return render_template(
+return render_template(
     "index.html",
        
     atividades=atividades,

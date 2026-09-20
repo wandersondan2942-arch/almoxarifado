@@ -28,7 +28,7 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-# Disponibiliza o utilizador logado globalmente para todos os templates HTML (canto inferior direito)
+# Disponibiliza o utilizador logado globalmente para todos os templates HTML
 @app.context_processor
 def inject_user():
     return dict(usuario_atual=session.get('usuario'))
@@ -160,7 +160,7 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
-            # Garante que o responsável seja preenchido com o utilizador logado caso venha vazio
+            # Garante que se o formulário não mandar responsável, assume o utilizador logado
             responsavel = request.form.get('responsavel') or usuario_atual
             prazo = request.form.get('prazo')
             
@@ -206,6 +206,7 @@ def index():
         except Exception:
             return 0
 
+    # Contadores corrigidos para refletir corretamente os cards do painel principal
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")

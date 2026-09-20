@@ -160,8 +160,8 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
-            # Garante que se o formulário não mandar responsável, assume o utilizador logado
-            responsavel = request.form.get('responsavel') or usuario_atual
+            usuario_atual = session.get('usuario' , Wanderson Tito')
+            responsavel = usuario_atual
             prazo = request.form.get('prazo')
             
             if atividade:

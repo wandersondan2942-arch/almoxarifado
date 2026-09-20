@@ -346,6 +346,17 @@ def deletar_estoque(id):
     cur.close()
     return redirect(url_for('modulo', nome='Estoque'))
 
+@app.route('/requisicoes')
+def requisicoes():
+    cur = db.cursor() # Ajuste para a sua conexão de base de dados
+    # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Requisições'")
+    registros = cur.fetchall()
+    cur.close()
+    
+    usuario_atual = session.get('usuario', 'Wanderson Tito')
+    return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
+
 with app.app_context():
     init_db()
 

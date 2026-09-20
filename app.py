@@ -214,17 +214,18 @@ def index():
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
     
     cur.close()
-    
     return render_template(
-        'index.html', 
-        atividades=atividades, 
+        'index.html',
+        atividades=atividades,
         mensagens_chat=mensagens_chat,
+        usuario_atual=usuario_atual,  # Adicionado para aparecer o nome de quem logou
+        usuarios=usuarios,            # Adicionado para preencher o select de responsáveis no modal
         total_req=total_req,
         inv_conc=inv_conc,
-        inv_total=inv_total_reg,
-        exp_andamento=exp_andamento,
-        rec_aguardando=rec_aguardando,
-        ocorrencias_alta=ocorrencias_alta
+        inv_total=inv_total_reg,      # Ajustado para casar com o HTML (inv_total)
+        exp_pend=exp_andamento,       # Ajustado de exp_andamento para exp_pend
+        rec_pend=rec_aguardando,      # Ajustado de rec_aguardando para rec_pend
+        total_oco=ocorrencias_alta    # Ajustado de ocorrencias_alta para total_oco
     )
 
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])

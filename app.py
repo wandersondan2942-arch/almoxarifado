@@ -366,18 +366,15 @@ def login():
         fechar_cursor(cursor)
 
         if usuario:
-
             session["usuario"] = usuario["nome"]
-
-            return redirect(
+            
+        return redirect(
                 url_for("index")
-            )
-
-        erro = "Usuário ou senha inválidos!"
-
-    return render_template(
+        )
+           erro = "Usuário ou senha inválidos!"
+        return render_template(
         "login.html",
-        erro=erro
+           erro=erro
     )
 
 

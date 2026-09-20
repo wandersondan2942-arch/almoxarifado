@@ -160,6 +160,7 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
+            # Garante que se o formulário não mandar responsável, assume o utilizador logado
             responsavel = request.form.get('responsavel') or usuario_atual
             prazo = request.form.get('prazo')
             
@@ -205,7 +206,7 @@ def index():
         except Exception:
             return 0
 
-    # Contadores atualizados
+    # Contadores corrigidos para refletir corretamente os cards do painel principal
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
@@ -214,25 +215,17 @@ def index():
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
     
     cur.close()
-    # Busque os usuários cadastrados no banco (exemplo usando SQLite/SQLAlchemy ou Cursor)
-    # Ajuste conforme a forma que seu código já conecta ao banco:
-    cur.execute("SELECT id, nome FROM usuarios")
-    usuarios = cur.fetchall()
-
-    # E garanta que o usuário atual está vindo da sessão:
-    usuario_atual = session.get('usuario', 'Convidado')
+    
     return render_template(
-        'index.html',
-        atividades=atividades,
+        'index.html', 
+        atividades=atividades, 
         mensagens_chat=mensagens_chat,
-        usuario_atual=usuario_atual,
-        usuarios=usuarios,
         total_req=total_req,
         inv_conc=inv_conc,
         inv_total=inv_total_reg,
-        exp_pend=exp_andamento,
-        rec_pend=rec_aguardando,
-        total_oco=ocorrencias_alta
+        exp_andamento=exp_andamento,
+        rec_aguardando=rec_aguardando,
+        ocorrencias_alta=ocorrencias_alta
     )
 
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])
@@ -313,7 +306,6 @@ def modulo(nome):
         cur.close()
         return render_template('estoque.html', usuarios=usuarios, estoque_items=estoque_items)
     
-    # Mapeamento correto para as páginas de módulos exibirem a tabela de itens
     categoria_map = {
         'Requisições': 'Separação',
         'Inventário': 'Inventário',
@@ -321,13 +313,12 @@ def modulo(nome):
         'Recebimento': 'Recebimento'
     }
     cat_filtro = categoria_map.get(nome_limpo)
-    itens = []
     if cat_filtro:
         cur.execute("SELECT * FROM atividades WHERE categoria = %s ORDER BY id DESC", (cat_filtro,))
         itens = cur.fetchall()
     
     cur.close()
-    return render_template('modulo.html', nome=nome_limpo, itens=itens)
+    return render_template('modulo.html', nome=nome_limpo)
 
 @app.route('/deletar/<int:id>')
 def deletar(id):

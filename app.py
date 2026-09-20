@@ -33,55 +33,51 @@ def init_db():
     cur = db.cursor()
     cur.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                nome TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL
-            )
-        ''')
-    cur = db.cursor()
+            id SERIAL PRIMARY KEY,
+            nome TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL
+        )
+    ''')
     cur.execute('''
-            CREATE TABLE IF NOT EXISTS atividades (
-                id SERIAL PRIMARY KEY,
-                num_requisicao TEXT,
-                prioridade TEXT NOT NULL,
-                atividade TEXT NOT NULL,
-                categoria TEXT NOT NULL,
-                responsavel TEXT NOT NULL,
-                prazo TEXT NOT NULL,
-                status TEXT DEFAULT 'Pendente'
-            )
-        ''')
-    cur = db.cursor()
+        CREATE TABLE IF NOT EXISTS atividades (
+            id SERIAL PRIMARY KEY,
+            num_requisicao TEXT,
+            prioridade TEXT NOT NULL,
+            atividade TEXT NOT NULL,
+            categoria TEXT NOT NULL,
+            responsavel TEXT NOT NULL,
+            prazo TEXT NOT NULL,
+            status TEXT DEFAULT 'Pendente'
+        )
+    ''')
     cur.execute('''
-            CREATE TABLE IF NOT EXISTS chat (
-                id SERIAL PRIMARY KEY,
-                remetente TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-    cur = db.cursor()
+        CREATE TABLE IF NOT EXISTS chat (
+            id SERIAL PRIMARY KEY,
+            remetente TEXT NOT NULL,
+            mensagem TEXT NOT NULL,
+            horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     cur.execute('''
-            CREATE TABLE IF NOT EXISTS melhorias (
-                id SERIAL PRIMARY KEY,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                autor TEXT NOT NULL,
-                etapa TEXT DEFAULT 'Planejar (Plan)',
-                status TEXT DEFAULT 'Em Andamento'
-            )
-        ''')
-    cur = db.cursor()
+        CREATE TABLE IF NOT EXISTS melhorias (
+            id SERIAL PRIMARY KEY,
+            titulo TEXT NOT NULL,
+            descricao TEXT NOT NULL,
+            autor TEXT NOT NULL,
+            etapa TEXT DEFAULT 'Planejar (Plan)',
+            status TEXT DEFAULT 'Em Andamento'
+        )
+    ''')
     cur.execute('''
-            CREATE TABLE IF NOT EXISTS estoque (
-                id SERIAL PRIMARY KEY,
-                rua TEXT,
-                prateleira TEXT,
-                codigo_material TEXT,
-                descricao TEXT,
-                quantidade INTEGER
-            )
-        ''')
+        CREATE TABLE IF NOT EXISTS estoque (
+            id SERIAL PRIMARY KEY,
+            rua TEXT,
+            prateleira TEXT,
+            codigo_material TEXT,
+            descricao TEXT,
+            quantidade INTEGER
+        )
+    ''')
     cur.execute('SELECT COUNT(*) FROM usuarios')
     resultado = cur.fetchone()
     user_count = resultado['count'] if isinstance(resultado, dict) else resultado[0]
@@ -91,16 +87,16 @@ def init_db():
         db.commit()
 
     cur.close()
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     erro = None
-    db = get_db()
-    cur = db.cursor()
-    
     if request.method == 'POST':
         nome = request.form.get('nome')
         senha = request.form.get('senha')
         
+        db = get_db()
+        cur = db.cursor()
         cur.execute("SELECT * FROM usuarios WHERE nome = %s AND senha = %s", (nome, senha))
         user = cur.fetchone()
         cur.close()
@@ -154,9 +150,7 @@ def index():
                 db.commit()
                 cur.close()
                 return redirect(url_for('index'))
-
-    else:
-            # Captura segura dos dados do formulário
+        else:
             num_requisicao = request.form.get('num_requisicao')
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
@@ -179,7 +173,7 @@ def index():
                 
                 return redirect(url_for('index'))
 
-    # Método GET (ou carregamento padrão da página)
+    # Método GET: Listagem
     busca = request.args.get('q', '')
     if busca:
         cur.execute("SELECT * FROM atividades WHERE (atividade LIKE %s OR categoria LIKE %s OR responsavel LIKE %s OR num_requisicao LIKE %s)", 
@@ -188,39 +182,16 @@ def index():
     else:
         cur.execute("SELECT * FROM atividades WHERE status = 'Pendente' ORDER BY id DESC")
         atividades = cur.fetchall()
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
-        total_req = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
-        inv_total_reg = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
-        inv_conc = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
-        exp_andamento = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
-        rec_aguardando = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
-        ocorrencias_alta = cur.fetchone()[0]
-        
-        
-        cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-        mensagens_chat = cur.fetchall()
-    
-    cur.close()
-        # Contagens seguras para os Cards do Topo e Indicadores
+
+    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
+    mensagens_chat = cur.fetchall()
+
     def obtem_contagem(query):
         try:
-            cur.execute(query)
-            res = cur.fetchone()
+            c = db.cursor()
+            c.execute(query)
+            res = c.fetchone()
+            c.close()
             if not res:
                 return 0
             if isinstance(res, dict):
@@ -228,13 +199,16 @@ def index():
             return res[0]
         except Exception:
             return 0
-    
+
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
     exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
     rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
+    
+    cur.close()
+    
     return render_template(
         'index.html', 
         atividades=atividades, 
@@ -247,36 +221,35 @@ def index():
         ocorrencias_alta=ocorrencias_alta
     )
 
-
-
 @app.route('/modulo/<path:nome>', methods=['GET', 'POST'])
 def modulo(nome):
     if 'usuario' not in session:
         return redirect(url_for('login'))
+        
     db = get_db()
+    cur = db.cursor()
     nome_limpo = nome.replace('%20', ' ')
     
     if 'Configurações' in nome_limpo:
+        cur.close()
         return render_template('configuracoes.html')
-    elif 'Indicadores' in nome_limpo:
-        db = get_db()
-        cur = db.cursor()
-        nome_limpo = nome.replace('%20', ' ')
-
-    if 'Configurações' in nome_limpo:
-        return render_template('configuracoes.html')
+        
     elif 'Indicadores' in nome_limpo:
         cur.execute("SELECT COUNT(*) FROM atividades")
-        total_geral = cur.fetchone()[0]
+        res1 = cur.fetchone()
+        total_geral = list(res1.values())[0] if isinstance(res1, dict) else res1[0]
         
         cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Concluído'")
-        concluidas = cur.fetchone()[0]
+        res2 = cur.fetchone()
+        concluidas = list(res2.values())[0] if isinstance(res2, dict) else res2[0]
         
         cur.execute("SELECT COUNT(*) FROM atividades WHERE status = 'Pendente'")
-        pendentes = cur.fetchone()[0]
+        res3 = cur.fetchone()
+        pendentes = list(res3.values())[0] if isinstance(res3, dict) else res3[0]
         
+        cur.close()
         return render_template('indicadores.html', total_geral=total_geral, concluidas=concluidas, pendentes=pendentes)
-        return render_template('indicadores.html', total_geral=total_geral, concluidas=concluidas, pendentes=pendentes)
+        
     elif 'PDCA' in nome_limpo or 'Melhorias' in nome_limpo:
         if request.method == 'POST':
             titulo = request.form.get('titulo')
@@ -284,16 +257,22 @@ def modulo(nome):
             etapa = request.form.get('etapa')
             autor = session['usuario']
             if titulo:
-                cur.execute("INSERT INTO melhorias (titulo, descricao, autor, etapa) VALUES (%s, %s, %s, %s, %s)", (titulo, descricao, autor, etapa))
+                cur.execute("INSERT INTO melhorias (titulo, descricao, autor, etapa) VALUES (%s, %s, %s, %s)", (titulo, descricao, autor, etapa))
                 db.commit()
                 cur.close()
             return redirect(url_for('modulo', nome='Melhorias / PDCA'))
         
-        melhorias = cur.execute("SELECT * FROM melhorias ORDER BY id DESC").fetchall()
+        cur.execute("SELECT * FROM melhorias ORDER BY id DESC")
+        melhorias = cur.fetchall()
+        cur.close()
         return render_template('pdca.html', melhorias=melhorias)
+        
     elif 'Relatórios' in nome_limpo:
-        itens = cur.execute("SELECT * FROM atividades ORDER BY id DESC").fetchall()
+        cur.execute("SELECT * FROM atividades ORDER BY id DESC")
+        itens = cur.fetchall()
+        cur.close()
         return render_template('relatorios.html', itens=itens)
+        
     elif 'Estoque' in nome_limpo or 'Cadastros' in nome_limpo:
         if request.method == 'POST':
             acao = request.form.get('acao_estoque')
@@ -313,35 +292,12 @@ def modulo(nome):
                 cur.close()
                 return redirect(url_for('modulo', nome='Estoque'))
                 
-            elif acao == 'importar_excel' and 'arquivo_excel' in request.files:
-                file = request.files['arquivo_excel']
-                if file and file.filename.endswith(('.xlsx', '.xls', '.csv')):
-                    try:
-                        if file.filename.endswith('.csv'):
-                            df = pd.read_csv(file)
-                        else:
-                            df = pd.read_excel(file)
-                        
-                        for _, row in df.iterrows():
-                            rua = str(row.get('Rua', ''))
-                            prateleira = str(row.get('Prateleira', ''))
-                            codigo = str(row.get('Codigo', row.get('Código', '')))
-                            descricao = str(row.get('Descricao', row.get('Descrição', '')))
-                            val_qtd = row.get('Quantidade', row.get('Qtd', 0))
-                            qtd = int(float(val_qtd)) if pd.notna(val_qtd) else 0
-                            
-                            cur.execute("INSERT INTO estoque (rua, prateleira, codigo_material, descricao, quantidade) VALUES (%s,%s,%s,%s,%s)",
-                                       (rua, prateleira, codigo, descricao, qtd))
-                        db.commit()
-                        cur.close()
-                    except Exception as e:
-                        print(f"Erro ao importar Excel: {e}")
-                    return redirect(url_for('modulo', nome='Estoque'))
-                    cur.execute("SELECT * FROM usuarios")
-                    usuarios = cur.fetchall()
-                    cur.execute("SELECT * FROM estoque ORDER BY id DESC")
-                    estoque_items = cur.fetchall()
-        return render_template('estoque.html', usuarios=usuarios, estoque_itens=estoque_itens)
+        cur.execute("SELECT * FROM usuarios")
+        usuarios = cur.fetchall()
+        cur.execute("SELECT * FROM estoque ORDER BY id DESC")
+        estoque_items = cur.fetchall()
+        cur.close()
+        return render_template('estoque.html', usuarios=usuarios, estoque_items=estoque_items)
     
     categoria_map = {
         'Requisições': 'Separação',
@@ -349,48 +305,19 @@ def modulo(nome):
         'Expedição': 'Expedição',
         'Recebimento': 'Recebimento'
     }
-    # Certifica-te de definir a variável antes de usá-la na query ou no template:
-    cat_filro = request.args.get('categoria', '')
     cat_filtro = categoria_map.get(nome_limpo)
-    if cat_filro:
+    if cat_filtro:
         cur.execute("SELECT * FROM atividades WHERE categoria = %s ORDER BY id DESC", (cat_filtro,))
         itens = cur.fetchall()
-        
-    return render_template('modulo.html', nome=nome_limpo)
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
-    total_req = cur.fetchone()[0]
-    
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
-    inv_total_reg = cur.fetchone()[0]
-
-    
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
-    inv_conc = cur.fetchone()[0]
-    
-    # Se tiveres outras categorias (Expedição, Recebimentos, etc.), podes calcular aqui também:
-    cur.execute("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Em andamento'")
-    exp_andamento = cur.fetchone()[0]
-
-    cur.execute("SELECT * FROM chat ORDER BY id DESC LIMIT 15")
-    mensagens_chat = cur.fetchall()
     
     cur.close()
-    
-    # Passa todas estas variáveis para o HTML:
-    return render_template(
-        'index.html', 
-        atividades=atividades, 
-        mensagens_chat=mensagens_chat,
-        total_req=total_req,
-        inv_conc=inv_conc,
-        inv_total=inv_total_reg,
-        exp_andamento=exp_andamento
-    )
+    return render_template('modulo.html', nome=nome_limpo)
 
 @app.route('/deletar/<int:id>')
 def deletar(id):
     db = get_db()
-    cur.execute("UPDATE atividades SET status = 'Concluído' WHERE id = %s,", (id,))
+    cur = db.cursor()
+    cur.execute("UPDATE atividades SET status = 'Concluído' WHERE id = %s", (id,))
     db.commit()
     cur.close()
     return redirect(request.referrer or url_for('index'))

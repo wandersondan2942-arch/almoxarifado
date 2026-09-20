@@ -28,6 +28,11 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
+# Disponibiliza o utilizador logado globalmente para todos os templates HTML (canto inferior direito)
+@app.context_processor
+def inject_user():
+    return dict(usuario_atual=session.get('usuario'))
+
 def init_db():
     db = get_db()
     cur = db.cursor()
@@ -155,7 +160,8 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
-            responsavel = request.form.get('responsavel')
+            # Garante que o responsável seja preenchido com o utilizador logado caso venha vazio
+            responsavel = request.form.get('responsavel') or usuario_atual
             prazo = request.form.get('prazo')
             
             if atividade:
@@ -203,8 +209,8 @@ def index():
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
-    exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
-    rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
+    exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição' AND status = 'Pendente'")
+    rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento' AND status = 'Pendente'")
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
     
     cur.close()

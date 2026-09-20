@@ -341,42 +341,32 @@ def init_db():
 # LOGIN
 # =========================================================
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-
     erro = None
 
-    if request.method == "POST":
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        senha = request.form.get('senha')
 
-        nome = request.form.get("nome", "").strip()
-        senha = request.form.get("senha", "").strip()
+        db = get_db()
+        cur = db.cursor()
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            WHERE nome = %s
-            AND senha = %s
-            """,
+        cur.execute(
+            "SELECT * FROM usuarios WHERE nome = %s AND senha = %s",
             (nome, senha)
         )
 
-        usuario = obter_primeiro(cursor)
+        user = cur.fetchone()
+        cur.close()
 
-        fechar_cursor(cursor)
+        if user:
+            session['usuario'] = user['nome']
+            return redirect(url_for('index'))
+        else:
+            erro = "Usuário ou senha inválidos!"
 
-        if usuario:
-            session["usuario"] = usuario["nome"]
-            
-        return redirect(
-                url_for("index")
-        )
-           erro = "Usuário ou senha inválidos!"
-        return render_template(
-        "login.html",
-           erro=erro
-    )
-
+    return render_template('login.html', erro=erro)
 
 # =========================================================
 # CADASTRO DE USUÁRIO

@@ -216,8 +216,6 @@ def index():
         mensagens_chat = cur.fetchall()
     
     cur.close()
-    
-    return render_template(
         # Contagens seguras para os Cards do Topo e Indicadores
     def obtem_contagem(query):
         try:
@@ -230,14 +228,24 @@ def index():
             return res[0]
         except Exception:
             return 0
-    )
+    
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
     exp_andamento = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Expedição'")
     rec_aguardando = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Recebimento'")
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
-    return render_template('index.html', atividades=atividades, mensagens_chat=mensagens_chat)
+    return render_template(
+        'index.html', 
+        atividades=atividades, 
+        mensagens_chat=mensagens_chat,
+        total_req=total_req,
+        inv_conc=inv_conc,
+        inv_total=inv_total_reg,
+        exp_andamento=exp_andamento,
+        rec_aguardando=rec_aguardando,
+        ocorrencias_alta=ocorrencias_alta
+    )
 
 
 

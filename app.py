@@ -214,6 +214,13 @@ def index():
     ocorrencias_alta = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE prioridade = 'Alta' AND status = 'Pendente'")
     
     cur.close()
+    # Busque os usuários cadastrados no banco (exemplo usando SQLite/SQLAlchemy ou Cursor)
+    # Ajuste conforme a forma que seu código já conecta ao banco:
+    cur.execute("SELECT id, nome FROM usuarios") # ou a sua consulta equivalente
+    usuarios = cur.fetchall() # ou o formato que você usa
+
+    # E garanta que o usuário atual está vindo da sessão:
+    usuario_atual = session.get('usuario', 'Convidado')
     return render_template(
         'index.html',
         atividades=atividades,

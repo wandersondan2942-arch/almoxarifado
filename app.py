@@ -160,7 +160,6 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
-            # Garante que se o formulário não mandar responsável, assume o utilizador logado
             responsavel = request.form.get('responsavel') or usuario_atual
             prazo = request.form.get('prazo')
             
@@ -206,7 +205,7 @@ def index():
         except Exception:
             return 0
 
-    # Contadores corrigidos para refletir corretamente os cards do painel principal
+    # Contadores atualizados
     total_req = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Separação' AND status = 'Pendente'")
     inv_total_reg = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário'")
     inv_conc = obtem_contagem("SELECT COUNT(*) FROM atividades WHERE categoria = 'Inventário' AND status = 'Concluído'")
@@ -306,6 +305,7 @@ def modulo(nome):
         cur.close()
         return render_template('estoque.html', usuarios=usuarios, estoque_items=estoque_items)
     
+    # Mapeamento correto para as páginas de módulos exibirem a tabela de itens
     categoria_map = {
         'Requisições': 'Separação',
         'Inventário': 'Inventário',
@@ -313,12 +313,13 @@ def modulo(nome):
         'Recebimento': 'Recebimento'
     }
     cat_filtro = categoria_map.get(nome_limpo)
+    itens = []
     if cat_filtro:
         cur.execute("SELECT * FROM atividades WHERE categoria = %s ORDER BY id DESC", (cat_filtro,))
         itens = cur.fetchall()
     
     cur.close()
-    return render_template('modulo.html', nome=nome_limpo)
+    return render_template('modulo.html', nome=nome_limpo, itens=itens)
 
 @app.route('/deletar/<int:id>')
 def deletar(id):

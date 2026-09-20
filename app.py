@@ -346,18 +346,18 @@ def deletar_estoque(id):
     cur.close()
     return redirect(url_for('modulo', nome='Estoque'))
 
-@app.route('/requisicoes')
-def requisicoes():
+@app.route('/separacoes')
+def separacoes():
     cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Requisições'")
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Separacoes'")
     registros = cur.fetchall()
     cur.close()
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
     return render_template('requisicoes.html', registros=registros, usuario_atual=usuario_atual)
 
-@app.route('/inventario')
+@app.route('/inventarios')
 def inventarios():
     cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
@@ -365,19 +365,19 @@ def inventarios():
     registros = cur.fetchall()
     cur.close()
 
-@app.route('/expedicoes')
-def expedicoes():
+@app.route('/expedicao')
+def expedicao():
     cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Expedições'")
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Expedicao'")
     registros = cur.fetchall()
     cur.close()
 
-@app.route('/recebimentos')
-def recebimentos():
+@app.route('/recebimento')
+def recebimento():
     cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Recebimentos'")
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Recebimento'")
     registros = cur.fetchall()
     cur.close()
 
@@ -385,18 +385,18 @@ def recebimentos():
 def ocorrencias():
     cur = db.cursor()
     # Filtra as atividades da categoria 'Requisições' (ou o nome exato que usa na base de dados)
-    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Ocorreoncias'")
+    cur.execute("SELECT id, atividade, categoria, responsavel, status FROM atividades WHERE categoria = 'Ocorrencias'")
     registros = cur.fetchall()
     cur.close()
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('inventarios.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('inventario.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('expedicoes.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('expedicao.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
-    return render_template('recebimentos.html', registros=registros, usuario_atual=usuario_atual)
+    return render_template('recebimento.html', registros=registros, usuario_atual=usuario_atual)
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
     return render_template('ocorrencias.html', registros=registros, usuario_atual=usuario_atual)

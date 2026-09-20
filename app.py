@@ -160,7 +160,7 @@ def index():
             prioridade = request.form.get('prioridade')
             atividade = request.form.get('atividade')
             categoria = request.form.get('categoria')
-            usuario_atual = session.get('usuario' , Wanderson Tito')
+            usuario_atual = session.get('usuario' , 'Wanderson Tito')
             responsavel = usuario_atual
             prazo = request.form.get('prazo')
             

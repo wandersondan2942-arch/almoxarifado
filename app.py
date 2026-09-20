@@ -35,19 +35,16 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 def usando_postgresql():
-    """
-    Retorna True quando o sistema está rodando com PostgreSQL.
-    No Render, DATABASE_URL será configurada.
-    """
     return bool(DATABASE_URL)
 
 
 def get_db():
     """
-    Abre a conexão com o banco de dados.
+    Render:
+        PostgreSQL
 
-    - Render: PostgreSQL
-    - Computador local: SQLite
+    Computador local:
+        SQLite
     """
 
     db = getattr(g, "_database", None)
@@ -59,7 +56,6 @@ def get_db():
 
         url = DATABASE_URL
 
-        # Compatibilidade com URLs antigas
         if url.startswith("postgres://"):
             url = url.replace(
                 "postgres://",
@@ -87,9 +83,6 @@ def get_db():
 
 @app.teardown_appcontext
 def close_connection(exception):
-    """
-    Fecha o banco ao finalizar a requisição.
-    """
 
     db = getattr(g, "_database", None)
 
@@ -103,38 +96,30 @@ def close_connection(exception):
 
 def executar(sql, parametros=()):
     """
-    Executa comandos SQL funcionando tanto no SQLite
-    quanto no PostgreSQL.
+    Executa SQL compatível com SQLite e PostgreSQL.
     """
 
     db = get_db()
 
-    # SQLite utiliza ?
     if not usando_postgresql():
         sql = sql.replace("%s", "?")
 
     cursor = db.cursor()
 
-    cursor.execute(sql, parametros)
+    cursor.execute(
+        sql,
+        parametros
+    )
 
     return cursor
 
 
 def obter_primeiro(cursor):
-    """
-    Retorna a primeira linha da consulta.
-    """
 
-    resultado = cursor.fetchone()
-
-    return resultado
+    return cursor.fetchone()
 
 
 def obter_valor(cursor):
-    """
-    Retorna o primeiro valor da primeira linha.
-    Usado principalmente para COUNT().
-    """
 
     resultado = cursor.fetchone()
 
@@ -148,16 +133,13 @@ def obter_valor(cursor):
 
 
 def fechar_cursor(cursor):
-    """
-    Fecha o cursor com segurança.
-    """
 
     if cursor:
         cursor.close()
 
 
 # =========================================================
-# USUÁRIO LOGADO DISPONÍVEL NOS TEMPLATES
+# CONTEXTO DO USUÁRIO
 # =========================================================
 
 @app.context_processor
@@ -166,6 +148,34 @@ def inject_user():
     return {
         "usuario_atual": session.get("usuario")
     }
+
+
+# =========================================================
+# CONTADOR
+# =========================================================
+
+def contar(sql, parametros=()):
+
+    try:
+
+        cursor = executar(
+            sql,
+            parametros
+        )
+
+        valor = obter_valor(cursor)
+
+        fechar_cursor(cursor)
+
+        return valor
+
+    except Exception as erro:
+
+        print(
+            f"Erro ao calcular indicador: {erro}"
+        )
+
+        return 0
 
 
 # =========================================================
@@ -178,11 +188,11 @@ def init_db():
 
     cursor = db.cursor()
 
-    if usando_postgresql():
+    # =====================================================
+    # POSTGRESQL
+    # =====================================================
 
-        # -------------------------------------------------
-        # POSTGRESQL
-        # -------------------------------------------------
+    if usando_postgresql():
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -235,13 +245,13 @@ def init_db():
                 quantidade INTEGER DEFAULT 0
             )
         """)
+
+    # =====================================================
+    # SQLITE
+    # =====================================================
 
     else:
 
-        # -------------------------------------------------
-        # SQLITE
-        # -------------------------------------------------
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -294,15 +304,17 @@ def init_db():
             )
         """)
 
-    # -----------------------------------------------------
-    # CRIA USUÁRIO INICIAL
-    # -----------------------------------------------------
+    # =====================================================
+    # USUÁRIO INICIAL
+    # =====================================================
 
     cursor.execute(
         "SELECT COUNT(*) FROM usuarios"
     )
 
-    quantidade_usuarios = obter_valor(cursor)
+    quantidade_usuarios = obter_valor(
+        cursor
+    )
 
     if quantidade_usuarios == 0:
 
@@ -310,7 +322,8 @@ def init_db():
 
             cursor.execute(
                 """
-                INSERT INTO usuarios (nome, senha)
+                INSERT INTO usuarios
+                (nome, senha)
                 VALUES (%s, %s)
                 """,
                 (
@@ -323,7 +336,8 @@ def init_db():
 
             cursor.execute(
                 """
-                INSERT INTO usuarios (nome, senha)
+                INSERT INTO usuarios
+                (nome, senha)
                 VALUES (?, ?)
                 """,
                 (
@@ -341,32 +355,58 @@ def init_db():
 # LOGIN
 # =========================================================
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
 def login():
+
     erro = None
 
-    if request.method == 'POST':
-        nome = request.form.get('nome')
-        senha = request.form.get('senha')
+    if request.method == "POST":
 
-        db = get_db()
-        cur = db.cursor()
+        nome = request.form.get(
+            "nome",
+            ""
+        ).strip()
 
-        cur.execute(
-            "SELECT * FROM usuarios WHERE nome = %s AND senha = %s",
-            (nome, senha)
+        senha = request.form.get(
+            "senha",
+            ""
+        ).strip()
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM usuarios
+            WHERE nome = %s
+            AND senha = %s
+            """,
+            (
+                nome,
+                senha
+            )
         )
 
-        user = cur.fetchone()
-        cur.close()
+        user = cursor.fetchone()
+
+        fechar_cursor(cursor)
 
         if user:
-            session['usuario'] = user['nome']
-            return redirect(url_for('index'))
-        else:
-            erro = "Usuário ou senha inválidos!"
 
-    return render_template('login.html', erro=erro)
+            session["usuario"] = user["nome"]
+
+            return redirect(
+                url_for("index")
+            )
+
+        erro = "Usuário ou senha inválidos!"
+
+    return render_template(
+        "login.html",
+        erro=erro
+    )
+
 
 # =========================================================
 # CADASTRO DE USUÁRIO
@@ -406,7 +446,10 @@ def cadastro_usuario():
                     (nome, senha)
                     VALUES (%s, %s)
                     """,
-                    (nome, senha)
+                    (
+                        nome,
+                        senha
+                    )
                 )
 
                 get_db().commit()
@@ -417,9 +460,13 @@ def cadastro_usuario():
                     url_for("login")
                 )
 
-            except Exception:
+            except Exception as erro_banco:
 
                 get_db().rollback()
+
+                print(
+                    f"Erro ao cadastrar usuário: {erro_banco}"
+                )
 
                 erro = (
                     "Não foi possível cadastrar "
@@ -469,9 +516,9 @@ def index():
 
     db = get_db()
 
-    # -----------------------------------------------------
+    # =====================================================
     # POST
-    # -----------------------------------------------------
+    # =====================================================
 
     if request.method == "POST":
 
@@ -656,235 +703,219 @@ def index():
 
     fechar_cursor(cursor)
 
- # =====================================================
-# INDICADORES
-# =====================================================
+    # =====================================================
+    # INDICADORES
+    # =====================================================
 
-def contar(sql, parametros=()):
+    # -----------------------------------------------------
+    # REQUISIÇÕES PENDENTES
+    # -----------------------------------------------------
 
-    try:
+    total_req = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Separação'
+        AND status = 'Pendente'
+        """
+    )
 
-        cursor = executar(
-            sql,
-            parametros
+    # -----------------------------------------------------
+    # INVENTÁRIO
+    # -----------------------------------------------------
+
+    inv_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        """
+    )
+
+    inv_concluido = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        AND status = 'Concluído'
+        """
+    )
+
+    # -----------------------------------------------------
+    # EXPEDIÇÃO
+    # -----------------------------------------------------
+
+    exp_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status = 'Pendente'
+        """
+    )
+
+    exp_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        """
+    )
+
+    exp_concluido = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status = 'Concluído'
+        """
+    )
+
+    # -----------------------------------------------------
+    # RECEBIMENTO
+    # -----------------------------------------------------
+
+    rec_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Recebimento'
+        AND status = 'Pendente'
+        """
+    )
+
+    # -----------------------------------------------------
+    # OCORRÊNCIAS
+    # -----------------------------------------------------
+
+    total_oco = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE prioridade = 'Alta'
+        AND status = 'Pendente'
+        """
+    )
+
+    # -----------------------------------------------------
+    # ATIVIDADES
+    # -----------------------------------------------------
+
+    total_atividades = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        """
+    )
+
+    atividades_concluidas = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = 'Concluído'
+        """
+    )
+
+    # -----------------------------------------------------
+    # PERCENTUAL ATENDIDAS
+    # -----------------------------------------------------
+
+    if total_atividades > 0:
+
+        perc_atendidas = round(
+            (
+                atividades_concluidas
+                / total_atividades
+            ) * 100
         )
 
-        valor = obter_valor(cursor)
+    else:
 
-        fechar_cursor(cursor)
+        perc_atendidas = 0
 
-        return valor
+    # -----------------------------------------------------
+    # PERCENTUAL INVENTÁRIO
+    # -----------------------------------------------------
 
-    except Exception as erro:
+    if inv_total > 0:
 
-        print(f"Erro ao calcular indicador: {erro}")
+        perc_inventario = round(
+            (
+                inv_concluido
+                / inv_total
+            ) * 100
+        )
 
-        return 0
+    else:
 
+        perc_inventario = 0
 
-# -----------------------------------------------------
-# REQUISIÇÕES PENDENTES
-# -----------------------------------------------------
+    # -----------------------------------------------------
+    # PERCENTUAL EXPEDIÇÃO
+    # -----------------------------------------------------
 
-total_req = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Separação'
-    AND status = 'Pendente'
-    """
-)
+    if exp_total > 0:
 
+        perc_expedicao = round(
+            (
+                exp_concluido
+                / exp_total
+            ) * 100
+        )
 
-# -----------------------------------------------------
-# INVENTÁRIO
-# -----------------------------------------------------
+    else:
 
-inv_total = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Inventário'
-    """
-)
+        perc_expedicao = 0
 
+    # =====================================================
+    # USUÁRIOS
+    # =====================================================
 
-inv_concluido = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Inventário'
-    AND status = 'Concluído'
-    """
-)
-
-
-# -----------------------------------------------------
-# EXPEDIÇÃO
-# -----------------------------------------------------
-
-exp_pend = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Expedição'
-    AND status = 'Pendente'
-    """
-)
-
-
-exp_total = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Expedição'
-    """
-)
-
-
-exp_concluido = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Expedição'
-    AND status = 'Concluído'
-    """
-)
-
-
-# -----------------------------------------------------
-# RECEBIMENTO
-# -----------------------------------------------------
-
-rec_pend = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE categoria = 'Recebimento'
-    AND status = 'Pendente'
-    """
-)
-
-
-# -----------------------------------------------------
-# OCORRÊNCIAS
-# -----------------------------------------------------
-
-total_oco = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE prioridade = 'Alta'
-    AND status = 'Pendente'
-    """
-)
-
-
-# -----------------------------------------------------
-# INDICADOR: ATENDIDAS
-# -----------------------------------------------------
-
-total_atividades = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    """
-)
-
-
-atividades_concluidas = contar(
-    """
-    SELECT COUNT(*)
-    FROM atividades
-    WHERE status = 'Concluído'
-    """
-)
-
-
-if total_atividades > 0:
-
-    perc_atendidas = round(
-        (atividades_concluidas / total_atividades) * 100
+    cursor = executar(
+        """
+        SELECT *
+        FROM usuarios
+        ORDER BY nome
+        """
     )
 
-else:
+    usuarios = cursor.fetchall()
 
-    perc_atendidas = 0
+    fechar_cursor(cursor)
 
+    # =====================================================
+    # RENDERIZA PAINEL
+    # =====================================================
 
-# -----------------------------------------------------
-# INDICADOR: INVENTÁRIO
-# -----------------------------------------------------
+    return render_template(
+        "index.html",
 
-if inv_total > 0:
+        atividades=atividades,
 
-    perc_inventario = round(
-        (inv_concluido / inv_total) * 100
+        mensagens_chat=mensagens_chat,
+
+        usuarios=usuarios,
+
+        busca=busca,
+
+        total_req=total_req,
+
+        inv_conc=inv_concluido,
+
+        inv_total=inv_total,
+
+        exp_pend=exp_pend,
+
+        rec_pend=rec_pend,
+
+        total_oco=total_oco,
+
+        perc_atendidas=perc_atendidas,
+
+        perc_inventario=perc_inventario,
+
+        perc_expedicao=perc_expedicao
     )
-
-else:
-
-    perc_inventario = 0
-
-
-# -----------------------------------------------------
-# INDICADOR: EXPEDIÇÃO
-# -----------------------------------------------------
-
-if exp_total > 0:
-
-    perc_expedicao = round(
-        (exp_concluido / exp_total) * 100
-    )
-
-else:
-
-    perc_expedicao = 0
-
-
-# =====================================================
-# USUÁRIOS PARA O FORMULÁRIO DE NOVA ATIVIDADE
-# =====================================================
-
-cursor = executar(
-    """
-    SELECT *
-    FROM usuarios
-    ORDER BY nome
-    """
-)
-
-usuarios = cursor.fetchall()
-
-fechar_cursor(cursor)
-
-
-# =====================================================
-# RENDERIZA PAINEL
-# =====================================================
-
-return render_template(
-    "index.html",
-
-    atividades=atividades,
-
-    mensagens_chat=mensagens_chat,
-
-    usuarios=usuarios,
-
-    busca=busca,
-
-    total_req=total_req,
-    inv_conc=inv_concluido,
-    inv_total=inv_total,
-    exp_pend=exp_pend,
-    rec_pend=rec_pend,
-    total_oco=total_oco,
-
-    perc_atendidas=perc_atendidas,
-    perc_inventario=perc_inventario,
-    perc_expedicao=perc_expedicao
-)
 
 
 # =========================================================
@@ -921,19 +952,14 @@ def modulo(nome):
 
     if "Indicadores" in nome_limpo:
 
-        total_geral = 0
-        concluidas = 0
-        pendentes = 0
-
-        cursor = executar(
-            "SELECT COUNT(*) FROM atividades"
+        total_geral = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            """
         )
 
-        total_geral = obter_valor(cursor)
-
-        fechar_cursor(cursor)
-
-        cursor = executar(
+        concluidas = contar(
             """
             SELECT COUNT(*)
             FROM atividades
@@ -941,11 +967,7 @@ def modulo(nome):
             """
         )
 
-        concluidas = obter_valor(cursor)
-
-        fechar_cursor(cursor)
-
-        cursor = executar(
+        pendentes = contar(
             """
             SELECT COUNT(*)
             FROM atividades
@@ -953,14 +975,13 @@ def modulo(nome):
             """
         )
 
-        pendentes = obter_valor(cursor)
-
-        fechar_cursor(cursor)
-
         return render_template(
             "indicadores.html",
+
             total_geral=total_geral,
+
             concluidas=concluidas,
+
             pendentes=pendentes
         )
 
@@ -1190,7 +1211,9 @@ def modulo(nome):
 
         return render_template(
             "estoque.html",
+
             usuarios=usuarios,
+
             estoque_items=estoque_items
         )
 
@@ -1224,7 +1247,9 @@ def modulo(nome):
             WHERE categoria = %s
             ORDER BY id DESC
             """,
-            (categoria,)
+            (
+                categoria,
+            )
         )
 
         itens = cursor.fetchall()
@@ -1233,7 +1258,9 @@ def modulo(nome):
 
     return render_template(
         "modulo.html",
+
         nome=nome_limpo,
+
         itens=itens
     )
 
@@ -1259,7 +1286,9 @@ def deletar(id):
         SET status = 'Concluído'
         WHERE id = %s
         """,
-        (id,)
+        (
+            id,
+        )
     )
 
     get_db().commit()
@@ -1292,7 +1321,9 @@ def deletar_estoque(id):
         DELETE FROM estoque
         WHERE id = %s
         """,
-        (id,)
+        (
+            id,
+        )
     )
 
     get_db().commit()
@@ -1308,15 +1339,16 @@ def deletar_estoque(id):
 
 
 # =========================================================
-# INICIALIZAÇÃO
+# INICIALIZAÇÃO DO BANCO
 # =========================================================
 
 with app.app_context():
+
     init_db()
 
 
 # =========================================================
-# EXECUÇÃO
+# EXECUÇÃO LOCAL
 # =========================================================
 
 if __name__ == "__main__":

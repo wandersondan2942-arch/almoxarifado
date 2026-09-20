@@ -345,14 +345,14 @@ def deletar_estoque(id):
     db.commit()
     cur.close()
     return redirect(url_for('modulo', nome='Estoque'))
+
 @app.route('/modulo/<nome_modulo>')
 def modulo_especifico(nome_modulo):
-    cur = db.cursor()
+    # ATENÇÃO: Substitua 'conn' pelo nome real da sua variável de conexão (ex: db, mysql, conexao, etc.)
+    cur = conn.cursor() 
     
-    # Normaliza o nome para tratar acentos e maiúsculas/minúsculas
     termo = nome_modulo.strip()
     
-    # Se o módulo acessado for Requisições, busca por variações comuns salvas no banco ('Separação' ou 'Requisições')
     if termo.lower() in ['requisicoes', 'requisições']:
         cur.execute("""
             SELECT id, atividade, categoria, responsavel, status 
@@ -360,7 +360,6 @@ def modulo_especifico(nome_modulo):
             WHERE categoria ILIKE '%Sepra%' OR categoria ILIKE '%Requis%'
         """)
     else:
-        # Para os demais módulos (Inventário, Expedição, etc.), busca exata ignorando maiúsculas/minúsculas
         cur.execute("""
             SELECT id, atividade, categoria, responsavel, status 
             FROM atividades 
@@ -372,7 +371,7 @@ def modulo_especifico(nome_modulo):
     
     usuario_atual = session.get('usuario', 'Wanderson Tito')
     return render_template('modulo_especifico.html', registros=registros, usuario_atual=usuario_atual, nome_modulo=nome_modulo)
-
+    
 with app.app_context():
     init_db()
 

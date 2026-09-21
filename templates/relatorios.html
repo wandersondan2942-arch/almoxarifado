@@ -3,40 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <title>Relatórios - Valenet</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; color: #2d3748; }</style>
+
+    <style>
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', sans-serif;
+            color: #2d3748;
+        }
+
+        .cabecalho-relatorio {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .btn-pdf {
+            font-weight: 600;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        @media print {
+            .nao-imprimir {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
+
 <body class="p-4">
-    <div class="container" style="max-width: 1000px;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="fw-bold m-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Relatório Geral Consolidado</h4>
-            <a href="/" class="btn btn-outline-primary btn-sm fw-bold"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</a>
+
+<div class="container" style="max-width: 1100px;">
+
+    <!-- CABEÇALHO -->
+    <div class="cabecalho-relatorio mb-4">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+            <div>
+                <h4 class="fw-bold m-0">
+                    <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+                    Relatórios
+                </h4>
+
+                <small class="text-muted">
+                    Acompanhamento das atividades do almoxarifado
+                </small>
+            </div>
+
+            <div class="d-flex gap-2 nao-imprimir">
+
+                <!-- GERAR PDF -->
+                <a href="/relatorio_pdf"
+                   class="btn btn-danger btn-sm btn-pdf">
+
+                    <i class="fa-solid fa-file-pdf me-1"></i>
+                    Gerar PDF do dia
+                </a>
+
+                <!-- VOLTAR -->
+                <a href="/"
+                   class="btn btn-outline-primary btn-sm fw-bold">
+
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+                    Voltar
+                </a>
+
+            </div>
+
         </div>
-        <div class="card p-4 shadow-sm border-0">
-            <table class="table table-striped align-middle" style="font-size: 13px;">
-                <thead>
+
+    </div>
+
+
+    <!-- RESUMO -->
+    <div class="card border-0 shadow-sm p-3 mb-4">
+
+        <div class="row text-center">
+
+            <div class="col-md-3 mb-2">
+                <div class="info-box">
+                    <small class="text-muted d-block">
+                        Total de registros
+                    </small>
+
+                    <strong class="fs-4">
+                        {{ itens|length }}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <div class="info-box">
+                    <small class="text-muted d-block">
+                        Concluídos
+                    </small>
+
+                    <strong class="fs-4 text-success">
+                        {{ itens|selectattr('status', 'equalto', 'Concluído')|list|length }}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <div class="info-box">
+                    <small class="text-muted d-block">
+                        Pendentes
+                    </small>
+
+                    <strong class="fs-4 text-warning">
+                        {{ itens|selectattr('status', 'equalto', 'Pendente')|list|length }}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <div class="info-box">
+                    <small class="text-muted d-block">
+                        Arquivados
+                    </small>
+
+                    <strong class="fs-4 text-secondary">
+                        {{ itens|selectattr('status', 'equalto', 'Arquivada')|list|length }}
+                    </strong>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- TABELA -->
+    <div class="card p-4 shadow-sm border-0">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <h5 class="fw-bold m-0">
+                <i class="fa-solid fa-list-check text-primary me-2"></i>
+                Relatório Geral Consolidado
+            </h5>
+
+            <span class="badge bg-primary">
+                {{ itens|length }} registro(s)
+            </span>
+
+        </div>
+
+
+        <div class="table-responsive">
+
+            <table class="table table-striped table-hover align-middle"
+                   style="font-size: 13px;">
+
+                <thead class="table-light">
+
                     <tr>
                         <th>ID</th>
+                        <th>Nº Requisição</th>
                         <th>Atividade</th>
                         <th>Categoria</th>
                         <th>Responsável</th>
+                        <th>Prioridade</th>
                         <th>Status</th>
                     </tr>
+
                 </thead>
+
                 <tbody>
+
                     {% for i in itens %}
+
                     <tr>
-                        <td>#{{ i.id }}</td>
-                        <td class="fw-semibold">{{ i.atividade }}</td>
-                        <td>{{ i.categoria }}</td>
-                        <td>{{ i.responsavel }}</td>
-                        <td><span class="badge {% if i.status == 'Concluído' %}bg-success{% else %}bg-secondary{% endif %}">{{ i.status }}</span></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</body>
-</html>
+
+                        <td>
+                            #{{ i.id }}
+                        </td>
+
+                        <td>
+                            {% if i.num_requisicao %}
+                                <strong>{{ i.num_requisicao }}</strong>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="fw-semibold">
+                            {{ i.atividade }}
+                        </td>
+
+                        <td>
+                            {{ i.categoria }}
+                        </td>
+
+                        <td>
+                            {{ i.responsavel }}
+                        </td>
+
+                        <td>
+
+                            {% if i.prioridade == 'Alta' %}
+                                <span class="badge bg-danger">
+                                    Alta
+                                </span>
+
+                            {% elif i.prior

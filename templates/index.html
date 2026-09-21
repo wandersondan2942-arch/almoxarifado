@@ -1,20 +1,47 @@
 <!DOCTYPE html>
 
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Início - Almoxarifado Valenet</title>
 
 ```
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Início - Almoxarifado Valenet</title>
+
+
+<!-- Bootstrap -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
+
+
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
+
 
 <style>
+
     body {
         background-color: #f4f6f9;
         font-family: 'Segoe UI', sans-serif;
         color: #333;
+        min-height: 100vh;
     }
+
+
+    /* =====================================================
+       SIDEBAR
+    ===================================================== */
 
     .sidebar {
         background-color: #161e2e;
@@ -25,7 +52,9 @@
         top: 0;
         left: 0;
         padding-top: 20px;
+        z-index: 1000;
     }
+
 
     .sidebar a {
         color: #94a3b8;
@@ -37,6 +66,7 @@
         transition: 0.2s;
     }
 
+
     .sidebar a:hover,
     .sidebar a.active {
         background-color: #1e293b;
@@ -44,60 +74,182 @@
         border-left: 4px solid #3b82f6;
     }
 
+
+    .sidebar-user {
+        border-top: 1px solid #334155;
+        padding-top: 12px;
+    }
+
+
+    /* =====================================================
+       CONTEÚDO
+    ===================================================== */
+
     .main-content {
         margin-left: 250px;
         padding: 30px;
     }
+
+
+    /* =====================================================
+       CARDS DE INDICADORES
+    ===================================================== */
 
     .card-stat {
         border-radius: 8px;
         border: 1px solid #e2e8f0;
         background: #fff;
         border-left-width: 5px;
+        height: 100%;
     }
+
 
     .card-req {
         border-left-color: #3b82f6;
     }
 
+
     .card-inv {
         border-left-color: #eab308;
     }
+
 
     .card-exp {
         border-left-color: #22c55e;
     }
 
+
     .card-rec {
         border-left-color: #06b6d4;
     }
+
 
     .card-oco {
         border-left-color: #ef4444;
     }
 
+
+    /* =====================================================
+       CÍRCULOS DOS INDICADORES
+    ===================================================== */
+
     .circle-badge {
-        width: 45px;
-        height: 45px;
+        width: 58px;
+        height: 58px;
         border-radius: 50%;
         border: 3px solid #3b82f6;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 13px;
         color: #1e293b;
         margin: 0 auto 5px auto;
+        background: #fff;
     }
 
+
+    /* =====================================================
+       CHAT
+    ===================================================== */
+
     .chat-box {
-        max-height: 160px;
+        max-height: 220px;
         overflow-y: auto;
         background: #fff;
         padding: 10px;
         border-radius: 6px;
         border: 1px solid #e2e8f0;
     }
+
+
+    .chat-message {
+        border-bottom: 1px solid #edf0f3;
+        padding: 8px 4px;
+    }
+
+
+    .chat-message:last-child {
+        border-bottom: none;
+    }
+
+
+    .chat-user {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+
+    .chat-text {
+        font-size: 13px;
+        color: #475569;
+        word-break: break-word;
+    }
+
+
+    /* =====================================================
+       ATIVIDADES
+    ===================================================== */
+
+    .activity-item {
+        border-left: 4px solid #3b82f6;
+        background: #fff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+
+    .activity-title {
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+
+    .activity-description {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+
+    .badge-prioridade {
+        font-size: 10px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVIDADE
+    ===================================================== */
+
+    @media (max-width: 1100px) {
+
+        .sidebar {
+            width: 220px;
+        }
+
+        .main-content {
+            margin-left: 220px;
+        }
+
+    }
+
+
+    @media (max-width: 768px) {
+
+        .sidebar {
+            position: relative;
+            width: 100%;
+            min-height: auto;
+        }
+
+        .main-content {
+            margin-left: 0;
+            padding: 20px;
+        }
+
+    }
+
 </style>
 ```
 
@@ -105,232 +257,1380 @@
 
 <body>
 
-```
-<!-- ============================= -->
-<!-- MENU LATERAL -->
-<!-- ============================= -->
+<!-- ============================================================
+     MENU LATERAL
+============================================================ -->
 
 <div class="sidebar d-flex flex-column justify-content-between pb-3">
 
-    <div>
+```
+<div>
 
-        <div class="px-3 mb-3">
-            <h5 class="fw-bold text-white m-0">
-                <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
-                ALMOXARIFADO
-            </h5>
+    <!-- LOGO -->
 
-            <small class="text-muted" style="font-size: 11px;">
-                Painel Operacional Valenet
-            </small>
-        </div>
+    <div class="px-3 mb-3">
 
-        <hr class="border-secondary my-2">
+        <h5 class="fw-bold text-white m-0">
 
-        <a href="/" class="active">
-            <i class="fa-solid fa-house me-2"></i>
-            Início
-        </a>
+            <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
 
-        <a href="/modulo/Requisições">
-            <i class="fa-solid fa-clipboard-list me-2"></i>
-            Requisições
-        </a>
+            ALMOXARIFADO
 
-        <a href="/modulo/Inventário">
-            <i class="fa-solid fa-warehouse me-2"></i>
-            Inventário
-        </a>
+        </h5>
 
-        <a href="/modulo/Expedição">
-            <i class="fa-solid fa-truck-fast me-2"></i>
-            Expedição
-        </a>
 
-        <a href="/modulo/Recebimento">
-            <i class="fa-solid fa-box-open me-2"></i>
-            Recebimento
-        </a>
+        <small
+            class="text-muted"
+            style="font-size: 11px;"
+        >
 
-        <a href="/modulo/Estoque">
-            <i class="fa-solid fa-boxes-packing me-2"></i>
-            Estoque
-        </a>
+            Painel Operacional Valenet
 
-        <a href="/modulo/Melhorias / PDCA">
-            <i class="fa-solid fa-chart-line me-2"></i>
-            Melhorias / PDCA
-        </a>
-
-        <a href="/modulo/Indicadores">
-            <i class="fa-solid fa-chart-pie me-2"></i>
-            Indicadores
-        </a>
-
-        <a href="/modulo/Relatórios">
-            <i class="fa-solid fa-file-lines me-2"></i>
-            Relatórios
-        </a>
-
-        <a href="/modulo/Configurações">
-            <i class="fa-solid fa-gear me-2"></i>
-            Configurações
-        </a>
-
-    </div>
-
-    <div class="px-3">
-
-        <hr class="border-secondary my-2">
-
-        <div class="d-flex align-items-center justify-content-between">
-
-            <span class="small text-white fw-semibold">
-                <i class="fa-solid fa-user me-1 text-primary"></i>
-                {{ usuario_atual }}
-            </span>
-
-            <a href="/logout" class="text-danger small">
-                <i class="fa-solid fa-right-from-bracket"></i>
-            </a>
-
-        </div>
-
-        <small class="text-success" style="font-size: 10px;">
-            <i class="fa-solid fa-circle" style="font-size: 6px;"></i>
-            Online
         </small>
 
     </div>
 
+
+    <hr class="border-secondary my-2">
+
+
+    <!-- MENU -->
+
+    <a
+        href="{{ url_for('index') }}"
+        class="active"
+    >
+
+        <i class="fa-solid fa-house me-2"></i>
+
+        Início
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Requisições') }}"
+    >
+
+        <i class="fa-solid fa-clipboard-list me-2"></i>
+
+        Requisições
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Inventário') }}"
+    >
+
+        <i class="fa-solid fa-warehouse me-2"></i>
+
+        Inventário
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Expedição') }}"
+    >
+
+        <i class="fa-solid fa-truck-fast me-2"></i>
+
+        Expedição
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Recebimento') }}"
+    >
+
+        <i class="fa-solid fa-box-open me-2"></i>
+
+        Recebimento
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Estoque') }}"
+    >
+
+        <i class="fa-solid fa-boxes-packing me-2"></i>
+
+        Estoque
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Cadastros') }}"
+    >
+
+        <i class="fa-solid fa-address-book me-2"></i>
+
+        Cadastros
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+    >
+
+        <i class="fa-solid fa-chart-line me-2"></i>
+
+        Melhorias / PDCA
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Indicadores') }}"
+    >
+
+        <i class="fa-solid fa-chart-pie me-2"></i>
+
+        Indicadores
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Relatórios') }}"
+    >
+
+        <i class="fa-solid fa-file-lines me-2"></i>
+
+        Relatórios
+
+    </a>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Configurações') }}"
+    >
+
+        <i class="fa-solid fa-gear me-2"></i>
+
+        Configurações
+
+    </a>
+
 </div>
 
 
-<!-- ============================= -->
-<!-- CONTEÚDO PRINCIPAL -->
-<!-- ============================= -->
+<!-- USUÁRIO -->
+
+<div class="px-3">
+
+    <hr class="border-secondary my-2">
+
+
+    <div class="d-flex align-items-center justify-content-between">
+
+        <span class="small text-white fw-semibold">
+
+            <i class="fa-solid fa-user me-1 text-primary"></i>
+
+            {{ usuario_atual }}
+
+        </span>
+
+
+        <a
+            href="{{ url_for('logout') }}"
+            class="text-danger small"
+            title="Sair"
+        >
+
+            <i class="fa-solid fa-right-from-bracket"></i>
+
+        </a>
+
+    </div>
+
+
+    <small
+        class="text-success"
+        style="font-size: 10px;"
+    >
+
+        <i
+            class="fa-solid fa-circle"
+            style="font-size: 6px;"
+        ></i>
+
+        Online
+
+    </small>
+
+</div>
+```
+
+</div>
+
+<!-- ============================================================
+     CONTEÚDO PRINCIPAL
+============================================================ -->
 
 <div class="main-content">
 
-    <!-- TOPO -->
+```
+<!-- ========================================================
+     CABEÇALHO
+======================================================== -->
 
-    <div class="row align-items-center mb-4">
+<div class="row align-items-center mb-4">
 
-        <div class="col-md-8">
 
-            <h2 class="fw-bold m-0 text-dark">
-                {{ usuario_atual }}!
-            </h2>
+    <div class="col-md-7">
 
-            <p class="text-muted small m-0">
-                Painel Operacional do Almoxarifado Valenet
-            </p>
+        <h2 class="fw-bold m-0 text-dark">
 
-        </div>
+            Olá, {{ usuario_atual }}!
 
-        <div class="col-md-4">
+        </h2>
 
-            <form method="GET">
+
+        <p class="text-muted small m-0">
+
+            Painel Operacional do Almoxarifado Valenet
+
+        </p>
+
+    </div>
+
+
+    <div class="col-md-5 mt-3 mt-md-0">
+
+        <form
+            method="GET"
+            action="{{ url_for('index') }}"
+        >
+
+            <div class="input-group">
+
+                <span class="input-group-text bg-white">
+
+                    <i class="fa-solid fa-magnifying-glass text-muted"></i>
+
+                </span>
+
 
                 <input
                     type="text"
                     name="q"
                     value="{{ busca }}"
                     class="form-control form-control-sm"
-                    placeholder="Buscar no sistema..."
+                    placeholder="Buscar requisição, atividade ou responsável..."
                 >
 
-            </form>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================================================
+     MENSAGENS
+======================================================== -->
+
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+
+    {% if mensagens %}
+
+        {% for categoria, mensagem in mensagens %}
+
+            <div
+                class="alert alert-{{ categoria if categoria in ['success', 'danger', 'warning', 'info'] else 'info' }} alert-dismissible fade show"
+                role="alert"
+            >
+
+                {% if categoria == 'success' %}
+
+                    <i class="fa-solid fa-circle-check me-2"></i>
+
+                {% elif categoria == 'danger' %}
+
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                {% elif categoria == 'warning' %}
+
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
+                {% else %}
+
+                    <i class="fa-solid fa-circle-info me-2"></i>
+
+                {% endif %}
+
+                {{ mensagem }}
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+
+<!-- ========================================================
+     CARDS SUPERIORES
+======================================================== -->
+
+<div class="row g-3 mb-4">
+
+
+    <!-- REQUISIÇÕES -->
+
+    <div class="col-xl col-md-4 col-sm-6">
+
+        <div class="card card-stat card-req p-3">
+
+            <span class="text-muted small">
+                Requisições
+            </span>
+
+
+            <h3 class="fw-bold mt-1 mb-0 text-primary">
+
+                {{ total_req }}
+
+            </h3>
+
+
+            <small
+                class="text-muted"
+                style="font-size: 11px;"
+            >
+
+                Pendentes
+
+            </small>
 
         </div>
 
     </div>
 
 
-    <!-- ============================= -->
-    <!-- CARDS SUPERIORES -->
-    <!-- ============================= -->
+    <!-- INVENTÁRIO -->
 
-    <div class="row g-3 mb-4">
+    <div class="col-xl col-md-4 col-sm-6">
 
-        <div class="col">
-            <div class="card card-stat card-req p-3">
+        <div class="card card-stat card-inv p-3">
 
-                <span class="text-muted small">
-                    Requisições
+            <span class="text-muted small">
+                Inventários
+            </span>
+
+
+            <h3 class="fw-bold mt-1 mb-0 text-warning">
+
+                {{ inv_conc }}
+
+                <span class="text-muted fs-6">
+                    / {{ inv_total }}
                 </span>
 
-                <h3 class="fw-bold mt-1 mb-0 text-primary">
-                    {{ total_req }}
-                </h3>
+            </h3>
 
-                <small class="text-muted" style="font-size: 11px;">
-                    Pendentes
-                </small>
 
-            </div>
+            <small
+                class="text-muted"
+                style="font-size: 11px;"
+            >
+
+                Concluídos
+
+            </small>
+
         </div>
 
+    </div>
 
-        <div class="col">
-            <div class="card card-stat card-inv p-3">
 
-                <span class="text-muted small">
-                    Inventários
-                </span>
+    <!-- EXPEDIÇÕES -->
 
-                <h3 class="fw-bold mt-1 mb-0 text-warning">
-                    {{ inv_total }}
-                </h3>
+    <div class="col-xl col-md-4 col-sm-6">
 
-                <small class="text-muted" style="font-size: 11px;">
-                    Concluído
-                </small>
+        <div class="card card-stat card-exp p-3">
 
-            </div>
+            <span class="text-muted small">
+                Expedições
+            </span>
+
+
+            <h3 class="fw-bold mt-1 mb-0 text-success">
+
+                {{ exp_pend }}
+
+            </h3>
+
+
+            <small
+                class="text-muted"
+                style="font-size: 11px;"
+            >
+
+                Em andamento
+
+            </small>
+
         </div>
 
+    </div>
 
-        <div class="col">
-            <div class="card card-stat card-exp p-3">
 
-                <span class="text-muted small">
-                    Expedições
-                </span>
+    <!-- RECEBIMENTOS -->
 
-                <h3 class="fw-bold mt-1 mb-0 text-success">
-                    {{ exp_pend }}
-                </h3>
+    <div class="col-xl col-md-4 col-sm-6">
 
-                <small class="text-muted" style="font-size: 11px;">
-                    Em andamento
-                </small>
+        <div class="card card-stat card-rec p-3">
 
-            </div>
+            <span class="text-muted small">
+                Recebimentos
+            </span>
+
+
+            <h3 class="fw-bold mt-1 mb-0 text-info">
+
+                {{ rec_pend }}
+
+            </h3>
+
+
+            <small
+                class="text-muted"
+                style="font-size: 11px;"
+            >
+
+                Aguardando
+
+            </small>
+
         </div>
 
+    </div>
 
-        <div class="col">
-            <div class="card card-stat card-rec p-3">
 
-                <span class="text-muted small">
-                    Recebimentos
-                </span>
+    <!-- OCORRÊNCIAS -->
 
-                <h3 class="fw-bold mt-1 mb-0 text-info">
-                    {{ rec_pend }}
-                </h3>
+    <div class="col-xl col-md-4 col-sm-6">
 
-                <small class="text-muted" style="font-size: 11px;">
-                    Aguardando
-                </small>
+        <div class="card card-stat card-oco p-3">
 
-            </div>
+            <span class="text-muted small">
+                Ocorrências
+            </span>
+
+
+            <h3 class="fw-bold mt-1 mb-0 text-danger">
+
+                {{ total_oco }}
+
+            </h3>
+
+
+            <small
+                class="text-muted"
+                style="font-size: 11px;"
+            >
+
+                Alta prioridade
+
+            </small>
+
         </div>
 
+    </div>
 
-        <div class="col">
-            <div class="card card-stat card-oco p-3">
+</div>
 
-                <span class="text-muted small">
+
+
+<!-- ========================================================
+     NOVA ATIVIDADE + INDICADORES
+======================================================== -->
+
+<div class="row g-4 mb-4">
+
+
+    <!-- NOVA ATIVIDADE -->
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4">
+
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+
+                            <i class="fa-solid fa-plus-circle text-primary me-2"></i>
+
+                            Nova Atividade
+
+                        </h5>
+
+
+                        <small class="text-muted">
+
+                            Registre uma nova atividade operacional.
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <form
+                    method="POST"
+                    action="{{ url_for('index') }}"
+                >
+
+
+                    <!-- REQUISIÇÃO -->
+
+                    <div class="row g-3 mb-3">
+
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="num_requisicao"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Nº da Requisição
+
+                            </label>
+
+
+                            <input
+                                type="text"
+                                id="num_requisicao"
+                                name="num_requisicao"
+                                class="form-control"
+                                placeholder="Ex.: 123456"
+                            >
+
+                        </div>
+
+
+                        <!-- PRIORIDADE -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="prioridade"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Prioridade
+
+                            </label>
+
+
+                            <select
+                                id="prioridade"
+                                name="prioridade"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Baixa">
+                                    Baixa
+                                </option>
+
+                                <option
+                                    value="Média"
+                                    selected
+                                >
+                                    Média
+                                </option>
+
+                                <option value="Alta">
+                                    Alta
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- CATEGORIA -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="categoria"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Categoria
+
+                            </label>
+
+
+                            <select
+                                id="categoria"
+                                name="categoria"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Separação">
+                                    Separação
+                                </option>
+
+                                <option value="Inventário">
+                                    Inventário
+                                </option>
+
+                                <option value="Expedição">
+                                    Expedição
+                                </option>
+
+                                <option value="Recebimento">
+                                    Recebimento
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ATIVIDADE -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="atividade"
+                            class="form-label small fw-semibold"
+                        >
+
+                            Atividade
+
+                        </label>
+
+
+                        <input
+                            type="text"
+                            id="atividade"
+                            name="atividade"
+                            class="form-control"
+                            placeholder="Ex.: Separar equipamentos da requisição"
+                            maxlength="255"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- RESPONSÁVEL + PRAZO -->
+
+                    <div class="row g-3 mb-3">
+
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="responsavel"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Responsável
+
+                            </label>
+
+
+                            <select
+                                id="responsavel"
+                                name="responsavel"
+                                class="form-select"
+                                required
+                            >
+
+                                {% for u in usuarios %}
+
+                                    <option
+                                        value="{{ u.nome }}"
+                                        {% if u.nome == usuario_atual %}
+                                            selected
+                                        {% endif %}
+                                    >
+
+                                        {{ u.nome }}
+
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="prazo"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Prazo
+
+                            </label>
+
+
+                            <input
+                                type="date"
+                                id="prazo"
+                                name="prazo"
+                                class="form-control"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="descricao"
+                            class="form-label small fw-semibold"
+                        >
+
+                            Descrição / Observação
+
+                        </label>
+
+
+                        <textarea
+                            id="descricao"
+                            name="descricao"
+                            class="form-control"
+                            rows="2"
+                            maxlength="1000"
+                            placeholder="Informações adicionais..."
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- BOTÃO -->
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary fw-bold"
+                    >
+
+                        <i class="fa-solid fa-plus me-1"></i>
+
+                        Criar Atividade
+
+                    </button>
+
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- INDICADORES -->
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+
+                <h5 class="fw-bold mb-1">
+
+                    <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+
+                    Indicadores do Dia
+
+                </h5>
+
+
+                <small class="text-muted">
+
+                    Acompanhamento operacional
+
+                </small>
+
+
+                <div class="row text-center mt-4">
+
+
+                    <!-- ATENDIMENTO -->
+
+                    <div class="col-4">
+
+                        <div class="circle-badge">
+
+                            {{ perc_atendidas }}%
+
+                        </div>
+
+
+                        <small class="text-muted">
+                            Atendidas
+                        </small>
+
+                    </div>
+
+
+                    <!-- INVENTÁRIO -->
+
+                    <div class="col-4">
+
+                        <div class="circle-badge">
+
+                            {{ perc_inventario }}%
+
+                        </div>
+
+
+                        <small class="text-muted">
+                            Inventário
+                        </small>
+
+                    </div>
+
+
+                    <!-- EXPEDIÇÃO -->
+
+                    <div class="col-4">
+
+                        <div class="circle-badge">
+
+                            {{ perc_expedicao }}%
+
+                        </div>
+
+
+                        <small class="text-muted">
+                            Expedição
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <hr>
+
+
+                <div class="small text-muted">
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <span>
+                            Atividades concluídas
+                        </span>
+
+                        <strong>
+                            {{ atividades_concluidas }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between">
+
+                        <span>
+                            Atividades pendentes
+                        </span>
+
+                        <strong>
+                            {{ total_atividades }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ========================================================
+     ATIVIDADES + CHAT
+======================================================== -->
+
+<div class="row g-4">
+
+
+    <!-- ATIVIDADES -->
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4">
+
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <div>
+
+                        <h5 class="fw-bold mb-1">
+
+                            <i class="fa-solid fa-list-check text-primary me-2"></i>
+
+                            Atividades
+
+                        </h5>
+
+
+                        <small class="text-muted">
+
+                            Atividades pendentes do Almoxarifado
+
+                        </small>
+
+                    </div>
+
+
+                    <span class="badge bg-primary">
+
+                        {{ atividades|length }}
+
+                    </span>
+
+                </div>
+
+
+                {% if atividades %}
+
+
+                    {% for item in atividades %}
+
+
+                    <div class="activity-item">
+
+
+                        <div class="d-flex justify-content-between align-items-start">
+
+
+                            <div class="pe-3">
+
+
+                                <div class="activity-title">
+
+                                    {{ item.atividade }}
+
+                                </div>
+
+
+                                {% if item.descricao %}
+
+                                    <div class="activity-description mt-1">
+
+                                        {{ item.descricao }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <div class="mt-2 small text-muted">
+
+
+                                    {% if item.num_requisicao %}
+
+                                        <span class="me-3">
+
+                                            <i class="fa-solid fa-hashtag me-1"></i>
+
+                                            Req. {{ item.num_requisicao }}
+
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    <span class="me-3">
+
+                                        <i class="fa-solid fa-user me-1"></i>
+
+                                        {{ item.responsavel }}
+
+                                    </span>
+
+
+                                    <span>
+
+                                        <i class="fa-solid fa-layer-group me-1"></i>
+
+                                        {{ item.categoria }}
+
+                                    </span>
+
+                                </div>
+
+
+                                <div class="mt-2">
+
+                                    {% if item.prioridade == 'Alta' %}
+
+                                        <span class="badge bg-danger badge-prioridade">
+                                            Alta
+                                        </span>
+
+                                    {% elif item.prioridade == 'Média' %}
+
+                                        <span class="badge bg-warning text-dark badge-prioridade">
+                                            Média
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-secondary badge-prioridade">
+                                            Baixa
+                                        </span>
+
+                                    {% endif %}
+
+
+                                    {% if item.prazo %}
+
+                                        <span class="badge bg-light text-dark border ms-1">
+
+                                            <i class="fa-regular fa-calendar me-1"></i>
+
+                                            {{ item.prazo }}
+
+                                        </span>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- CONCLUIR -->
+
+                            <div class="text-end">
+
+                                <a
+                                    href="{{ url_for('concluir', id=item.id) }}"
+                                    class="btn btn-sm btn-outline-success"
+                                    title="Concluir atividade"
+                                    onclick="return confirmarConclusao();"
+                                >
+
+                                    <i class="fa-solid fa-check"></i>
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <div class="text-center py-5 text-muted">
+
+                        <i class="fa-solid fa-circle-check fa-3x mb-3 text-success"></i>
+
+
+                        <h6 class="fw-bold">
+
+                            Tudo em dia!
+
+                        </h6>
+
+
+                        <p class="small mb-0">
+
+                            Não existem atividades pendentes no momento.
+
+                        </p>
+
+                    </div>
+
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         CHAT
+    ====================================================== -->
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4">
+
+
+                <h5 class="fw-bold mb-1">
+
+                    <i class="fa-solid fa-comments text-primary me-2"></i>
+
+                    Chat da Equipe
+
+                </h5>
+
+
+                <small class="text-muted">
+
+                    Comunicação rápida entre a equipe
+
+                </small>
+
+
+                <div class="chat-box mt-3 mb-3">
+
+
+                    {% if chat %}
+
+
+                        {% for msg in chat %}
+
+
+                        <div class="chat-message">
+
+
+                            <div class="chat-user">
+
+                                <i class="fa-solid fa-user me-1 text-primary"></i>
+
+                                {{ msg.usuario }}
+
+                            </div>
+
+
+                            <div class="chat-text">
+
+                                {{ msg.mensagem }}
+
+                            </div>
+
+
+                            {% if msg.criado_em %}
+
+                                <small class="text-muted">
+
+                                    {{ msg.criado_em }}
+
+                                </small>
+
+                            {% endif %}
+
+
+                        </div>
+
+
+                        {% endfor %}
+
+
+                    {% else %}
+
+
+                        <div class="text-center text-muted py-4">
+
+                            <i class="fa-regular fa-comments fa-2x mb-2"></i>
+
+                            <div class="small">
+
+                                Nenhuma mensagem ainda.
+
+                            </div>
+
+                        </div>
+
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- ENVIAR CHAT -->
+
+                <form
+                    method="POST"
+                    action="{{ url_for('index') }}"
+                >
+
+
+                    <input
+                        type="hidden"
+                        name="acao_chat"
+                        value="enviar"
+                    >
+
+
+                    <div class="input-group">
+
+                        <input
+                            type="text"
+                            name="mensagem"
+                            class="form-control form-control-sm"
+                            placeholder="Digite uma mensagem..."
+                            maxlength="500"
+                            required
+                        >
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary btn-sm"
+                            title="Enviar mensagem"
+                        >
+
+                            <i class="fa-solid fa-paper-plane"></i>
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 ```
+
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+
+<script>
+
+
+    function confirmarConclusao() {
+
+        return confirm(
+            "Deseja marcar esta atividade como concluída?"
+        );
+
+    }
+
+
+    /*
+     * Se a categoria for Separação, o número da requisição
+     * passa a ser obrigatório.
+     */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const categoria =
+                document.getElementById("categoria");
+
+            const requisicao =
+                document.getElementById("num_requisicao");
+
+
+            function validarRequisicao() {
+
+                if (!categoria || !requisicao) {
+                    return;
+                }
+
+
+                if (categoria.value === "Separação") {
+
+                    requisicao.required = true;
+
+                    requisicao.placeholder =
+                        "Obrigatório para Separação";
+
+                } else {
+
+                    requisicao.required = false;
+
+                    requisicao.placeholder =
+                        "Ex.: 123456";
+
+                }
+
+            }
+
+
+            if (categoria) {
+
+                categoria.addEventListener(
+                    "change",
+                    validarRequisicao
+                );
+
+                validarRequisicao();
+
+            }
+
+        }
+    );
+
+</script>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+
+</html>

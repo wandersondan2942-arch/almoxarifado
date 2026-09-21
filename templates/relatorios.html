@@ -1,87 +1,84 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
-    <title>Relatórios - Valenet</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+```
+<title>Relatórios - Valenet</title>
 
-    <style>
-        body {
-            background-color: #f5f6fa;
-            font-family: 'Segoe UI', sans-serif;
-            color: #2d3748;
-        }
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-        .cabecalho-relatorio {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
 
-        .card {
-            border-radius: 12px;
-        }
+<style>
+    body {
+        background-color: #f5f6fa;
+        font-family: 'Segoe UI', sans-serif;
+        color: #2d3748;
+    }
 
-        .btn-pdf {
-            font-weight: 600;
-        }
+    .card {
+        border-radius: 10px;
+    }
 
-        .info-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-        }
+    .table {
+        font-size: 13px;
+    }
+</style>
+```
 
-        @media print {
-            .nao-imprimir {
-                display: none !important;
-            }
-        }
-    </style>
 </head>
 
 <body class="p-4">
 
-<div class="container" style="max-width: 1100px;">
+```
+<div class="container" style="max-width: 1200px;">
 
     <!-- CABEÇALHO -->
-    <div class="cabecalho-relatorio mb-4">
 
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
 
-            <div>
-                <h4 class="fw-bold m-0">
-                    <i class="fa-solid fa-chart-pie text-primary me-2"></i>
-                    Relatórios
-                </h4>
+        <div>
+            <h4 class="fw-bold m-0">
+                <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+                Relatório Geral Consolidado
+            </h4>
 
-                <small class="text-muted">
-                    Acompanhamento das atividades do almoxarifado
-                </small>
-            </div>
+            <small class="text-muted">
+                Histórico das atividades do almoxarifado
+            </small>
+        </div>
 
-            <div class="d-flex gap-2 nao-imprimir">
+        <div class="d-flex gap-2">
 
-                <!-- GERAR PDF -->
-                <a href="/relatorio_pdf"
-                   class="btn btn-danger btn-sm btn-pdf">
+            <!-- PDF DO DIA -->
 
-                    <i class="fa-solid fa-file-pdf me-1"></i>
-                    Gerar PDF do dia
-                </a>
+            <a
+                href="/relatorio_pdf"
+                class="btn btn-danger btn-sm fw-bold"
+                target="_blank"
+            >
+                <i class="fa-solid fa-file-pdf me-1"></i>
+                PDF do Dia
+            </a>
 
-                <!-- VOLTAR -->
-                <a href="/"
-                   class="btn btn-outline-primary btn-sm fw-bold">
+            <!-- VOLTAR -->
 
-                    <i class="fa-solid fa-arrow-left me-1"></i>
-                    Voltar
-                </a>
-
-            </div>
+            <a
+                href="/"
+                class="btn btn-outline-primary btn-sm fw-bold"
+            >
+                <i class="fa-solid fa-arrow-left me-1"></i>
+                Voltar
+            </a>
 
         </div>
 
@@ -89,56 +86,78 @@
 
 
     <!-- RESUMO -->
-    <div class="card border-0 shadow-sm p-3 mb-4">
 
-        <div class="row text-center">
+    <div class="row g-3 mb-4">
 
-            <div class="col-md-3 mb-2">
-                <div class="info-box">
-                    <small class="text-muted d-block">
-                        Total de registros
-                    </small>
+        <div class="col-md-3">
 
-                    <strong class="fs-4">
-                        {{ itens|length }}
-                    </strong>
-                </div>
+            <div class="card shadow-sm border-0 p-3">
+
+                <small class="text-muted">
+                    Total de atividades
+                </small>
+
+                <h3 class="fw-bold text-primary mb-0">
+                    {{ itens|length }}
+                </h3>
+
             </div>
 
-            <div class="col-md-3 mb-2">
-                <div class="info-box">
-                    <small class="text-muted d-block">
-                        Concluídos
-                    </small>
+        </div>
 
-                    <strong class="fs-4 text-success">
-                        {{ itens|selectattr('status', 'equalto', 'Concluído')|list|length }}
-                    </strong>
-                </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 p-3">
+
+                <small class="text-muted">
+                    Concluídas
+                </small>
+
+                <h3 class="fw-bold text-success mb-0">
+
+                    {{ itens|selectattr('status', 'equalto', 'Concluído')|list|length }}
+
+                </h3>
+
             </div>
 
-            <div class="col-md-3 mb-2">
-                <div class="info-box">
-                    <small class="text-muted d-block">
-                        Pendentes
-                    </small>
+        </div>
 
-                    <strong class="fs-4 text-warning">
-                        {{ itens|selectattr('status', 'equalto', 'Pendente')|list|length }}
-                    </strong>
-                </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 p-3">
+
+                <small class="text-muted">
+                    Pendentes
+                </small>
+
+                <h3 class="fw-bold text-warning mb-0">
+
+                    {{ itens|selectattr('status', 'equalto', 'Pendente')|list|length }}
+
+                </h3>
+
             </div>
 
-            <div class="col-md-3 mb-2">
-                <div class="info-box">
-                    <small class="text-muted d-block">
-                        Arquivados
-                    </small>
+        </div>
 
-                    <strong class="fs-4 text-secondary">
-                        {{ itens|selectattr('status', 'equalto', 'Arquivada')|list|length }}
-                    </strong>
-                </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0 p-3">
+
+                <small class="text-muted">
+                    Arquivadas
+                </small>
+
+                <h3 class="fw-bold text-secondary mb-0">
+
+                    {{ itens|selectattr('status', 'equalto', 'Arquivada')|list|length }}
+
+                </h3>
+
             </div>
 
         </div>
@@ -147,17 +166,18 @@
 
 
     <!-- TABELA -->
+
     <div class="card p-4 shadow-sm border-0">
 
         <div class="d-flex justify-content-between align-items-center mb-3">
 
-            <h5 class="fw-bold m-0">
+            <h6 class="fw-bold mb-0">
                 <i class="fa-solid fa-list-check text-primary me-2"></i>
-                Relatório Geral Consolidado
-            </h5>
+                Histórico de Atividades
+            </h6>
 
-            <span class="badge bg-primary">
-                {{ itens|length }} registro(s)
+            <span class="badge bg-light text-dark border">
+                {{ itens|length }} registros
             </span>
 
         </div>
@@ -165,22 +185,32 @@
 
         <div class="table-responsive">
 
-            <table class="table table-striped table-hover align-middle"
-                   style="font-size: 13px;">
+            <table class="table table-striped table-hover align-middle">
 
                 <thead class="table-light">
 
                     <tr>
+
                         <th>ID</th>
-                        <th>Nº Requisição</th>
+
+                        <th>Nº Req.</th>
+
                         <th>Atividade</th>
+
                         <th>Categoria</th>
+
                         <th>Responsável</th>
-                        <th>Prioridade</th>
+
+                        <th>Início</th>
+
+                        <th>Conclusão</th>
+
                         <th>Status</th>
+
                     </tr>
 
                 </thead>
+
 
                 <tbody>
 
@@ -192,31 +222,147 @@
                             #{{ i.id }}
                         </td>
 
+
                         <td>
+
                             {% if i.num_requisicao %}
-                                <strong>{{ i.num_requisicao }}</strong>
+
+                                <span class="fw-semibold text-primary">
+                                    {{ i.num_requisicao }}
+                                </span>
+
                             {% else %}
-                                <span class="text-muted">-</span>
+
+                                <span class="text-muted">
+                                    -
+                                </span>
+
                             {% endif %}
+
                         </td>
+
 
                         <td class="fw-semibold">
                             {{ i.atividade }}
                         </td>
 
+
                         <td>
-                            {{ i.categoria }}
+
+                            <span class="badge bg-light text-dark border">
+                                {{ i.categoria }}
+                            </span>
+
                         </td>
+
 
                         <td>
                             {{ i.responsavel }}
                         </td>
 
+
                         <td>
 
-                            {% if i.prioridade == 'Alta' %}
-                                <span class="badge bg-danger">
-                                    Alta
+                            {% if i.inicio_em %}
+
+                                {{ i.inicio_em }}
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    -
                                 </span>
 
-                            {% elif i.prior
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if i.concluido_em %}
+
+                                <span class="text-success">
+                                    {{ i.concluido_em }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-muted">
+                                    -
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td>
+
+                            {% if i.status == 'Concluído' %}
+
+                                <span class="badge bg-success">
+                                    <i class="fa-solid fa-check me-1"></i>
+                                    Concluído
+                                </span>
+
+                            {% elif i.status == 'Arquivada' %}
+
+                                <span class="badge bg-secondary">
+                                    <i class="fa-solid fa-box-archive me-1"></i>
+                                    Arquivada
+                                </span>
+
+                            {% elif i.status == 'Pendente' %}
+
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fa-solid fa-clock me-1"></i>
+                                    Pendente
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+                                    {{ i.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+
+                        <td
+                            colspan="8"
+                            class="text-center text-muted py-5"
+                        >
+
+                            <i class="fa-solid fa-inbox fa-2x mb-2"></i>
+
+                            <br>
+
+                            Nenhuma atividade registrada.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+```
+
+</body>
+</html>

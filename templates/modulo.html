@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -128,6 +127,10 @@
                 width: 100%;
             }
 
+            .table {
+                min-width: 1100px;
+            }
+
         }
 
     </style>
@@ -177,15 +180,11 @@
                 <div>
 
                     <h2 class="module-title mb-1">
-
                         {{ nome }}
-
                     </h2>
 
                     <small class="text-muted">
-
                         Registros operacionais do almoxarifado
-
                     </small>
 
                 </div>
@@ -280,13 +279,9 @@
                         <!-- ID -->
 
                         <td>
-
                             <span class="text-muted">
-
                                 #{{ item.id }}
-
                             </span>
-
                         </td>
 
 
@@ -297,17 +292,13 @@
                             {% if item.num_requisicao %}
 
                                 <span class="request-number">
-
                                     {{ item.num_requisicao }}
-
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
                             {% endif %}
@@ -320,17 +311,13 @@
                         <td>
 
                             <div class="activity-name">
-
                                 {{ item.atividade }}
-
                             </div>
 
                             {% if item.descricao %}
 
                                 <small class="text-muted">
-
                                     {{ item.descricao }}
-
                                 </small>
 
                             {% endif %}
@@ -400,9 +387,7 @@
                         <td>
 
                             <span class="fw-semibold">
-
-                                {{ item.responsavel }}
-
+                                {{ item.responsavel or 'Não informado' }}
                             </span>
 
                         </td>
@@ -415,17 +400,13 @@
                             {% if item.inicio_em %}
 
                                 <span class="date-value">
-
                                     {{ item.inicio_em }}
-
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
                             {% endif %}
@@ -440,17 +421,13 @@
                             {% if item.prazo %}
 
                                 <span class="date-value">
-
                                     {{ item.prazo }}
-
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
                             {% endif %}
@@ -465,17 +442,13 @@
                             {% if item.concluido_em %}
 
                                 <span class="date-value text-success">
-
                                     {{ item.concluido_em }}
-
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
                             {% endif %}
@@ -586,9 +559,7 @@
                             {% else %}
 
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
                             {% endif %}
@@ -615,15 +586,11 @@
             <i class="fa-solid fa-inbox text-muted mb-3"></i>
 
             <h5 class="fw-bold text-dark">
-
                 Nenhum registro encontrado
-
             </h5>
 
             <p class="text-muted mb-0">
-
                 Ainda não existem atividades registradas neste módulo.
-
             </p>
 
         </div>
@@ -657,29 +624,3 @@
 </body>
 
 </html>
-```
-
-Esse arquivo agora está alinhado com o que estamos construindo:
-
-* **Requisição**
-* **Separação**
-* **Inventário**
-* **Expedição**
-* **Recebimento**
-* responsável
-* início da atividade
-* prazo
-* conclusão
-* **Pendente**
-* **Concluído**
-* **Arquivada**
-* botão para concluir atividade
-* histórico preservado
-
-E o ponto mais importante: o botão usa:
-
-```jinja2
-{{ url_for('concluir', id=item.id) }}
-```
-
-Então o `app.py` precisa ter a rota `concluir()` que estamos planejando. Isso é melhor do que manter o nome antigo `/deletar`, porque **não queremos mais excluir as atividades do almoxarifado** — queremos concluí-las e depois arquivá-las.

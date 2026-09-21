@@ -1,3 +1,4 @@
+```python
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -14,7 +15,8 @@ from flask import (
     url_for,
     g,
     session,
-    send_file
+    send_file,
+    flash
 )
 
 from reportlab.lib import colors
@@ -194,6 +196,40 @@ def contar(sql, parametros=()):
 
 
 # =========================================================
+# DATA/HORA
+# =========================================================
+
+def agora_utc():
+
+    return datetime.now(
+        timezone.utc
+    )
+
+
+def agora_utc_naive():
+
+    """
+    PostgreSQL está usando TIMESTAMP sem timezone.
+    Portanto armazenamos UTC sem informação de timezone.
+    """
+
+    return agora_utc().replace(
+        tzinfo=None
+    )
+
+
+def agora_sqlite():
+
+    """
+    SQLite armazena a data como texto em UTC.
+    """
+
+    return agora_utc().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+
+# =========================================================
 # CRIAÇÃO DO BANCO
 # =========================================================
 
@@ -366,10 +402,15 @@ def init_db():
             )
         """)
 
-        # Preenche início das atividades antigas que ainda não possuem
+        # Preenche início das atividades antigas
+        # que ainda não possuem data de início.
+
         cursor.execute("""
             UPDATE atividades
-            SET inicio_em = COALESCE(concluido_em, datetime('now'))
+            SET inicio_em = COALESCE(
+                concluido_em,
+                datetime('now')
+            )
             WHERE inicio_em IS NULL
         """)
 
@@ -427,19 +468,13 @@ def init_db():
 def arquivar_atividades_expiradas():
 
     """
-    Procura atividades que:
+    Concluído
+          ↓
+    após 24 horas
+          ↓
+    Arquivada
 
-        status = Concluído
-
-    e que foram concluídas há pelo menos 24 horas.
-
-    Depois altera:
-
-        Concluído
-              ↓
-        Arquivada
-
-    O registro NÃO é apagado.
+    O registro permanece no banco.
     """
 
     try:
@@ -465,7 +500,7 @@ def arquivar_atividades_expiradas():
             cursor = db.cursor()
 
             limite = (
-                datetime.now(timezone.utc)
+                agora_utc()
                 - timedelta(hours=24)
             )
 
@@ -623,7 +658,8 @@ def cadastro_usuario():
                 get_db().rollback()
 
                 print(
-                    f"Erro ao cadastrar usuário: {erro_banco}"
+                    f"Erro ao cadastrar usuário: "
+                    f"{erro_banco}"
                 )
 
                 erro = (
@@ -723,98 +759,148 @@ def index():
         # NOVA ATIVIDADE
         # =================================================
 
-        num_requisicao = request.form.get(
-            "num_requisicao"
+        num_requisicao = (
+            request.form.get(
+                "num_requisicao",
+                ""
+            ).strip()
         )
 
-        prioridade = request.form.get(
-            "prioridade"
-        ) or "Baixa"
-
-        atividade = request.form.get(
-            "atividade"
+        prioridade = (
+            request.form.get(
+                "prioridade"
+            )
+            or "Baixa"
         )
 
-        categoria = request.form.get(
-            "categoria"
-        ) or "Separação"
+        atividade = (
+            request.form.get(
+                "atividade",
+                ""
+            ).strip()
+        )
+
+        categoria = (
+            request.form.get(
+                "categoria"
+            )
+            or "Separação"
+        )
 
         responsavel = (
-            request.form.get("responsavel")
+            request.form.get(
+                "responsavel"
+            )
             or usuario_atual
         )
 
-        prazo = request.form.get(
-            "prazo"
-        ) or ""
-
-        agora = datetime.now(
-            timezone.utc
+        prazo = (
+            request.form.get(
+                "prazo"
+            )
+            or ""
         )
 
-        if atividade:
+        # =================================================
+        # VALIDAÇÕES
+        # =================================================
 
-            try:
+        if not atividade:
 
-                if usando_postgresql():
+            flash(
+                "Informe a atividade.",
+                "danger"
+            )
 
-                    inicio_em = agora
+            return redirect(
+                url_for("index")
+            )
 
-                else:
+        # Para Separação, a requisição é obrigatória.
 
-                    inicio_em = agora.strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    )
+        if categoria == "Separação" and not num_requisicao:
 
-                cursor = executar(
-                    """
-                    INSERT INTO atividades
-                    (
-                        num_requisicao,
-                        prioridade,
-                        atividade,
-                        categoria,
-                        responsavel,
-                        prazo,
-                        status,
-                        inicio_em,
-                        concluido_em
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        'Pendente',
-                        %s,
-                        NULL
-                    )
-                    """,
-                    (
-                        num_requisicao,
-                        prioridade,
-                        atividade,
-                        categoria,
-                        responsavel,
-                        prazo,
-                        inicio_em
-                    )
+            flash(
+                "Informe o número da requisição para criar uma Separação.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("index")
+            )
+
+        # =================================================
+        # DATA/HORA DE INÍCIO
+        # =================================================
+
+        if usando_postgresql():
+
+            inicio_em = agora_utc_naive()
+
+        else:
+
+            inicio_em = agora_sqlite()
+
+        # =================================================
+        # INSERE ATIVIDADE
+        # =================================================
+
+        try:
+
+            cursor = executar(
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    prioridade,
+                    atividade,
+                    categoria,
+                    responsavel,
+                    prazo,
+                    status,
+                    inicio_em,
+                    concluido_em
                 )
-
-                db.commit()
-
-                fechar_cursor(cursor)
-
-            except Exception as erro:
-
-                db.rollback()
-
-                print(
-                    f"Erro ao inserir atividade: {erro}"
+                VALUES
+                (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    'Pendente',
+                    %s,
+                    NULL
                 )
+                """,
+                (
+                    num_requisicao or None,
+                    prioridade,
+                    atividade,
+                    categoria,
+                    responsavel,
+                    prazo,
+                    inicio_em
+                )
+            )
+
+            db.commit()
+
+            fechar_cursor(cursor)
+
+        except Exception as erro:
+
+            db.rollback()
+
+            print(
+                f"Erro ao inserir atividade: {erro}"
+            )
+
+            flash(
+                "Não foi possível registrar a atividade.",
+                "danger"
+            )
 
         return redirect(
             url_for("index")
@@ -886,6 +972,8 @@ def index():
     # INDICADORES
     # =====================================================
 
+    # Requisições pendentes
+
     total_req = contar(
         """
         SELECT COUNT(*)
@@ -895,7 +983,9 @@ def index():
         """
     )
 
-    inv_total = contar(
+    # Inventários pendentes
+
+    inv_pendentes = contar(
         """
         SELECT COUNT(*)
         FROM atividades
@@ -903,6 +993,8 @@ def index():
         AND status = 'Pendente'
         """
     )
+
+    # Inventários concluídos
 
     inv_concluido = contar(
         """
@@ -913,6 +1005,8 @@ def index():
         """
     )
 
+    # Total de Inventários para o indicador
+
     inv_total_indicador = contar(
         """
         SELECT COUNT(*)
@@ -921,6 +1015,8 @@ def index():
         AND status IN ('Pendente', 'Concluído')
         """
     )
+
+    # Expedições pendentes
 
     exp_pend = contar(
         """
@@ -931,6 +1027,8 @@ def index():
         """
     )
 
+    # Expedições concluídas
+
     exp_concluido = contar(
         """
         SELECT COUNT(*)
@@ -939,6 +1037,8 @@ def index():
         AND status = 'Concluído'
         """
     )
+
+    # Total de Expedições
 
     exp_total = contar(
         """
@@ -949,6 +1049,8 @@ def index():
         """
     )
 
+    # Recebimentos pendentes
+
     rec_pend = contar(
         """
         SELECT COUNT(*)
@@ -957,6 +1059,8 @@ def index():
         AND status = 'Pendente'
         """
     )
+
+    # Ocorrências = prioridade alta pendente
 
     total_oco = contar(
         """
@@ -967,6 +1071,8 @@ def index():
         """
     )
 
+    # Total de atividades ativas
+
     total_atividades = contar(
         """
         SELECT COUNT(*)
@@ -974,6 +1080,8 @@ def index():
         WHERE status IN ('Pendente', 'Concluído')
         """
     )
+
+    # Atividades concluídas
 
     atividades_concluidas = contar(
         """
@@ -983,6 +1091,8 @@ def index():
         """
     )
 
+    # Atividades arquivadas
+
     atividades_arquivadas = contar(
         """
         SELECT COUNT(*)
@@ -990,6 +1100,10 @@ def index():
         WHERE status = 'Arquivada'
         """
     )
+
+    # =====================================================
+    # PERCENTUAL DE ATENDIMENTO
+    # =====================================================
 
     if total_atividades > 0:
 
@@ -1004,6 +1118,10 @@ def index():
 
         perc_atendidas = 0
 
+    # =====================================================
+    # PERCENTUAL DO INVENTÁRIO
+    # =====================================================
+
     if inv_total_indicador > 0:
 
         perc_inventario = round(
@@ -1016,6 +1134,10 @@ def index():
     else:
 
         perc_inventario = 0
+
+    # =====================================================
+    # PERCENTUAL DA EXPEDIÇÃO
+    # =====================================================
 
     if exp_total > 0:
 
@@ -1063,9 +1185,11 @@ def index():
 
         total_req=total_req,
 
+        # IMPORTANTE:
+        # agora mostra o total real de Inventários
         inv_conc=inv_concluido,
 
-        inv_total=inv_total,
+        inv_total=inv_total_indicador,
 
         exp_pend=exp_pend,
 
@@ -1162,16 +1286,25 @@ def modulo(nome):
 
         if request.method == "POST":
 
-            titulo = request.form.get(
-                "titulo"
+            titulo = (
+                request.form.get(
+                    "titulo",
+                    ""
+                ).strip()
             )
 
-            descricao = request.form.get(
-                "descricao"
+            descricao = (
+                request.form.get(
+                    "descricao",
+                    ""
+                ).strip()
             )
 
-            etapa = request.form.get(
-                "etapa"
+            etapa = (
+                request.form.get(
+                    "etapa"
+                )
+                or "Planejar (Plan)"
             )
 
             autor = session["usuario"]
@@ -1271,20 +1404,32 @@ def modulo(nome):
 
             if acao == "cadastrar_manual":
 
-                rua = request.form.get(
-                    "rua"
+                rua = (
+                    request.form.get(
+                        "rua",
+                        ""
+                    ).strip()
                 )
 
-                prateleira = request.form.get(
-                    "prateleira"
+                prateleira = (
+                    request.form.get(
+                        "prateleira",
+                        ""
+                    ).strip()
                 )
 
-                codigo = request.form.get(
-                    "codigo_material"
+                codigo = (
+                    request.form.get(
+                        "codigo_material",
+                        ""
+                    ).strip()
                 )
 
-                descricao = request.form.get(
-                    "descricao"
+                descricao = (
+                    request.form.get(
+                        "descricao",
+                        ""
+                    ).strip()
                 )
 
                 try:
@@ -1300,37 +1445,47 @@ def modulo(nome):
 
                     quantidade = 0
 
-                cursor = executar(
-                    """
-                    INSERT INTO estoque
-                    (
-                        rua,
-                        prateleira,
-                        codigo_material,
-                        descricao,
-                        quantidade
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        rua,
-                        prateleira,
-                        codigo,
-                        descricao,
-                        quantidade
-                    )
-                )
+                try:
 
-                get_db().commit()
+                    cursor = executar(
+                        """
+                        INSERT INTO estoque
+                        (
+                            rua,
+                            prateleira,
+                            codigo_material,
+                            descricao,
+                            quantidade
+                        )
+                        VALUES
+                        (
+                            %s,
+                            %s,
+                            %s,
+                            %s,
+                            %s
+                        )
+                        """,
+                        (
+                            rua,
+                            prateleira,
+                            codigo,
+                            descricao,
+                            quantidade
+                        )
+                    )
 
-                fechar_cursor(cursor)
+                    get_db().commit()
+
+                    fechar_cursor(cursor)
+
+                except Exception as erro:
+
+                    get_db().rollback()
+
+                    print(
+                        f"Erro ao cadastrar estoque: {erro}"
+                    )
 
                 return redirect(
                     url_for(
@@ -1435,14 +1590,10 @@ def relatorio_pdf():
     try:
 
         # =================================================
-        # DATA ATUAL
-        #
-        # Horário do Brasil: UTC-3
+        # DATA ATUAL DO BRASIL
         # =================================================
 
-        agora_utc = datetime.now(
-            timezone.utc
-        )
+        agora_utc = agora_utc()
 
         agora_brasil = (
             agora_utc
@@ -1471,16 +1622,18 @@ def relatorio_pdf():
                     (
                         inicio_em IS NOT NULL
                         AND DATE(
-                            inicio_em AT TIME ZONE
-                            'America/Sao_Paulo'
+                            inicio_em
+                            AT TIME ZONE 'UTC'
+                            AT TIME ZONE 'America/Sao_Paulo'
                         ) = %s
                     )
                     OR
                     (
                         concluido_em IS NOT NULL
                         AND DATE(
-                            concluido_em AT TIME ZONE
-                            'America/Sao_Paulo'
+                            concluido_em
+                            AT TIME ZONE 'UTC'
+                            AT TIME ZONE 'America/Sao_Paulo'
                         ) = %s
                     )
                 ORDER BY id ASC
@@ -1501,14 +1654,20 @@ def relatorio_pdf():
                     (
                         inicio_em IS NOT NULL
                         AND date(
-                            datetime(inicio_em, '-3 hours')
+                            datetime(
+                                inicio_em,
+                                '-3 hours'
+                            )
                         ) = ?
                     )
                     OR
                     (
                         concluido_em IS NOT NULL
                         AND date(
-                            datetime(concluido_em, '-3 hours')
+                            datetime(
+                                concluido_em,
+                                '-3 hours'
+                            )
                         ) = ?
                     )
                 ORDER BY id ASC
@@ -1706,13 +1865,19 @@ def relatorio_pdf():
             conclusao = item["concluido_em"]
 
             if inicio:
+
                 inicio = str(inicio)[:19]
+
             else:
+
                 inicio = "-"
 
             if conclusao:
+
                 conclusao = str(conclusao)[:19]
+
             else:
+
                 conclusao = "-"
 
             requisicao = (
@@ -1902,9 +2067,12 @@ def relatorio_pdf():
 # =========================================================
 
 @app.route(
+    "/concluir/<int:id>"
+)
+@app.route(
     "/deletar/<int:id>"
 )
-def deletar(id):
+def concluir_atividade(id):
 
     if "usuario" not in session:
 
@@ -1913,7 +2081,7 @@ def deletar(id):
         )
 
     # =====================================================
-    # BUSCA A ATIVIDADE ANTES DE CONCLUIR
+    # BUSCA A ATIVIDADE
     # =====================================================
 
     cursor = executar(
@@ -1943,19 +2111,13 @@ def deletar(id):
     # MOMENTO DA CONCLUSÃO
     # =====================================================
 
-    agora = datetime.now(
-        timezone.utc
-    )
-
     if usando_postgresql():
 
-        concluido_em = agora
+        concluido_em = agora_utc_naive()
 
     else:
 
-        concluido_em = agora.strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        concluido_em = agora_sqlite()
 
     # =====================================================
     # CONCLUI A ATIVIDADE
@@ -1993,7 +2155,7 @@ def deletar(id):
         num_requisicao = (
             atividade["num_requisicao"]
             or ""
-        )
+        ).strip()
 
         prioridade = (
             atividade["prioridade"]
@@ -2010,8 +2172,25 @@ def deletar(id):
             or ""
         )
 
-        # Verifica se já existe uma Expedição
-        # para evitar duplicidade.
+        # =================================================
+        # SEGURANÇA
+        # =================================================
+
+        if not num_requisicao:
+
+            print(
+                "[AVISO] Separação concluída "
+                "sem número de requisição."
+            )
+
+            return redirect(
+                request.referrer
+                or url_for("index")
+            )
+
+        # =================================================
+        # VERIFICA DUPLICIDADE
+        # =================================================
 
         cursor = executar(
             """
@@ -2031,17 +2210,19 @@ def deletar(id):
 
         fechar_cursor(cursor)
 
+        # =================================================
+        # CRIA EXPEDIÇÃO
+        # =================================================
+
         if existe_expedicao == 0:
 
             if usando_postgresql():
 
-                inicio_expedicao = agora
+                inicio_expedicao = agora_utc_naive()
 
             else:
 
-                inicio_expedicao = agora.strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                )
+                inicio_expedicao = agora_sqlite()
 
             cursor = executar(
                 """
@@ -2085,8 +2266,10 @@ def deletar(id):
             fechar_cursor(cursor)
 
             print(
-                f"[EXPEDIÇÃO] Criada automaticamente "
-                f"para a requisição {num_requisicao}."
+                f"[EXPEDIÇÃO] "
+                f"Criada automaticamente "
+                f"para a requisição "
+                f"{num_requisicao}."
             )
 
     return redirect(
@@ -2159,3 +2342,4 @@ if __name__ == "__main__":
         port=port,
         debug=False
     )
+```

@@ -1,104 +1,819 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
-    <title>Melhorias / PDCA - Almoxarifado Valenet</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Melhorias / PDCA - Almoxarifado Valenet
+    </title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
     <style>
-        body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; color: #2d3748; }
-        .main-content { max-width: 1000px; margin: 40px auto; padding: 20px; }
+
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', sans-serif;
+            color: #2d3748;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card-custom {
+            border: 0;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
+
+        .pdca-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .pdca-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .pdca-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 14px;
+            background-color: #eef4ff;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #0d6efd;
+            font-size: 24px;
+        }
+
+        .page-title {
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            white-space: nowrap;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+        }
+
+        .description-cell {
+            max-width: 420px;
+            min-width: 250px;
+        }
+
+        .description-text {
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .empty-state {
+            padding: 60px 20px;
+        }
+
+        .empty-state i {
+            font-size: 50px;
+        }
+
+        .pdca-step {
+            font-weight: 600;
+        }
+
+        .btn-back {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+
+            .main-content {
+                margin: 15px auto;
+                padding: 10px;
+            }
+
+            .header-area {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+
+            .btn-back {
+                width: 100%;
+            }
+
+        }
+
     </style>
+
 </head>
+
+
 <body>
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold m-0"><i class="fa-solid fa-chart-line text-primary me-2"></i> Melhorias / Ciclo PDCA</h3>
-            <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</a>
+
+<div class="main-content">
+
+
+    <!-- ========================================= -->
+    <!-- CABEÇALHO -->
+    <!-- ========================================= -->
+
+    <div
+        class="d-flex justify-content-between align-items-center header-area mb-4"
+    >
+
+        <div class="d-flex align-items-center">
+
+            <div class="pdca-icon me-3">
+
+                <i class="fa-solid fa-chart-line"></i>
+
+            </div>
+
+            <div>
+
+                <h3 class="page-title m-0">
+
+                    Melhorias / Ciclo PDCA
+
+                </h3>
+
+                <small class="text-muted">
+
+                    Gestão de melhorias contínuas do almoxarifado
+
+                </small>
+
+            </div>
+
         </div>
 
-        <!-- Botão para abrir modal de nova melhoria -->
-        <div class="mb-4">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalMelhoria">
-                <i class="fa-solid fa-plus me-1"></i> Nova Melhoria / Ação
-            </button>
-        </div>
 
-        <!-- Lista de Melhorias -->
-        <div class="card border-0 shadow-sm p-4">
-            <h5 class="fw-bold text-dark mb-3">Registro de Melhorias Contínuas</h5>
+        <a
+            href="{{ url_for('index') }}"
+            class="btn btn-outline-secondary btn-back"
+        >
+
+            <i class="fa-solid fa-arrow-left me-1"></i>
+
+            Voltar ao Painel
+
+        </a>
+
+    </div>
+
+
+
+    <!-- ========================================= -->
+    <!-- MENSAGENS FLASH -->
+    <!-- ========================================= -->
+
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+
+        {% if mensagens %}
+
+            {% for categoria, mensagem in mensagens %}
+
+                <div
+                    class="alert alert-{{ categoria }} alert-dismissible fade show"
+                    role="alert"
+                >
+
+                    {% if categoria == 'success' %}
+
+                        <i class="fa-solid fa-circle-check me-1"></i>
+
+                    {% elif categoria == 'danger' %}
+
+                        <i class="fa-solid fa-circle-exclamation me-1"></i>
+
+                    {% elif categoria == 'warning' %}
+
+                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
+
+                    {% else %}
+
+                        <i class="fa-solid fa-circle-info me-1"></i>
+
+                    {% endif %}
+
+                    {{ mensagem }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+
+    <!-- ========================================= -->
+    <!-- BOTÃO NOVA MELHORIA -->
+    <!-- ========================================= -->
+
+    <div class="mb-4">
+
+        <button
+            type="button"
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#modalMelhoria"
+        >
+
+            <i class="fa-solid fa-plus me-1"></i>
+
+            Nova Melhoria / Ação
+
+        </button>
+
+    </div>
+
+
+
+    <!-- ========================================= -->
+    <!-- LISTA DE MELHORIAS -->
+    <!-- ========================================= -->
+
+    <div class="card card-custom p-4 pdca-card">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <div>
+
+                <h5 class="fw-bold text-dark mb-1">
+
+                    <i class="fa-solid fa-list-check text-primary me-2"></i>
+
+                    Registro de Melhorias Contínuas
+
+                </h5>
+
+                <small class="text-muted">
+
+                    Acompanhe problemas, ações e oportunidades de melhoria.
+
+                </small>
+
+            </div>
+
+
             {% if melhorias %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Etapa PDCA</th>
-                            <th>Título</th>
-                            <th>Descrição</th>
-                            <th>Proposto por</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for m in melhorias %}
-                        <tr>
-                            <td>
-                                <span class="badge bg-info text-dark">{{ m.etapa }}</span>
-                            </td>
-                            <td class="fw-semibold">{{ m.titulo }}</td>
-                            <td>{{ m.descricao }}</td>
-                            <td>{{ m.autor }}</td>
-                            <td>
-                                <a href="/deletar_melhoria/{{ m.id }}" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="fa-solid fa-trash"></i></a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-muted mb-0">Nenhuma melhoria cadastrada até o momento. Clique em "Nova Melhoria / Ação" para registrar a primeira!</p>
+
+                <span class="badge bg-primary">
+
+                    {{ melhorias|length }} registro(s)
+
+                </span>
+
             {% endif %}
+
         </div>
+
+
+
+        {% if melhorias %}
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                    <tr>
+
+                        <th>Etapa PDCA</th>
+
+                        <th>Título</th>
+
+                        <th>Descrição</th>
+
+                        <th>Proposto por</th>
+
+                        <th>Status</th>
+
+                        <th>Ação</th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                    {% for m in melhorias %}
+
+                    <tr>
+
+
+                        <!-- ETAPA -->
+
+                        <td>
+
+                            {% if m.etapa == 'Planejar (Plan)' %}
+
+                                <span class="badge bg-primary pdca-step">
+
+                                    <i class="fa-solid fa-lightbulb me-1"></i>
+
+                                    Planejar
+
+                                </span>
+
+
+                            {% elif m.etapa == 'Fazer (Do)' %}
+
+                                <span class="badge bg-warning text-dark pdca-step">
+
+                                    <i class="fa-solid fa-play me-1"></i>
+
+                                    Fazer
+
+                                </span>
+
+
+                            {% elif m.etapa == 'Checar (Check)' %}
+
+                                <span class="badge bg-info text-dark pdca-step">
+
+                                    <i class="fa-solid fa-magnifying-glass me-1"></i>
+
+                                    Checar
+
+                                </span>
+
+
+                            {% elif m.etapa == 'Agir (Act)' %}
+
+                                <span class="badge bg-success pdca-step">
+
+                                    <i class="fa-solid fa-rotate me-1"></i>
+
+                                    Agir
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+
+                                    {{ m.etapa or 'Não informado' }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- TÍTULO -->
+
+                        <td>
+
+                            <span class="fw-semibold">
+
+                                {{ m.titulo }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- DESCRIÇÃO -->
+
+                        <td class="description-cell">
+
+                            <div class="description-text">
+
+                                {{ m.descricao }}
+
+                            </div>
+
+                        </td>
+
+
+
+                        <!-- AUTOR -->
+
+                        <td>
+
+                            {{ m.autor or 'Não informado' }}
+
+                        </td>
+
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            {% if m.status == 'Concluído' %}
+
+                                <span class="badge bg-success">
+
+                                    <i class="fa-solid fa-check me-1"></i>
+
+                                    Concluído
+
+                                </span>
+
+
+                            {% elif m.status == 'Em andamento' %}
+
+                                <span class="badge bg-warning text-dark">
+
+                                    <i class="fa-solid fa-spinner me-1"></i>
+
+                                    Em andamento
+
+                                </span>
+
+
+                            {% elif m.status == 'Arquivado' %}
+
+                                <span class="badge bg-secondary">
+
+                                    <i class="fa-solid fa-box-archive me-1"></i>
+
+                                    Arquivado
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="badge bg-primary">
+
+                                    <i class="fa-solid fa-clock me-1"></i>
+
+                                    {{ m.status or 'Pendente' }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- AÇÕES -->
+
+                        <td>
+
+                            {% if m.id %}
+
+                                <a
+                                    href="{{ url_for('deletar_melhoria', id=m.id) }}"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Excluir melhoria"
+                                    onclick="return confirmarExclusao();"
+                                >
+
+                                    <i class="fa-solid fa-trash"></i>
+
+                                </a>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        {% else %}
+
+
+        <!-- ========================================= -->
+        <!-- ESTADO VAZIO -->
+        <!-- ========================================= -->
+
+        <div class="text-center empty-state">
+
+            <i class="fa-solid fa-lightbulb text-muted mb-3"></i>
+
+            <h5 class="fw-bold">
+
+                Nenhuma melhoria cadastrada
+
+            </h5>
+
+            <p class="text-muted mb-4">
+
+                Registre uma oportunidade de melhoria para começar
+                o acompanhamento pelo ciclo PDCA.
+
+            </p>
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#modalMelhoria"
+            >
+
+                <i class="fa-solid fa-plus me-1"></i>
+
+                Registrar primeira melhoria
+
+            </button>
+
+        </div>
+
+        {% endif %}
+
     </div>
 
-    <!-- Modal Nova Melhoria -->
-    <div class="modal fade" id="modalMelhoria" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title fw-bold">Cadastrar Nova Melhoria (PDCA)</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+
+
+<!-- ========================================= -->
+<!-- MODAL NOVA MELHORIA -->
+<!-- ========================================= -->
+
+<div
+    class="modal fade"
+    id="modalMelhoria"
+    tabindex="-1"
+    aria-labelledby="modalMelhoriaLabel"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                action="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+            >
+
+
+                <!-- CABEÇALHO DO MODAL -->
+
+                <div class="modal-header">
+
+                    <h5
+                        class="modal-title fw-bold"
+                        id="modalMelhoriaLabel"
+                    >
+
+                        <i class="fa-solid fa-chart-line text-primary me-2"></i>
+
+                        Cadastrar Nova Melhoria
+
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+
+                </div>
+
+
+
+                <!-- CORPO -->
+
+                <div class="modal-body">
+
+                    <div class="alert alert-light border">
+
+                        <i class="fa-solid fa-circle-info text-primary me-1"></i>
+
+                        Registre uma oportunidade, problema ou ação que possa
+                        melhorar os processos do almoxarifado.
+
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Etapa do PDCA</label>
-                            <select name="etapa" class="form-select" required>
-                                <option value="Planejar (Plan)">Planejar (Plan)</option>
-                                <option value="Fazer (Do)">Fazer (Do)</option>
-                                <option value="Checar (Check)">Checar (Check)</option>
-                                <option value="Agir (Act)">Agir (Act)</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Título da Melhoria</label>
-                            <input type="text" name="titulo" class="form-control" placeholder="Ex: Otimização do corredor de cabos" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Descrição / Detalhes</label>
-                            <textarea name="descricao" class="form-control" rows="3" placeholder="Explique qual é a ideia ou o problema a ser resolvido..." required></textarea>
-                        </div>
+
+
+                    <!-- ETAPA PDCA -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="etapa"
+                            class="form-label fw-semibold"
+                        >
+
+                            Etapa do PDCA
+
+                        </label>
+
+                        <select
+                            id="etapa"
+                            name="etapa"
+                            class="form-select"
+                            required
+                        >
+
+                            <option value="">
+                                Selecione uma etapa
+                            </option>
+
+                            <option value="Planejar (Plan)">
+                                Planejar (Plan)
+                            </option>
+
+                            <option value="Fazer (Do)">
+                                Fazer (Do)
+                            </option>
+
+                            <option value="Checar (Check)">
+                                Checar (Check)
+                            </option>
+
+                            <option value="Agir (Act)">
+                                Agir (Act)
+                            </option>
+
+                        </select>
+
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Salvar Melhoria</button>
+
+
+
+                    <!-- TÍTULO -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="titulo"
+                            class="form-label fw-semibold"
+                        >
+
+                            Título da Melhoria
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="titulo"
+                            name="titulo"
+                            class="form-control"
+                            maxlength="150"
+                            placeholder="Ex.: Otimização do corredor de cabos"
+                            required
+                        >
+
                     </div>
-                </form>
-            </div>
+
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="mb-3">
+
+                        <label
+                            for="descricao"
+                            class="form-label fw-semibold"
+                        >
+
+                            Descrição / Detalhes
+
+                        </label>
+
+                        <textarea
+                            id="descricao"
+                            name="descricao"
+                            class="form-control"
+                            rows="5"
+                            maxlength="2000"
+                            placeholder="Explique o problema, oportunidade ou ideia de melhoria..."
+                            required
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- RODAPÉ -->
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+
+                        Cancelar
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fa-solid fa-floppy-disk me-1"></i>
+
+                        Salvar Melhoria
+
+                    </button>
+
+                </div>
+
+            </form>
+
         </div>
+
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================= -->
+
+<script>
+
+    function confirmarExclusao() {
+
+        return confirm(
+            "Deseja realmente excluir esta melhoria?"
+        );
+
+    }
+
+</script>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
+
 </body>
+
 </html>
+```
+
+### ⚠️ Um detalhe importante
+
+Esse HTML agora chama:
+
+```python
+url_for('deletar_melhoria', id=m.id)
+```
+
+Portanto, quando formos montar o `app.py` definitivo, precisamos ter essa rota.
+
+E existe uma decisão que vale manter no nosso projeto: **atividades do almoxarifado não serão excluídas**; elas serão concluídas e depois arquivadas. Para **Melhorias/PDCA**, deixei a exclusão disponível porque é um registro administrativo separado das atividades operacionais.
+
+Também deixei o formulário enviando para:
+
+```python
+url_for('modulo', nome='Melhorias / PDCA')
+```
+
+Então o próprio `app.py` poderá tratar o `POST`, gravar a melhoria no banco e retornar para a página.
+
+**Esse arquivo pode ser considerado a versão definitiva do `pdca.html` por enquanto.**

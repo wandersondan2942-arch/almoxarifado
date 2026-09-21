@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -267,25 +266,3 @@
 
 </body>
 </html>
-```
-
-Esse arquivo fica em:
-
-```text
-templates/login.html
-```
-
-E está preparado para trabalhar com a rota que já temos:
-
-```python
-@app.route("/login", methods=["GET", "POST"])
-def login():
-```
-
-Também mantive o **cadastro de usuário** funcionando através de:
-
-```jinja2
-{{ url_for('cadastro_usuario') }}
-```
-
-Assim evitamos problemas caso o endereço da rota mude futuramente.

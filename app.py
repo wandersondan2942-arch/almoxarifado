@@ -40,13 +40,6 @@ def usando_postgresql():
 
 
 def get_db():
-    """
-    Render:
-        PostgreSQL
-
-    Computador local:
-        SQLite
-    """
 
     db = getattr(g, "_database", None)
 
@@ -96,9 +89,6 @@ def close_connection(exception):
 # =========================================================
 
 def executar(sql, parametros=()):
-    """
-    Executa SQL compatível com SQLite e PostgreSQL.
-    """
 
     db = get_db()
 
@@ -180,7 +170,7 @@ def contar(sql, parametros=()):
 
 
 # =========================================================
-# CRIAÇÃO DO BANCO
+# CRIAÇÃO / ATUALIZAÇÃO DO BANCO
 # =========================================================
 
 def init_db():
@@ -213,8 +203,18 @@ def init_db():
                 responsavel TEXT NOT NULL,
                 prazo TEXT NOT NULL,
                 status TEXT DEFAULT 'Pendente',
+                inicio_em TIMESTAMP,
                 concluido_em TIMESTAMP
             )
+        """)
+
+        # -------------------------------------------------
+        # MIGRAÇÕES
+        # -------------------------------------------------
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
         """)
 
         cursor.execute("""
@@ -253,6 +253,20 @@ def init_db():
             )
         """)
 
+        # -------------------------------------------------
+        # PREENCHE inicio_em DE REGISTROS ANTIGOS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            UPDATE atividades
+            SET inicio_em = COALESCE(
+                inicio_em,
+                concluido_em,
+                CURRENT_TIMESTAMP
+            )
+            WHERE inicio_em IS NULL
+        """)
+
     # =====================================================
     # SQLITE
     # =====================================================
@@ -277,9 +291,14 @@ def init_db():
                 responsavel TEXT NOT NULL,
                 prazo TEXT NOT NULL,
                 status TEXT DEFAULT 'Pendente',
+                inicio_em TEXT,
                 concluido_em TEXT
             )
         """)
+
+        # -------------------------------------------------
+        # VERIFICA COLUNAS EXISTENTES
+        # -------------------------------------------------
 
         cursor.execute("""
             PRAGMA table_info(atividades)
@@ -291,6 +310,25 @@ def init_db():
             coluna[1]
             for coluna in colunas
         ]
+
+        # -------------------------------------------------
+        # ADICIONA inicio_em SE NÃO EXISTIR
+        # -------------------------------------------------
+
+        if "inicio_em" not in nomes_colunas:
+
+            print(
+                "Adicionando coluna inicio_em ao SQLite..."
+            )
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN inicio_em TEXT
+            """)
+
+        # -------------------------------------------------
+        # ADICIONA concluido_em SE NÃO EXISTIR
+        # -------------------------------------------------
 
         if "concluido_em" not in nomes_colunas:
 
@@ -332,6 +370,20 @@ def init_db():
                 descricao TEXT,
                 quantidade INTEGER DEFAULT 0
             )
+        """)
+
+        # -------------------------------------------------
+        # PREENCHE inicio_em DE REGISTROS ANTIGOS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            UPDATE atividades
+            SET inicio_em = COALESCE(
+                inicio_em,
+                concluido_em,
+                datetime('now')
+            )
+            WHERE inicio_em IS NULL
         """)
 
     # =====================================================
@@ -387,29 +439,9 @@ def init_db():
 
 def arquivar_atividades_expiradas():
 
-    """
-    Procura atividades que:
-
-        status = Concluído
-
-    e que foram concluídas há pelo menos 24 horas.
-
-    Depois altera:
-
-        Concluído
-              ↓
-        Arquivada
-
-    O registro NÃO é apagado.
-    """
-
     try:
 
         db = get_db()
-
-        # =================================================
-        # POSTGRESQL
-        # =================================================
 
         if usando_postgresql():
 
@@ -424,10 +456,6 @@ def arquivar_atividades_expiradas():
                     CURRENT_TIMESTAMP - INTERVAL '24 hours'
                 )
             """)
-
-        # =================================================
-        # SQLITE
-        # =================================================
 
         else:
 
@@ -640,7 +668,7 @@ def index():
         )
 
     # =====================================================
-    # VERIFICA ARQUIVAMENTO DE 24 HORAS
+    # VERIFICA ARQUIVAMENTO
     # =====================================================
 
     arquivar_atividades_expiradas()
@@ -721,6 +749,24 @@ def index():
             "prazo"
         )
 
+        # =================================================
+        # HORÁRIO DE INÍCIO
+        # =================================================
+
+        agora = datetime.now(
+            timezone.utc
+        )
+
+        if usando_postgresql():
+
+            inicio_em = agora
+
+        else:
+
+            inicio_em = agora.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
         if atividade:
 
             try:
@@ -736,6 +782,7 @@ def index():
                         responsavel,
                         prazo,
                         status,
+                        inicio_em,
                         concluido_em
                     )
                     VALUES
@@ -747,6 +794,7 @@ def index():
                         %s,
                         %s,
                         'Pendente',
+                        %s,
                         NULL
                     )
                     """,
@@ -756,7 +804,8 @@ def index():
                         atividade,
                         categoria,
                         responsavel,
-                        prazo
+                        prazo,
+                        inicio_em
                     )
                 )
 
@@ -828,794 +877,4 @@ def index():
     cursor = executar(
         """
         SELECT *
-        FROM chat
-        ORDER BY id DESC
-        LIMIT 15
-        """
-    )
-
-    mensagens_chat = cursor.fetchall()
-
-    fechar_cursor(cursor)
-
-    # =====================================================
-    # INDICADORES
-    # =====================================================
-
-    # -----------------------------------------------------
-    # REQUISIÇÕES PENDENTES
-    # -----------------------------------------------------
-
-    total_req = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Separação'
-        AND status = 'Pendente'
-        """
-    )
-
-    # -----------------------------------------------------
-    # INVENTÁRIO
-    #
-    # inv_total = somente pendentes
-    # Usado no CARD
-    # -----------------------------------------------------
-
-    inv_total = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        AND status = 'Pendente'
-        """
-    )
-
-    # -----------------------------------------------------
-    # INVENTÁRIO CONCLUÍDO
-    #
-    # Usado no INDICADOR DO DIA
-    # -----------------------------------------------------
-
-    inv_concluido = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        AND status = 'Concluído'
-        """
-    )
-
-    # -----------------------------------------------------
-    # TOTAL DE INVENTÁRIOS ATIVOS
-    #
-    # Pendente + Concluído
-    #
-    # Arquivada NÃO entra.
-    # -----------------------------------------------------
-
-    inv_total_indicador = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        AND status IN ('Pendente', 'Concluído')
-        """
-    )
-
-    # -----------------------------------------------------
-    # EXPEDIÇÃO PENDENTE
-    # -----------------------------------------------------
-
-    exp_pend = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        AND status = 'Pendente'
-        """
-    )
-
-    # -----------------------------------------------------
-    # EXPEDIÇÃO CONCLUÍDA
-    # -----------------------------------------------------
-
-    exp_concluido = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        AND status = 'Concluído'
-        """
-    )
-
-    # -----------------------------------------------------
-    # TOTAL EXPEDIÇÃO PARA O INDICADOR
-    #
-    # Pendente + Concluído
-    # -----------------------------------------------------
-
-    exp_total = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        AND status IN ('Pendente', 'Concluído')
-        """
-    )
-
-    # -----------------------------------------------------
-    # RECEBIMENTO
-    # -----------------------------------------------------
-
-    rec_pend = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE categoria = 'Recebimento'
-        AND status = 'Pendente'
-        """
-    )
-
-    # -----------------------------------------------------
-    # OCORRÊNCIAS
-    # -----------------------------------------------------
-
-    total_oco = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE prioridade = 'Alta'
-        AND status = 'Pendente'
-        """
-    )
-
-    # -----------------------------------------------------
-    # ATIVIDADES ATIVAS
-    #
-    # Pendente + Concluído
-    #
-    # Arquivadas ficam fora do indicador do dia.
-    # -----------------------------------------------------
-
-    total_atividades = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE status IN ('Pendente', 'Concluído')
-        """
-    )
-
-    # -----------------------------------------------------
-    # ATIVIDADES CONCLUÍDAS
-    # -----------------------------------------------------
-
-    atividades_concluidas = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE status = 'Concluído'
-        """
-    )
-
-    # -----------------------------------------------------
-    # ATIVIDADES ARQUIVADAS
-    # -----------------------------------------------------
-
-    atividades_arquivadas = contar(
-        """
-        SELECT COUNT(*)
-        FROM atividades
-        WHERE status = 'Arquivada'
-        """
-    )
-
-    # -----------------------------------------------------
-    # PERCENTUAL ATENDIDAS
-    #
-    # Exemplo:
-    #
-    # 1 pendente + 1 concluída
-    # = 1 / 2 = 50%
-    #
-    # 1 concluída
-    # = 1 / 1 = 100%
-    #
-    # Depois de arquivar:
-    # 0 / 0 = 0%
-    # -----------------------------------------------------
-
-    if total_atividades > 0:
-
-        perc_atendidas = round(
-            (
-                atividades_concluidas
-                / total_atividades
-            ) * 100
-        )
-
-    else:
-
-        perc_atendidas = 0
-
-    # -----------------------------------------------------
-    # PERCENTUAL INVENTÁRIO
-    #
-    # Usa Pendente + Concluído.
-    #
-    # Assim:
-    #
-    # 1 pendente = 0%
-    # 1 concluído = 100%
-    # após arquivar = 0%
-    # -----------------------------------------------------
-
-    if inv_total_indicador > 0:
-
-        perc_inventario = round(
-            (
-                inv_concluido
-                / inv_total_indicador
-            ) * 100
-        )
-
-    else:
-
-        perc_inventario = 0
-
-    # -----------------------------------------------------
-    # PERCENTUAL EXPEDIÇÃO
-    # -----------------------------------------------------
-
-    if exp_total > 0:
-
-        perc_expedicao = round(
-            (
-                exp_concluido
-                / exp_total
-            ) * 100
-        )
-
-    else:
-
-        perc_expedicao = 0
-
-    # =====================================================
-    # USUÁRIOS
-    # =====================================================
-
-    cursor = executar(
-        """
-        SELECT *
-        FROM usuarios
-        ORDER BY nome
-        """
-    )
-
-    usuarios = cursor.fetchall()
-
-    fechar_cursor(cursor)
-
-    # =====================================================
-    # RENDERIZA PAINEL
-    # =====================================================
-
-    return render_template(
-        "index.html",
-
-        atividades=atividades,
-
-        mensagens_chat=mensagens_chat,
-
-        usuarios=usuarios,
-
-        busca=busca,
-
-        total_req=total_req,
-
-        inv_conc=inv_concluido,
-
-        inv_total=inv_total,
-
-        exp_pend=exp_pend,
-
-        rec_pend=rec_pend,
-
-        total_oco=total_oco,
-
-        perc_atendidas=perc_atendidas,
-
-        perc_inventario=perc_inventario,
-
-        perc_expedicao=perc_expedicao,
-
-        atividades_arquivadas=atividades_arquivadas
-    )
-
-
-# =========================================================
-# MÓDULOS
-# =========================================================
-
-@app.route(
-    "/modulo/<path:nome>",
-    methods=["GET", "POST"]
-)
-def modulo(nome):
-
-    if "usuario" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    nome_limpo = nome
-
-    # =====================================================
-    # CONFIGURAÇÕES
-    # =====================================================
-
-    if "Configurações" in nome_limpo:
-
-        return render_template(
-            "configuracoes.html"
-        )
-
-    # =====================================================
-    # INDICADORES
-    # =====================================================
-
-    if "Indicadores" in nome_limpo:
-
-        total_geral = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE status IN ('Pendente', 'Concluído')
-            """
-        )
-
-        concluidas = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE status = 'Concluído'
-            """
-        )
-
-        pendentes = contar(
-            """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE status = 'Pendente'
-            """
-        )
-
-        return render_template(
-            "indicadores.html",
-
-            total_geral=total_geral,
-
-            concluidas=concluidas,
-
-            pendentes=pendentes
-        )
-
-    # =====================================================
-    # PDCA / MELHORIAS
-    # =====================================================
-
-    if (
-        "PDCA" in nome_limpo
-        or "Melhorias" in nome_limpo
-    ):
-
-        if request.method == "POST":
-
-            titulo = request.form.get(
-                "titulo"
-            )
-
-            descricao = request.form.get(
-                "descricao"
-            )
-
-            etapa = request.form.get(
-                "etapa"
-            )
-
-            autor = session["usuario"]
-
-            if titulo:
-
-                cursor = executar(
-                    """
-                    INSERT INTO melhorias
-                    (
-                        titulo,
-                        descricao,
-                        autor,
-                        etapa
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        titulo,
-                        descricao,
-                        autor,
-                        etapa
-                    )
-                )
-
-                get_db().commit()
-
-                fechar_cursor(cursor)
-
-            return redirect(
-                url_for(
-                    "modulo",
-                    nome="Melhorias / PDCA"
-                )
-            )
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM melhorias
-            ORDER BY id DESC
-            """
-        )
-
-        melhorias = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "pdca.html",
-            melhorias=melhorias
-        )
-
-    # =====================================================
-    # RELATÓRIOS
-    # =====================================================
-
-    if "Relatórios" in nome_limpo:
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            ORDER BY id DESC
-            """
-        )
-
-        itens = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "relatorios.html",
-            itens=itens
-        )
-
-    # =====================================================
-    # ESTOQUE
-    # =====================================================
-
-    if (
-        "Estoque" in nome_limpo
-        or "Cadastros" in nome_limpo
-    ):
-
-        if request.method == "POST":
-
-            acao = request.form.get(
-                "acao_estoque"
-            )
-
-            # ---------------------------------------------
-            # CADASTRO MANUAL
-            # ---------------------------------------------
-
-            if acao == "cadastrar_manual":
-
-                rua = request.form.get(
-                    "rua"
-                )
-
-                prateleira = request.form.get(
-                    "prateleira"
-                )
-
-                codigo = request.form.get(
-                    "codigo_material"
-                )
-
-                descricao = request.form.get(
-                    "descricao"
-                )
-
-                try:
-
-                    quantidade = int(
-                        request.form.get(
-                            "quantidade",
-                            0
-                        )
-                    )
-
-                except ValueError:
-
-                    quantidade = 0
-
-                cursor = executar(
-                    """
-                    INSERT INTO estoque
-                    (
-                        rua,
-                        prateleira,
-                        codigo_material,
-                        descricao,
-                        quantidade
-                    )
-                    VALUES
-                    (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    """,
-                    (
-                        rua,
-                        prateleira,
-                        codigo,
-                        descricao,
-                        quantidade
-                    )
-                )
-
-                get_db().commit()
-
-                fechar_cursor(cursor)
-
-                return redirect(
-                    url_for(
-                        "modulo",
-                        nome="Estoque"
-                    )
-                )
-
-        # ---------------------------------------------
-        # USUÁRIOS
-        # ---------------------------------------------
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            ORDER BY nome
-            """
-        )
-
-        usuarios = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        # ---------------------------------------------
-        # ESTOQUE
-        # ---------------------------------------------
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM estoque
-            ORDER BY id DESC
-            """
-        )
-
-        estoque_items = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-        return render_template(
-            "estoque.html",
-
-            usuarios=usuarios,
-
-            estoque_items=estoque_items
-        )
-
-    # =====================================================
-    # MÓDULOS OPERACIONAIS
-    # =====================================================
-
-    categoria_map = {
-
-        "Requisições": "Separação",
-
-        "Inventário": "Inventário",
-
-        "Expedição": "Expedição",
-
-        "Recebimento": "Recebimento"
-    }
-
-    categoria = categoria_map.get(
-        nome_limpo
-    )
-
-    itens = []
-
-    if categoria:
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = %s
-            ORDER BY id DESC
-            """,
-            (
-                categoria,
-            )
-        )
-
-        itens = cursor.fetchall()
-
-        fechar_cursor(cursor)
-
-    return render_template(
-        "modulo.html",
-
-        nome=nome_limpo,
-
-        itens=itens
-    )
-
-
-# =========================================================
-# CONCLUIR ATIVIDADE
-# =========================================================
-
-@app.route(
-    "/deletar/<int:id>"
-)
-def deletar(id):
-
-    if "usuario" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    # =====================================================
-    # MOMENTO EXATO EM QUE FOI CONCLUÍDA
-    # =====================================================
-
-    agora = datetime.now(
-        timezone.utc
-    )
-
-    # =====================================================
-    # POSTGRESQL
-    # =====================================================
-
-    if usando_postgresql():
-
-        concluido_em = agora
-
-    # =====================================================
-    # SQLITE
-    # =====================================================
-
-    else:
-
-        concluido_em = agora.strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-
-    # =====================================================
-    # ALTERA PENDENTE PARA CONCLUÍDO
-    #
-    # NÃO EXCLUI A ATIVIDADE
-    # =====================================================
-
-    cursor = executar(
-        """
-        UPDATE atividades
-
-        SET
-            status = 'Concluído',
-            concluido_em = %s
-
-        WHERE id = %s
-        AND status = 'Pendente'
-        """,
-        (
-            concluido_em,
-            id
-        )
-    )
-
-    get_db().commit()
-
-    fechar_cursor(cursor)
-
-    return redirect(
-        request.referrer
-        or url_for("index")
-    )
-
-
-# =========================================================
-# EXCLUIR ITEM DO ESTOQUE
-# =========================================================
-
-@app.route(
-    "/deletar_estoque/<int:id>"
-)
-def deletar_estoque(id):
-
-    if "usuario" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    cursor = executar(
-        """
-        DELETE FROM estoque
-        WHERE id = %s
-        """,
-        (
-            id,
-        )
-    )
-
-    get_db().commit()
-
-    fechar_cursor(cursor)
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="Estoque"
-        )
-    )
-
-
-# =========================================================
-# INICIALIZAÇÃO DO BANCO
-# =========================================================
-
-with app.app_context():
-
-    init_db()
-
-
-# =========================================================
-# EXECUÇÃO LOCAL
-# =========================================================
-
-if __name__ == "__main__":
-
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=False
-    )
+   

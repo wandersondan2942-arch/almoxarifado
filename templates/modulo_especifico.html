@@ -1,95 +1,263 @@
+```html
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
 
-```
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<title>Módulo: {{ nome }}</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
->
+    <title>
+        Módulo: {{ nome }} - Almoxarifado Valenet
+    </title>
 
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-<style>
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
 
-    body {
-        background-color: #f4f7f6;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    <style>
 
-    .container {
-        margin-top: 40px;
-        margin-bottom: 50px;
-    }
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #2d3748;
+        }
 
-    .card-custom {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
+        .main-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 20px;
+        }
 
-    .table {
-        font-size: 13px;
-    }
+        .card-custom {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+        }
 
-</style>
-```
+        .module-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 14px;
+            background-color: #eef4ff;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 24px;
+            color: #0d6efd;
+        }
+
+        .module-title {
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .table {
+            margin-bottom: 0;
+            font-size: 13px;
+        }
+
+        .table thead th {
+            white-space: nowrap;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+        }
+
+        .request-number {
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .activity-name {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .description {
+            display: block;
+            max-width: 300px;
+            margin-top: 3px;
+        }
+
+        .date-value {
+            white-space: nowrap;
+            font-size: 0.82rem;
+        }
+
+        .module-counter {
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            padding: 70px 20px;
+        }
+
+        .empty-state i {
+            font-size: 55px;
+        }
+
+        .btn-back {
+            white-space: nowrap;
+        }
+
+        .status-icon {
+            margin-right: 4px;
+        }
+
+        @media (max-width: 768px) {
+
+            .main-container {
+                margin: 15px auto;
+                padding: 10px;
+            }
+
+            .card-custom {
+                padding: 20px;
+            }
+
+            .header-area {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+
+            .btn-back {
+                width: 100%;
+            }
+
+        }
+
+    </style>
 
 </head>
 
+
 <body>
 
-```
-<div class="container">
+<div class="main-container">
 
     <div class="card-custom">
 
+
+        <!-- ========================================= -->
         <!-- CABEÇALHO -->
+        <!-- ========================================= -->
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div
+            class="d-flex justify-content-between align-items-center header-area mb-4"
+        >
 
-            <div>
+            <div class="d-flex align-items-center">
 
-                <h2 class="fw-bold mb-1">
+                <div class="module-icon me-3">
 
-                    <i class="fa-solid fa-folder-open text-primary me-2"></i>
+                    {% if nome == 'Requisições' or nome == 'Separação' %}
 
-                    Módulo: {{ nome }}
+                        <i class="fa-solid fa-box-open"></i>
 
-                </h2>
+                    {% elif nome == 'Inventário' %}
 
-                <small class="text-muted">
-                    Registros operacionais do almoxarifado
-                </small>
+                        <i class="fa-solid fa-boxes-stacked"></i>
+
+                    {% elif nome == 'Expedição' %}
+
+                        <i class="fa-solid fa-truck-fast"></i>
+
+                    {% elif nome == 'Recebimento' %}
+
+                        <i class="fa-solid fa-dolly"></i>
+
+                    {% else %}
+
+                        <i class="fa-solid fa-folder-open"></i>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div>
+
+                    <h2 class="module-title mb-1">
+
+                        {{ nome }}
+
+                    </h2>
+
+                    <small class="text-muted">
+
+                        Registros operacionais do almoxarifado
+
+                    </small>
+
+                </div>
 
             </div>
 
 
             <a
                 href="{{ url_for('index') }}"
-                class="btn btn-primary"
+                class="btn btn-primary btn-back"
             >
 
                 <i class="fa-solid fa-arrow-left me-1"></i>
 
-                Voltar ao Painel Operacional
+                Voltar ao Painel
 
             </a>
 
         </div>
 
 
-        <!-- REGISTROS -->
+
+        <!-- ========================================= -->
+        <!-- RESUMO -->
+        <!-- ========================================= -->
+
+        <div
+            class="d-flex justify-content-between align-items-center mb-3"
+        >
+
+            <span class="text-muted module-counter">
+
+                <i class="fa-solid fa-list me-1"></i>
+
+                {% if itens %}
+
+                    {{ itens|length }} registro(s) encontrado(s)
+
+                {% else %}
+
+                    Nenhum registro encontrado
+
+                {% endif %}
+
+            </span>
+
+        </div>
+
+
+
+        <!-- ========================================= -->
+        <!-- TABELA -->
+        <!-- ========================================= -->
 
         {% if itens %}
 
@@ -119,6 +287,8 @@
 
                         <th>Status</th>
 
+                        <th>Ação</th>
+
                     </tr>
 
                 </thead>
@@ -130,59 +300,168 @@
 
                     <tr>
 
-                        <td>
-                            #{{ item.id }}
-                        </td>
 
+                        <!-- ID -->
 
                         <td>
 
-                            {% if item.num_requisicao %}
+                            <span class="text-muted">
 
-                                <span class="fw-semibold text-primary">
-                                    {{ item.num_requisicao }}
-                                </span>
+                                #{{ item.id }}
 
-                            {% else %}
-
-                                <span class="text-muted">
-                                    -
-                                </span>
-
-                            {% endif %}
-
-                        </td>
-
-
-                        <td>
-                            <strong>{{ item.atividade }}</strong>
-                        </td>
-
-
-                        <td>
-
-                            <span class="badge bg-secondary">
-                                {{ item.categoria }}
                             </span>
 
                         </td>
 
 
+
+                        <!-- NÚMERO DA REQUISIÇÃO -->
+
                         <td>
-                            {{ item.responsavel }}
+
+                            {% if item.num_requisicao %}
+
+                                <span class="request-number">
+
+                                    {{ item.num_requisicao }}
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-muted">
+
+                                    —
+
+                                </span>
+
+                            {% endif %}
+
                         </td>
 
+
+
+                        <!-- ATIVIDADE -->
+
+                        <td>
+
+                            <div class="activity-name">
+
+                                {{ item.atividade }}
+
+                            </div>
+
+
+                            {% if item.descricao %}
+
+                                <small
+                                    class="text-muted description"
+                                >
+
+                                    {{ item.descricao }}
+
+                                </small>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- CATEGORIA -->
+
+                        <td>
+
+                            {% if item.categoria == 'Separação' %}
+
+                                <span class="badge bg-primary">
+
+                                    <i class="fa-solid fa-box-open me-1"></i>
+
+                                    Separação
+
+                                </span>
+
+
+                            {% elif item.categoria == 'Inventário' %}
+
+                                <span class="badge bg-warning text-dark">
+
+                                    <i class="fa-solid fa-boxes-stacked me-1"></i>
+
+                                    Inventário
+
+                                </span>
+
+
+                            {% elif item.categoria == 'Expedição' %}
+
+                                <span class="badge bg-success">
+
+                                    <i class="fa-solid fa-truck-fast me-1"></i>
+
+                                    Expedição
+
+                                </span>
+
+
+                            {% elif item.categoria == 'Recebimento' %}
+
+                                <span class="badge bg-info text-dark">
+
+                                    <i class="fa-solid fa-dolly me-1"></i>
+
+                                    Recebimento
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="badge bg-secondary">
+
+                                    {{ item.categoria or 'Não informado' }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- RESPONSÁVEL -->
+
+                        <td>
+
+                            <span class="fw-semibold">
+
+                                {{ item.responsavel }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- INÍCIO -->
 
                         <td>
 
                             {% if item.inicio_em %}
 
-                                {{ item.inicio_em }}
+                                <span class="date-value">
+
+                                    {{ item.inicio_em }}
+
+                                </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-                                    -
+
+                                    —
+
                                 </span>
 
                             {% endif %}
@@ -190,29 +469,60 @@
                         </td>
 
 
+
+                        <!-- PRAZO -->
+
                         <td>
-                            {{ item.prazo }}
+
+                            {% if item.prazo %}
+
+                                <span class="date-value">
+
+                                    {{ item.prazo }}
+
+                                </span>
+
+                            {% else %}
+
+                                <span class="text-muted">
+
+                                    —
+
+                                </span>
+
+                            {% endif %}
+
                         </td>
 
+
+
+                        <!-- CONCLUSÃO -->
 
                         <td>
 
                             {% if item.concluido_em %}
 
-                                <span class="text-success">
+                                <span class="date-value text-success">
+
                                     {{ item.concluido_em }}
+
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-                                    -
+
+                                    —
+
                                 </span>
 
                             {% endif %}
 
                         </td>
 
+
+
+                        <!-- STATUS -->
 
                         <td>
 
@@ -220,7 +530,9 @@
 
                                 <span class="badge bg-success">
 
-                                    <i class="fa-solid fa-check me-1"></i>
+                                    <i
+                                        class="fa-solid fa-circle-check status-icon"
+                                    ></i>
 
                                     Concluído
 
@@ -231,7 +543,9 @@
 
                                 <span class="badge bg-secondary">
 
-                                    <i class="fa-solid fa-box-archive me-1"></i>
+                                    <i
+                                        class="fa-solid fa-box-archive status-icon"
+                                    ></i>
 
                                     Arquivada
 
@@ -242,9 +556,24 @@
 
                                 <span class="badge bg-warning text-dark">
 
-                                    <i class="fa-solid fa-clock me-1"></i>
+                                    <i
+                                        class="fa-solid fa-clock status-icon"
+                                    ></i>
 
                                     Pendente
+
+                                </span>
+
+
+                            {% elif item.status == 'Em andamento' %}
+
+                                <span class="badge bg-info text-dark">
+
+                                    <i
+                                        class="fa-solid fa-spinner status-icon"
+                                    ></i>
+
+                                    Em andamento
 
                                 </span>
 
@@ -252,12 +581,71 @@
                             {% else %}
 
                                 <span class="badge bg-secondary">
-                                    {{ item.status }}
+
+                                    {{ item.status or 'Não informado' }}
+
                                 </span>
 
                             {% endif %}
 
                         </td>
+
+
+
+                        <!-- AÇÃO -->
+
+                        <td>
+
+                            {% if item.status == 'Pendente' %}
+
+                                <a
+                                    href="{{ url_for('concluir', id=item.id) }}"
+                                    class="btn btn-sm btn-success"
+                                    title="Concluir atividade"
+                                    onclick="return confirmarConclusao();"
+                                >
+
+                                    <i class="fa-solid fa-check"></i>
+
+                                </a>
+
+
+                            {% elif item.status == 'Concluído' %}
+
+                                <span
+                                    class="text-success"
+                                    title="Atividade concluída"
+                                >
+
+                                    <i class="fa-solid fa-check-double"></i>
+
+                                </span>
+
+
+                            {% elif item.status == 'Arquivada' %}
+
+                                <span
+                                    class="text-muted"
+                                    title="Atividade arquivada"
+                                >
+
+                                    <i class="fa-solid fa-box-archive"></i>
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span class="text-muted">
+
+                                    —
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
 
                     </tr>
 
@@ -272,12 +660,25 @@
 
         {% else %}
 
-        <div class="text-center py-5">
 
-            <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
+        <!-- ========================================= -->
+        <!-- SEM REGISTROS -->
+        <!-- ========================================= -->
 
-            <p class="text-muted fs-5">
-                Nenhum registro encontrado para este módulo.
+        <div class="text-center empty-state">
+
+            <i class="fa-solid fa-inbox text-muted mb-3"></i>
+
+            <h5 class="fw-bold text-dark">
+
+                Nenhum registro encontrado
+
+            </h5>
+
+            <p class="text-muted mb-0">
+
+                Ainda não existem atividades registradas neste módulo.
+
             </p>
 
         </div>
@@ -289,11 +690,40 @@
 </div>
 
 
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================= -->
+
+<script>
+
+    function confirmarConclusao() {
+
+        return confirm(
+            "Deseja realmente concluir esta atividade?"
+        );
+
+    }
+
+</script>
+
+
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
 </script>
-```
 
 </body>
 
 </html>
+```
+
+Uma observação importante: **não mantenha a versão anterior e esta ao mesmo tempo**. O arquivo deve ser somente esse `templates/modulo.html`.
+
+E ele depende de uma rota no `app.py` com o nome:
+
+```python
+@app.route("/concluir/<int:id>")
+def concluir(id):
+```
+
+que é justamente a parte que vai registrar o **horário de conclusão** e, quando for uma **Separação**, criar automaticamente a respectiva **Expedição** da mesma requisição.

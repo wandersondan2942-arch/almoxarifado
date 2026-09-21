@@ -1,9 +1,9 @@
-```python
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 
+import pandas as pd
 import psycopg2
 import psycopg2.extras
 
@@ -99,7 +99,7 @@ def get_db():
 
 
 @app.teardown_appcontext
-def close_connection(exception):
+def close_connection(exception=None):
 
     db = getattr(g, "_database", None)
 
@@ -131,11 +131,6 @@ def executar(sql, parametros=()):
     return cursor
 
 
-def obter_primeiro(cursor):
-
-    return cursor.fetchone()
-
-
 def obter_valor(cursor):
 
     resultado = cursor.fetchone()
@@ -152,7 +147,11 @@ def obter_valor(cursor):
 def fechar_cursor(cursor):
 
     if cursor:
-        cursor.close()
+
+        try:
+            cursor.close()
+        except Exception:
+            pass
 
 
 # =========================================================
@@ -173,6 +172,8 @@ def inject_user():
 
 def contar(sql, parametros=()):
 
+    cursor = None
+
     try:
 
         cursor = executar(
@@ -184,12 +185,19 @@ def contar(sql, parametros=()):
 
         fechar_cursor(cursor)
 
-        return valor
+        return int(valor or 0)
 
     except Exception as erro:
 
+        fechar_cursor(cursor)
+
+        try:
+            get_db().rollback()
+        except Exception:
+            pass
+
         print(
-            f"Erro ao calcular indicador: {erro}"
+            f"[ERRO CONTADOR] {erro}"
         )
 
         return 0
@@ -209,8 +217,8 @@ def agora_utc():
 def agora_utc_naive():
 
     """
-    PostgreSQL está usando TIMESTAMP sem timezone.
-    Portanto armazenamos UTC sem informação de timezone.
+    PostgreSQL utiliza TIMESTAMP sem timezone.
+    Portanto armazenamos UTC sem tzinfo.
     """
 
     return agora_utc().replace(
@@ -221,7 +229,7 @@ def agora_utc_naive():
 def agora_sqlite():
 
     """
-    SQLite armazena a data como texto em UTC.
+    SQLite armazena a data/hora em texto UTC.
     """
 
     return agora_utc().strftime(
@@ -229,8 +237,21 @@ def agora_sqlite():
     )
 
 
+def data_brasil():
+
+    """
+    Retorna a data atual do Brasil.
+    Atualmente o Brasil utiliza UTC-3.
+    """
+
+    return (
+        agora_utc()
+        - timedelta(hours=3)
+    ).date()
+
+
 # =========================================================
-# CRIAÇÃO DO BANCO
+# CRIAÇÃO E MIGRAÇÃO DO BANCO
 # =========================================================
 
 def init_db():
@@ -239,226 +260,452 @@ def init_db():
 
     cursor = db.cursor()
 
-    # =====================================================
-    # POSTGRESQL
-    # =====================================================
+    try:
 
-    if usando_postgresql():
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id SERIAL PRIMARY KEY,
-                nome TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS atividades (
-                id SERIAL PRIMARY KEY,
-                num_requisicao TEXT,
-                prioridade TEXT NOT NULL,
-                atividade TEXT NOT NULL,
-                categoria TEXT NOT NULL,
-                responsavel TEXT NOT NULL,
-                prazo TEXT NOT NULL,
-                status TEXT DEFAULT 'Pendente',
-                inicio_em TIMESTAMP,
-                concluido_em TIMESTAMP
-            )
-        """)
-
-        cursor.execute("""
-            ALTER TABLE atividades
-            ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
-        """)
-
-        cursor.execute("""
-            ALTER TABLE atividades
-            ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat (
-                id SERIAL PRIMARY KEY,
-                remetente TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS melhorias (
-                id SERIAL PRIMARY KEY,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                autor TEXT NOT NULL,
-                etapa TEXT DEFAULT 'Planejar (Plan)',
-                status TEXT DEFAULT 'Em Andamento'
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id SERIAL PRIMARY KEY,
-                rua TEXT,
-                prateleira TEXT,
-                codigo_material TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0
-            )
-        """)
-
-    # =====================================================
-    # SQLITE
-    # =====================================================
-
-    else:
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS usuarios (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS atividades (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                num_requisicao TEXT,
-                prioridade TEXT NOT NULL,
-                atividade TEXT NOT NULL,
-                categoria TEXT NOT NULL,
-                responsavel TEXT NOT NULL,
-                prazo TEXT NOT NULL,
-                status TEXT DEFAULT 'Pendente',
-                inicio_em TEXT,
-                concluido_em TEXT
-            )
-        """)
-
-        cursor.execute("""
-            PRAGMA table_info(atividades)
-        """)
-
-        colunas = cursor.fetchall()
-
-        nomes_colunas = [
-            coluna[1]
-            for coluna in colunas
-        ]
-
-        if "inicio_em" not in nomes_colunas:
-
-            print(
-                "Adicionando coluna inicio_em ao SQLite..."
-            )
-
-            cursor.execute("""
-                ALTER TABLE atividades
-                ADD COLUMN inicio_em TEXT
-            """)
-
-        if "concluido_em" not in nomes_colunas:
-
-            print(
-                "Adicionando coluna concluido_em ao SQLite..."
-            )
-
-            cursor.execute("""
-                ALTER TABLE atividades
-                ADD COLUMN concluido_em TEXT
-            """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS chat (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                remetente TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS melhorias (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                titulo TEXT NOT NULL,
-                descricao TEXT NOT NULL,
-                autor TEXT NOT NULL,
-                etapa TEXT DEFAULT 'Planejar (Plan)',
-                status TEXT DEFAULT 'Em Andamento'
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                rua TEXT,
-                prateleira TEXT,
-                codigo_material TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0
-            )
-        """)
-
-        # Preenche início das atividades antigas
-        # que ainda não possuem data de início.
-
-        cursor.execute("""
-            UPDATE atividades
-            SET inicio_em = COALESCE(
-                concluido_em,
-                datetime('now')
-            )
-            WHERE inicio_em IS NULL
-        """)
-
-    # =====================================================
-    # USUÁRIO INICIAL
-    # =====================================================
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM usuarios"
-    )
-
-    quantidade_usuarios = obter_valor(
-        cursor
-    )
-
-    if quantidade_usuarios == 0:
+        # =================================================
+        # POSTGRESQL
+        # =================================================
 
         if usando_postgresql():
 
-            cursor.execute(
-                """
-                INSERT INTO usuarios
-                (nome, senha)
-                VALUES (%s, %s)
-                """,
-                (
-                    "Wanderson Fernandes",
-                    "1234"
+            # ---------------------------------------------
+            # USUÁRIOS
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id SERIAL PRIMARY KEY,
+                    nome TEXT UNIQUE NOT NULL,
+                    senha TEXT NOT NULL
                 )
-            )
+            """)
+
+            # ---------------------------------------------
+            # ATIVIDADES
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS atividades (
+                    id SERIAL PRIMARY KEY,
+                    num_requisicao TEXT,
+                    prioridade TEXT NOT NULL DEFAULT 'Baixa',
+                    atividade TEXT NOT NULL,
+                    categoria TEXT NOT NULL DEFAULT 'Separação',
+                    responsavel TEXT NOT NULL,
+                    prazo TEXT NOT NULL DEFAULT '',
+                    status TEXT DEFAULT 'Pendente',
+                    inicio_em TIMESTAMP,
+                    concluido_em TIMESTAMP
+                )
+            """)
+
+            # Migração de bancos antigos
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS num_requisicao TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS prioridade TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS atividade TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS categoria TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS responsavel TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS prazo TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS status TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
+            """)
+
+            # Corrige valores nulos antigos
+
+            cursor.execute("""
+                UPDATE atividades
+                SET prioridade = 'Baixa'
+                WHERE prioridade IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET categoria = 'Separação'
+                WHERE categoria IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET prazo = ''
+                WHERE prazo IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET status = 'Pendente'
+                WHERE status IS NULL
+            """)
+
+            # ---------------------------------------------
+            # CHAT
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat (
+                    id SERIAL PRIMARY KEY,
+                    remetente TEXT NOT NULL,
+                    mensagem TEXT NOT NULL,
+                    horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # ---------------------------------------------
+            # MELHORIAS / PDCA
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS melhorias (
+                    id SERIAL PRIMARY KEY,
+                    titulo TEXT NOT NULL,
+                    descricao TEXT NOT NULL,
+                    autor TEXT NOT NULL,
+                    etapa TEXT DEFAULT 'Planejar (Plan)',
+                    status TEXT DEFAULT 'Pendente',
+                    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN IF NOT EXISTS etapa TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN IF NOT EXISTS autor TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN IF NOT EXISTS status TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+            """)
+
+            # ---------------------------------------------
+            # ESTOQUE
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS estoque (
+                    id SERIAL PRIMARY KEY,
+                    rua TEXT,
+                    prateleira TEXT,
+                    codigo_material TEXT,
+                    descricao TEXT,
+                    quantidade INTEGER DEFAULT 0
+                )
+            """)
+
+        # =================================================
+        # SQLITE
+        # =================================================
 
         else:
 
-            cursor.execute(
-                """
-                INSERT INTO usuarios
-                (nome, senha)
-                VALUES (?, ?)
-                """,
-                (
-                    "Wanderson Fernandes",
-                    "1234"
+            # ---------------------------------------------
+            # USUÁRIOS
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT UNIQUE NOT NULL,
+                    senha TEXT NOT NULL
                 )
-            )
+            """)
 
-    db.commit()
+            # ---------------------------------------------
+            # ATIVIDADES
+            # ---------------------------------------------
 
-    fechar_cursor(cursor)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS atividades (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    num_requisicao TEXT,
+                    prioridade TEXT NOT NULL DEFAULT 'Baixa',
+                    atividade TEXT NOT NULL,
+                    categoria TEXT NOT NULL DEFAULT 'Separação',
+                    responsavel TEXT NOT NULL,
+                    prazo TEXT NOT NULL DEFAULT '',
+                    status TEXT DEFAULT 'Pendente',
+                    inicio_em TEXT,
+                    concluido_em TEXT
+                )
+            """)
+
+            cursor.execute("""
+                PRAGMA table_info(atividades)
+            """)
+
+            colunas = cursor.fetchall()
+
+            nomes_colunas = [
+                coluna[1]
+                for coluna in colunas
+            ]
+
+            colunas_necessarias = {
+
+                "num_requisicao":
+                    "ALTER TABLE atividades ADD COLUMN num_requisicao TEXT",
+
+                "prioridade":
+                    "ALTER TABLE atividades ADD COLUMN prioridade TEXT",
+
+                "atividade":
+                    "ALTER TABLE atividades ADD COLUMN atividade TEXT",
+
+                "categoria":
+                    "ALTER TABLE atividades ADD COLUMN categoria TEXT",
+
+                "responsavel":
+                    "ALTER TABLE atividades ADD COLUMN responsavel TEXT",
+
+                "prazo":
+                    "ALTER TABLE atividades ADD COLUMN prazo TEXT",
+
+                "status":
+                    "ALTER TABLE atividades ADD COLUMN status TEXT",
+
+                "inicio_em":
+                    "ALTER TABLE atividades ADD COLUMN inicio_em TEXT",
+
+                "concluido_em":
+                    "ALTER TABLE atividades ADD COLUMN concluido_em TEXT"
+            }
+
+            for nome_coluna, comando in colunas_necessarias.items():
+
+                if nome_coluna not in nomes_colunas:
+
+                    print(
+                        f"[BANCO] Adicionando coluna "
+                        f"{nome_coluna}..."
+                    )
+
+                    cursor.execute(comando)
+
+            # Corrige dados antigos
+
+            cursor.execute("""
+                UPDATE atividades
+                SET prioridade = 'Baixa'
+                WHERE prioridade IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET categoria = 'Separação'
+                WHERE categoria IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET prazo = ''
+                WHERE prazo IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET status = 'Pendente'
+                WHERE status IS NULL
+            """)
+
+            # Preenche início de atividades antigas
+
+            cursor.execute("""
+                UPDATE atividades
+                SET inicio_em = COALESCE(
+                    concluido_em,
+                    datetime('now')
+                )
+                WHERE inicio_em IS NULL
+            """)
+
+            # ---------------------------------------------
+            # CHAT
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chat (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    remetente TEXT NOT NULL,
+                    mensagem TEXT NOT NULL,
+                    horario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # ---------------------------------------------
+            # MELHORIAS
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS melhorias (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    titulo TEXT NOT NULL,
+                    descricao TEXT NOT NULL,
+                    autor TEXT NOT NULL,
+                    etapa TEXT DEFAULT 'Planejar (Plan)',
+                    status TEXT DEFAULT 'Pendente',
+                    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            cursor.execute("""
+                PRAGMA table_info(melhorias)
+            """)
+
+            colunas_melhorias = cursor.fetchall()
+
+            nomes_melhorias = [
+                coluna[1]
+                for coluna in colunas_melhorias
+            ]
+
+            if "autor" not in nomes_melhorias:
+
+                cursor.execute("""
+                    ALTER TABLE melhorias
+                    ADD COLUMN autor TEXT
+                """)
+
+            if "etapa" not in nomes_melhorias:
+
+                cursor.execute("""
+                    ALTER TABLE melhorias
+                    ADD COLUMN etapa TEXT
+                """)
+
+            if "status" not in nomes_melhorias:
+
+                cursor.execute("""
+                    ALTER TABLE melhorias
+                    ADD COLUMN status TEXT
+                """)
+
+            if "criado_em" not in nomes_melhorias:
+
+                cursor.execute("""
+                    ALTER TABLE melhorias
+                    ADD COLUMN criado_em TIMESTAMP
+                """)
+
+            # ---------------------------------------------
+            # ESTOQUE
+            # ---------------------------------------------
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS estoque (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    rua TEXT,
+                    prateleira TEXT,
+                    codigo_material TEXT,
+                    descricao TEXT,
+                    quantidade INTEGER DEFAULT 0
+                )
+            """)
+
+        # =================================================
+        # USUÁRIO INICIAL
+        # =================================================
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM usuarios"
+        )
+
+        quantidade_usuarios = obter_valor(
+            cursor
+        )
+
+        if quantidade_usuarios == 0:
+
+            if usando_postgresql():
+
+                cursor.execute(
+                    """
+                    INSERT INTO usuarios
+                    (nome, senha)
+                    VALUES (%s, %s)
+                    """,
+                    (
+                        "Wanderson Fernandes",
+                        "1234"
+                    )
+                )
+
+            else:
+
+                cursor.execute(
+                    """
+                    INSERT INTO usuarios
+                    (nome, senha)
+                    VALUES (?, ?)
+                    """,
+                    (
+                        "Wanderson Fernandes",
+                        "1234"
+                    )
+                )
+
+        db.commit()
+
+        print(
+            "[BANCO] Banco inicializado com sucesso."
+        )
+
+    except Exception as erro:
+
+        db.rollback()
+
+        print(
+            f"[ERRO BANCO] {erro}"
+        )
+
+        raise
+
+    finally:
+
+        fechar_cursor(cursor)
 
 
 # =========================================================
@@ -467,37 +714,32 @@ def init_db():
 
 def arquivar_atividades_expiradas():
 
-    """
-    Concluído
-          ↓
-    após 24 horas
-          ↓
-    Arquivada
-
-    O registro permanece no banco.
-    """
-
     try:
 
         db = get_db()
 
+        cursor = db.cursor()
+
         if usando_postgresql():
 
-            cursor = db.cursor()
+            limite = agora_utc_naive() - timedelta(
+                hours=24
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE atividades
                 SET status = 'Arquivada'
                 WHERE status = 'Concluído'
                 AND concluido_em IS NOT NULL
-                AND concluido_em <= (
-                    CURRENT_TIMESTAMP - INTERVAL '24 hours'
+                AND concluido_em <= %s
+                """,
+                (
+                    limite,
                 )
-            """)
+            )
 
         else:
-
-            cursor = db.cursor()
 
             limite = (
                 agora_utc()
@@ -508,15 +750,18 @@ def arquivar_atividades_expiradas():
                 "%Y-%m-%d %H:%M:%S"
             )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 UPDATE atividades
                 SET status = 'Arquivada'
                 WHERE status = 'Concluído'
                 AND concluido_em IS NOT NULL
                 AND concluido_em <= ?
-            """, (
-                limite_texto,
-            ))
+                """,
+                (
+                    limite_texto,
+                )
+            )
 
         quantidade = cursor.rowcount
 
@@ -529,7 +774,7 @@ def arquivar_atividades_expiradas():
             print(
                 f"[ARQUIVAMENTO] "
                 f"{quantidade} atividade(s) "
-                f"arquivada(s) após 24 horas."
+                f"arquivada(s)."
             )
 
     except Exception as erro:
@@ -568,32 +813,48 @@ def login():
             ""
         ).strip()
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            WHERE nome = %s
-            AND senha = %s
-            """,
-            (
-                nome,
-                senha
-            )
-        )
+        cursor = None
 
-        user = cursor.fetchone()
+        try:
 
-        fechar_cursor(cursor)
-
-        if user:
-
-            session["usuario"] = user["nome"]
-
-            return redirect(
-                url_for("index")
+            cursor = executar(
+                """
+                SELECT *
+                FROM usuarios
+                WHERE nome = %s
+                AND senha = %s
+                """,
+                (
+                    nome,
+                    senha
+                )
             )
 
-        erro = "Usuário ou senha inválidos!"
+            user = cursor.fetchone()
+
+            if user:
+
+                session["usuario"] = user["nome"]
+
+                return redirect(
+                    url_for("index")
+                )
+
+            erro = "Usuário ou senha inválidos!"
+
+        except Exception as erro_banco:
+
+            get_db().rollback()
+
+            print(
+                f"[ERRO LOGIN] {erro_banco}"
+            )
+
+            erro = "Erro ao realizar login."
+
+        finally:
+
+            fechar_cursor(cursor)
 
     return render_template(
         "login.html",
@@ -631,6 +892,8 @@ def cadastro_usuario():
 
         else:
 
+            cursor = None
+
             try:
 
                 cursor = executar(
@@ -647,7 +910,10 @@ def cadastro_usuario():
 
                 get_db().commit()
 
-                fechar_cursor(cursor)
+                flash(
+                    "Usuário cadastrado com sucesso.",
+                    "success"
+                )
 
                 return redirect(
                     url_for("login")
@@ -658,14 +924,19 @@ def cadastro_usuario():
                 get_db().rollback()
 
                 print(
-                    f"Erro ao cadastrar usuário: "
+                    f"[ERRO USUÁRIO] "
                     f"{erro_banco}"
                 )
 
                 erro = (
                     "Não foi possível cadastrar "
-                    "este usuário."
+                    "este usuário. "
+                    "O nome pode já estar cadastrado."
                 )
+
+            finally:
+
+                fechar_cursor(cursor)
 
     return render_template(
         "cadastro_usuario.html",
@@ -735,21 +1006,35 @@ def index():
 
             if mensagem:
 
-                cursor = executar(
-                    """
-                    INSERT INTO chat
-                    (remetente, mensagem)
-                    VALUES (%s, %s)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem
+                cursor = None
+
+                try:
+
+                    cursor = executar(
+                        """
+                        INSERT INTO chat
+                        (remetente, mensagem)
+                        VALUES (%s, %s)
+                        """,
+                        (
+                            usuario_atual,
+                            mensagem
+                        )
                     )
-                )
 
-                db.commit()
+                    db.commit()
 
-                fechar_cursor(cursor)
+                except Exception as erro:
+
+                    db.rollback()
+
+                    print(
+                        f"[ERRO CHAT] {erro}"
+                    )
+
+                finally:
+
+                    fechar_cursor(cursor)
 
             return redirect(
                 url_for("index")
@@ -776,6 +1061,13 @@ def index():
         atividade = (
             request.form.get(
                 "atividade",
+                ""
+            ).strip()
+        )
+
+        descricao = (
+            request.form.get(
+                "descricao",
                 ""
             ).strip()
         )
@@ -816,12 +1108,14 @@ def index():
                 url_for("index")
             )
 
-        # Para Separação, a requisição é obrigatória.
-
-        if categoria == "Separação" and not num_requisicao:
+        if (
+            categoria == "Separação"
+            and not num_requisicao
+        ):
 
             flash(
-                "Informe o número da requisição para criar uma Separação.",
+                "Informe o número da requisição "
+                "para criar uma Separação.",
                 "warning"
             )
 
@@ -830,7 +1124,7 @@ def index():
             )
 
         # =================================================
-        # DATA/HORA DE INÍCIO
+        # DATA/HORA
         # =================================================
 
         if usando_postgresql():
@@ -842,8 +1136,10 @@ def index():
             inicio_em = agora_sqlite()
 
         # =================================================
-        # INSERE ATIVIDADE
+        # INSERÇÃO
         # =================================================
+
+        cursor = None
 
         try:
 
@@ -854,6 +1150,7 @@ def index():
                     num_requisicao,
                     prioridade,
                     atividade,
+                    descricao,
                     categoria,
                     responsavel,
                     prazo,
@@ -869,6 +1166,7 @@ def index():
                     %s,
                     %s,
                     %s,
+                    %s,
                     'Pendente',
                     %s,
                     NULL
@@ -878,6 +1176,7 @@ def index():
                     num_requisicao or None,
                     prioridade,
                     atividade,
+                    descricao,
                     categoria,
                     responsavel,
                     prazo,
@@ -887,27 +1186,35 @@ def index():
 
             db.commit()
 
-            fechar_cursor(cursor)
+            flash(
+                "Atividade registrada com sucesso.",
+                "success"
+            )
 
         except Exception as erro:
 
             db.rollback()
 
             print(
-                f"Erro ao inserir atividade: {erro}"
+                f"[ERRO ATIVIDADE] {erro}"
             )
 
             flash(
-                "Não foi possível registrar a atividade.",
+                "Não foi possível registrar "
+                "a atividade.",
                 "danger"
             )
+
+        finally:
+
+            fechar_cursor(cursor)
 
         return redirect(
             url_for("index")
         )
 
     # =====================================================
-    # LISTAGEM DE ATIVIDADES
+    # LISTAGEM
     # =====================================================
 
     busca = request.args.get(
@@ -915,64 +1222,96 @@ def index():
         ""
     ).strip()
 
-    if busca:
+    cursor = None
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE
-                atividade LIKE %s
-                OR categoria LIKE %s
-                OR responsavel LIKE %s
-                OR num_requisicao LIKE %s
-            ORDER BY id DESC
-            """,
-            (
-                f"%{busca}%",
-                f"%{busca}%",
-                f"%{busca}%",
-                f"%{busca}%"
+    try:
+
+        if busca:
+
+            termo = f"%{busca}%"
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE
+                    atividade LIKE %s
+                    OR descricao LIKE %s
+                    OR categoria LIKE %s
+                    OR responsavel LIKE %s
+                    OR num_requisicao LIKE %s
+                    OR status LIKE %s
+                ORDER BY id DESC
+                """,
+                (
+                    termo,
+                    termo,
+                    termo,
+                    termo,
+                    termo,
+                    termo
+                )
             )
+
+        else:
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE status = 'Pendente'
+                ORDER BY id DESC
+                """
+            )
+
+        atividades = cursor.fetchall()
+
+    except Exception as erro:
+
+        print(
+            f"[ERRO LISTAGEM] {erro}"
         )
 
-    else:
+        atividades = []
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE status = 'Pendente'
-            ORDER BY id DESC
-            """
-        )
+    finally:
 
-    atividades = cursor.fetchall()
-
-    fechar_cursor(cursor)
+        fechar_cursor(cursor)
 
     # =====================================================
     # CHAT
     # =====================================================
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM chat
-        ORDER BY id DESC
-        LIMIT 15
-        """
-    )
+    cursor = None
 
-    mensagens_chat = cursor.fetchall()
+    try:
 
-    fechar_cursor(cursor)
+        cursor = executar(
+            """
+            SELECT *
+            FROM chat
+            ORDER BY id DESC
+            LIMIT 15
+            """
+        )
+
+        mensagens_chat = cursor.fetchall()
+
+    except Exception as erro:
+
+        print(
+            f"[ERRO CHAT LISTA] {erro}"
+        )
+
+        mensagens_chat = []
+
+    finally:
+
+        fechar_cursor(cursor)
 
     # =====================================================
     # INDICADORES
     # =====================================================
-
-    # Requisições pendentes
 
     total_req = contar(
         """
@@ -983,8 +1322,6 @@ def index():
         """
     )
 
-    # Inventários pendentes
-
     inv_pendentes = contar(
         """
         SELECT COUNT(*)
@@ -993,8 +1330,6 @@ def index():
         AND status = 'Pendente'
         """
     )
-
-    # Inventários concluídos
 
     inv_concluido = contar(
         """
@@ -1005,8 +1340,6 @@ def index():
         """
     )
 
-    # Total de Inventários para o indicador
-
     inv_total_indicador = contar(
         """
         SELECT COUNT(*)
@@ -1015,8 +1348,6 @@ def index():
         AND status IN ('Pendente', 'Concluído')
         """
     )
-
-    # Expedições pendentes
 
     exp_pend = contar(
         """
@@ -1027,8 +1358,6 @@ def index():
         """
     )
 
-    # Expedições concluídas
-
     exp_concluido = contar(
         """
         SELECT COUNT(*)
@@ -1037,8 +1366,6 @@ def index():
         AND status = 'Concluído'
         """
     )
-
-    # Total de Expedições
 
     exp_total = contar(
         """
@@ -1049,8 +1376,6 @@ def index():
         """
     )
 
-    # Recebimentos pendentes
-
     rec_pend = contar(
         """
         SELECT COUNT(*)
@@ -1059,8 +1384,6 @@ def index():
         AND status = 'Pendente'
         """
     )
-
-    # Ocorrências = prioridade alta pendente
 
     total_oco = contar(
         """
@@ -1071,8 +1394,6 @@ def index():
         """
     )
 
-    # Total de atividades ativas
-
     total_atividades = contar(
         """
         SELECT COUNT(*)
@@ -1081,8 +1402,6 @@ def index():
         """
     )
 
-    # Atividades concluídas
-
     atividades_concluidas = contar(
         """
         SELECT COUNT(*)
@@ -1090,8 +1409,6 @@ def index():
         WHERE status = 'Concluído'
         """
     )
-
-    # Atividades arquivadas
 
     atividades_arquivadas = contar(
         """
@@ -1102,7 +1419,7 @@ def index():
     )
 
     # =====================================================
-    # PERCENTUAL DE ATENDIMENTO
+    # PERCENTUAIS
     # =====================================================
 
     if total_atividades > 0:
@@ -1118,10 +1435,6 @@ def index():
 
         perc_atendidas = 0
 
-    # =====================================================
-    # PERCENTUAL DO INVENTÁRIO
-    # =====================================================
-
     if inv_total_indicador > 0:
 
         perc_inventario = round(
@@ -1134,10 +1447,6 @@ def index():
     else:
 
         perc_inventario = 0
-
-    # =====================================================
-    # PERCENTUAL DA EXPEDIÇÃO
-    # =====================================================
 
     if exp_total > 0:
 
@@ -1156,20 +1465,34 @@ def index():
     # USUÁRIOS
     # =====================================================
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM usuarios
-        ORDER BY nome
-        """
-    )
+    cursor = None
 
-    usuarios = cursor.fetchall()
+    try:
 
-    fechar_cursor(cursor)
+        cursor = executar(
+            """
+            SELECT *
+            FROM usuarios
+            ORDER BY nome
+            """
+        )
+
+        usuarios = cursor.fetchall()
+
+    except Exception as erro:
+
+        print(
+            f"[ERRO USUÁRIOS] {erro}"
+        )
+
+        usuarios = []
+
+    finally:
+
+        fechar_cursor(cursor)
 
     # =====================================================
-    # RENDERIZA PAINEL
+    # RENDER
     # =====================================================
 
     return render_template(
@@ -1185,8 +1508,6 @@ def index():
 
         total_req=total_req,
 
-        # IMPORTANTE:
-        # agora mostra o total real de Inventários
         inv_conc=inv_concluido,
 
         inv_total=inv_total_indicador,
@@ -1202,6 +1523,10 @@ def index():
         perc_inventario=perc_inventario,
 
         perc_expedicao=perc_expedicao,
+
+        total_atividades=total_atividades,
+
+        atividades_concluidas=atividades_concluidas,
 
         atividades_arquivadas=atividades_arquivadas
     )
@@ -1265,6 +1590,72 @@ def modulo(nome):
             """
         )
 
+        inv_total = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE categoria = 'Inventário'
+            AND status IN ('Pendente', 'Concluído')
+            """
+        )
+
+        inv_concluido = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE categoria = 'Inventário'
+            AND status = 'Concluído'
+            """
+        )
+
+        exp_total = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE categoria = 'Expedição'
+            AND status IN ('Pendente', 'Concluído')
+            """
+        )
+
+        exp_concluido = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE categoria = 'Expedição'
+            AND status = 'Concluído'
+            """
+        )
+
+        perc_atendidas = (
+            round(
+                concluidas
+                / total_geral
+                * 100
+            )
+            if total_geral
+            else 0
+        )
+
+        perc_inventario = (
+            round(
+                inv_concluido
+                / inv_total
+                * 100
+            )
+            if inv_total
+            else 0
+        )
+
+        perc_expedicao = (
+            round(
+                exp_concluido
+                / exp_total
+                * 100
+            )
+            if exp_total
+            else 0
+        )
+
         return render_template(
             "indicadores.html",
 
@@ -1272,7 +1663,13 @@ def modulo(nome):
 
             concluidas=concluidas,
 
-            pendentes=pendentes
+            pendentes=pendentes,
+
+            perc_atendidas=perc_atendidas,
+
+            perc_inventario=perc_inventario,
+
+            perc_expedicao=perc_expedicao
         )
 
     # =====================================================
@@ -1309,7 +1706,23 @@ def modulo(nome):
 
             autor = session["usuario"]
 
-            if titulo:
+            if not titulo:
+
+                flash(
+                    "Informe um título para a melhoria.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "modulo",
+                        nome="Melhorias / PDCA"
+                    )
+                )
+
+            cursor = None
+
+            try:
 
                 cursor = executar(
                     """
@@ -1318,14 +1731,16 @@ def modulo(nome):
                         titulo,
                         descricao,
                         autor,
-                        etapa
+                        etapa,
+                        status
                     )
                     VALUES
                     (
                         %s,
                         %s,
                         %s,
-                        %s
+                        %s,
+                        'Pendente'
                     )
                     """,
                     (
@@ -1338,6 +1753,27 @@ def modulo(nome):
 
                 get_db().commit()
 
+                flash(
+                    "Melhoria cadastrada com sucesso.",
+                    "success"
+                )
+
+            except Exception as erro:
+
+                get_db().rollback()
+
+                print(
+                    f"[ERRO PDCA] {erro}"
+                )
+
+                flash(
+                    "Não foi possível cadastrar "
+                    "a melhoria.",
+                    "danger"
+                )
+
+            finally:
+
                 fechar_cursor(cursor)
 
             return redirect(
@@ -1347,17 +1783,31 @@ def modulo(nome):
                 )
             )
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM melhorias
-            ORDER BY id DESC
-            """
-        )
+        cursor = None
 
-        melhorias = cursor.fetchall()
+        try:
 
-        fechar_cursor(cursor)
+            cursor = executar(
+                """
+                SELECT *
+                FROM melhorias
+                ORDER BY id DESC
+                """
+            )
+
+            melhorias = cursor.fetchall()
+
+        except Exception as erro:
+
+            print(
+                f"[ERRO PDCA LISTA] {erro}"
+            )
+
+            melhorias = []
+
+        finally:
+
+            fechar_cursor(cursor)
 
         return render_template(
             "pdca.html",
@@ -1370,17 +1820,31 @@ def modulo(nome):
 
     if "Relatórios" in nome_limpo:
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            ORDER BY id DESC
-            """
-        )
+        cursor = None
 
-        itens = cursor.fetchall()
+        try:
 
-        fechar_cursor(cursor)
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                ORDER BY id DESC
+                """
+            )
+
+            itens = cursor.fetchall()
+
+        except Exception as erro:
+
+            print(
+                f"[ERRO RELATÓRIOS] {erro}"
+            )
+
+            itens = []
+
+        finally:
+
+            fechar_cursor(cursor)
 
         return render_template(
             "relatorios.html",
@@ -1388,19 +1852,57 @@ def modulo(nome):
         )
 
     # =====================================================
+    # CADASTROS
+    # =====================================================
+
+    if "Cadastros" in nome_limpo:
+
+        cursor = None
+
+        try:
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM usuarios
+                ORDER BY nome
+                """
+            )
+
+            usuarios = cursor.fetchall()
+
+        except Exception as erro:
+
+            print(
+                f"[ERRO CADASTROS] {erro}"
+            )
+
+            usuarios = []
+
+        finally:
+
+            fechar_cursor(cursor)
+
+        return render_template(
+            "cadastros.html",
+            usuarios=usuarios
+        )
+
+    # =====================================================
     # ESTOQUE
     # =====================================================
 
-    if (
-        "Estoque" in nome_limpo
-        or "Cadastros" in nome_limpo
-    ):
+    if "Estoque" in nome_limpo:
 
         if request.method == "POST":
 
             acao = request.form.get(
                 "acao_estoque"
             )
+
+            # =============================================
+            # CADASTRO MANUAL
+            # =============================================
 
             if acao == "cadastrar_manual":
 
@@ -1432,18 +1934,80 @@ def modulo(nome):
                     ).strip()
                 )
 
+                quantidade_texto = (
+                    request.form.get(
+                        "quantidade",
+                        "0"
+                    ).strip()
+                )
+
                 try:
 
                     quantidade = int(
-                        request.form.get(
-                            "quantidade",
-                            0
-                        )
+                        quantidade_texto
                     )
 
                 except ValueError:
 
-                    quantidade = 0
+                    quantidade = -1
+
+                if not rua:
+
+                    flash(
+                        "Informe a rua.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                if not codigo:
+
+                    flash(
+                        "Informe o código do material.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                if not descricao:
+
+                    flash(
+                        "Informe a descrição.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                if quantidade < 0:
+
+                    flash(
+                        "A quantidade não pode ser negativa.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                cursor = None
 
                 try:
 
@@ -1477,14 +2041,339 @@ def modulo(nome):
 
                     get_db().commit()
 
-                    fechar_cursor(cursor)
+                    flash(
+                        "Material cadastrado no estoque.",
+                        "success"
+                    )
 
                 except Exception as erro:
 
                     get_db().rollback()
 
                     print(
-                        f"Erro ao cadastrar estoque: {erro}"
+                        f"[ERRO ESTOQUE] {erro}"
+                    )
+
+                    flash(
+                        "Não foi possível cadastrar "
+                        "o material.",
+                        "danger"
+                    )
+
+                finally:
+
+                    fechar_cursor(cursor)
+
+                return redirect(
+                    url_for(
+                        "modulo",
+                        nome="Estoque"
+                    )
+                )
+
+            # =============================================
+            # IMPORTAÇÃO EXCEL / CSV
+            # =============================================
+
+            if acao == "importar_excel":
+
+                arquivo = request.files.get(
+                    "arquivo_excel"
+                )
+
+                if not arquivo:
+
+                    flash(
+                        "Selecione um arquivo.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                nome_arquivo = (
+                    arquivo.filename
+                    or ""
+                ).lower()
+
+                if not (
+                    nome_arquivo.endswith(".xlsx")
+                    or nome_arquivo.endswith(".xls")
+                    or nome_arquivo.endswith(".csv")
+                ):
+
+                    flash(
+                        "Formato inválido. "
+                        "Use XLSX, XLS ou CSV.",
+                        "danger"
+                    )
+
+                    return redirect(
+                        url_for(
+                            "modulo",
+                            nome="Estoque"
+                        )
+                    )
+
+                try:
+
+                    if nome_arquivo.endswith(".csv"):
+
+                        df = pd.read_csv(
+                            arquivo
+                        )
+
+                    else:
+
+                        df = pd.read_excel(
+                            arquivo
+                        )
+
+                    # -------------------------------------
+                    # NORMALIZA NOMES DAS COLUNAS
+                    # -------------------------------------
+
+                    mapa_colunas = {}
+
+                    for coluna in df.columns:
+
+                        texto = str(
+                            coluna
+                        ).strip().lower()
+
+                        texto = (
+                            texto
+                            .replace("á", "a")
+                            .replace("à", "a")
+                            .replace("ã", "a")
+                            .replace("â", "a")
+                            .replace("é", "e")
+                            .replace("ê", "e")
+                            .replace("í", "i")
+                            .replace("ó", "o")
+                            .replace("ô", "o")
+                            .replace("õ", "o")
+                            .replace("ú", "u")
+                            .replace("ç", "c")
+                        )
+
+                        mapa_colunas[
+                            texto
+                        ] = coluna
+
+                    def encontrar_coluna(opcoes):
+
+                        for opcao in opcoes:
+
+                            if opcao in mapa_colunas:
+
+                                return mapa_colunas[
+                                    opcao
+                                ]
+
+                        return None
+
+                    coluna_rua = encontrar_coluna([
+                        "rua"
+                    ])
+
+                    coluna_prateleira = encontrar_coluna([
+                        "prateleira"
+                    ])
+
+                    coluna_codigo = encontrar_coluna([
+                        "codigo",
+                        "codigo_material",
+                        "codigomaterial",
+                        "material"
+                    ])
+
+                    coluna_descricao = encontrar_coluna([
+                        "descricao",
+                        "descrição",
+                        "descricao_material",
+                        "material_descricao"
+                    ])
+
+                    coluna_quantidade = encontrar_coluna([
+                        "quantidade",
+                        "qtd",
+                        "quant"
+                    ])
+
+                    if not coluna_rua:
+                        raise ValueError(
+                            "A coluna 'Rua' não foi encontrada."
+                        )
+
+                    if not coluna_codigo:
+                        raise ValueError(
+                            "A coluna 'Código' não foi encontrada."
+                        )
+
+                    if not coluna_descricao:
+                        raise ValueError(
+                            "A coluna 'Descrição' não foi encontrada."
+                        )
+
+                    if not coluna_quantidade:
+                        raise ValueError(
+                            "A coluna 'Quantidade' não foi encontrada."
+                        )
+
+                    inseridos = 0
+                    ignorados = 0
+
+                    cursor = None
+
+                    try:
+
+                        for _, linha in df.iterrows():
+
+                            valor_rua = (
+                                linha[coluna_rua]
+                                if coluna_rua
+                                else ""
+                            )
+
+                            valor_prateleira = (
+                                linha[coluna_prateleira]
+                                if coluna_prateleira
+                                else ""
+                            )
+
+                            valor_codigo = (
+                                linha[coluna_codigo]
+                                if coluna_codigo
+                                else ""
+                            )
+
+                            valor_descricao = (
+                                linha[coluna_descricao]
+                                if coluna_descricao
+                                else ""
+                            )
+
+                            valor_quantidade = (
+                                linha[coluna_quantidade]
+                                if coluna_quantidade
+                                else 0
+                            )
+
+                            if pd.isna(valor_codigo):
+
+                                ignorados += 1
+                                continue
+
+                            if pd.isna(valor_descricao):
+
+                                ignorados += 1
+                                continue
+
+                            rua_valor = str(
+                                valor_rua
+                            ).strip()
+
+                            prateleira_valor = str(
+                                valor_prateleira
+                            ).strip()
+
+                            codigo_valor = str(
+                                valor_codigo
+                            ).strip()
+
+                            descricao_valor = str(
+                                valor_descricao
+                            ).strip()
+
+                            if (
+                                not codigo_valor
+                                or not descricao_valor
+                            ):
+
+                                ignorados += 1
+                                continue
+
+                            try:
+
+                                quantidade_valor = int(
+                                    float(
+                                        valor_quantidade
+                                    )
+                                )
+
+                            except (
+                                ValueError,
+                                TypeError
+                            ):
+
+                                quantidade_valor = 0
+
+                            cursor = executar(
+                                """
+                                INSERT INTO estoque
+                                (
+                                    rua,
+                                    prateleira,
+                                    codigo_material,
+                                    descricao,
+                                    quantidade
+                                )
+                                VALUES
+                                (
+                                    %s,
+                                    %s,
+                                    %s,
+                                    %s,
+                                    %s
+                                )
+                                """,
+                                (
+                                    rua_valor,
+                                    prateleira_valor,
+                                    codigo_valor,
+                                    descricao_valor,
+                                    quantidade_valor
+                                )
+                            )
+
+                            inseridos += 1
+
+                        get_db().commit()
+
+                    except Exception:
+
+                        get_db().rollback()
+
+                        raise
+
+                    finally:
+
+                        fechar_cursor(cursor)
+
+                    flash(
+                        f"Importação concluída: "
+                        f"{inseridos} registro(s) inserido(s) "
+                        f"e {ignorados} ignorado(s).",
+                        "success"
+                    )
+
+                except Exception as erro:
+
+                    get_db().rollback()
+
+                    print(
+                        f"[ERRO IMPORTAÇÃO ESTOQUE] "
+                        f"{erro}"
+                    )
+
+                    flash(
+                        f"Erro na importação: {erro}",
+                        "danger"
                     )
 
                 return redirect(
@@ -1494,36 +2383,39 @@ def modulo(nome):
                     )
                 )
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            ORDER BY nome
-            """
-        )
+        # =============================================
+        # LISTAGEM DO ESTOQUE
+        # =============================================
 
-        usuarios = cursor.fetchall()
+        cursor = None
 
-        fechar_cursor(cursor)
+        try:
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM estoque
-            ORDER BY id DESC
-            """
-        )
+            cursor = executar(
+                """
+                SELECT *
+                FROM estoque
+                ORDER BY rua, prateleira, descricao
+                """
+            )
 
-        estoque_items = cursor.fetchall()
+            estoque_itens = cursor.fetchall()
 
-        fechar_cursor(cursor)
+        except Exception as erro:
+
+            print(
+                f"[ERRO LISTA ESTOQUE] {erro}"
+            )
+
+            estoque_itens = []
+
+        finally:
+
+            fechar_cursor(cursor)
 
         return render_template(
             "estoque.html",
-
-            usuarios=usuarios,
-
-            estoque_items=estoque_items
+            estoque_itens=estoque_itens
         )
 
     # =====================================================
@@ -1549,21 +2441,35 @@ def modulo(nome):
 
     if categoria:
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = %s
-            ORDER BY id DESC
-            """,
-            (
-                categoria,
+        cursor = None
+
+        try:
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE categoria = %s
+                ORDER BY id DESC
+                """,
+                (
+                    categoria,
+                )
             )
-        )
 
-        itens = cursor.fetchall()
+            itens = cursor.fetchall()
 
-        fechar_cursor(cursor)
+        except Exception as erro:
+
+            print(
+                f"[ERRO MÓDULO] {erro}"
+            )
+
+            itens = []
+
+        finally:
+
+            fechar_cursor(cursor)
 
     return render_template(
         "modulo.html",
@@ -1590,13 +2496,13 @@ def relatorio_pdf():
     try:
 
         # =================================================
-        # DATA ATUAL DO BRASIL
+        # DATA DO BRASIL
         # =================================================
 
-        agora_utc = agora_utc()
+        agora_atual = agora_utc()
 
         agora_brasil = (
-            agora_utc
+            agora_atual
             - timedelta(hours=3)
         )
 
@@ -1709,7 +2615,7 @@ def relatorio_pdf():
         )
 
         # =================================================
-        # CRIA PDF NA MEMÓRIA
+        # PDF
         # =================================================
 
         buffer = BytesIO()
@@ -1726,10 +2632,6 @@ def relatorio_pdf():
         estilos = getSampleStyleSheet()
 
         elementos = []
-
-        # =================================================
-        # TÍTULO
-        # =================================================
 
         elementos.append(
             Paragraph(
@@ -1842,7 +2744,7 @@ def relatorio_pdf():
         )
 
         # =================================================
-        # TABELA PRINCIPAL
+        # TABELA
         # =================================================
 
         dados = [
@@ -1860,25 +2762,17 @@ def relatorio_pdf():
 
         for item in atividades_dia:
 
-            inicio = item["inicio_em"]
+            inicio = (
+                str(item["inicio_em"])[:19]
+                if item["inicio_em"]
+                else "-"
+            )
 
-            conclusao = item["concluido_em"]
-
-            if inicio:
-
-                inicio = str(inicio)[:19]
-
-            else:
-
-                inicio = "-"
-
-            if conclusao:
-
-                conclusao = str(conclusao)[:19]
-
-            else:
-
-                conclusao = "-"
+            conclusao = (
+                str(item["concluido_em"])[:19]
+                if item["concluido_em"]
+                else "-"
+            )
 
             requisicao = (
                 item["num_requisicao"]
@@ -1920,10 +2814,6 @@ def relatorio_pdf():
                 conclusao,
                 status
             ])
-
-        # =================================================
-        # CASO NÃO TENHA ATIVIDADES
-        # =================================================
 
         if len(dados) == 1:
 
@@ -2023,14 +2913,11 @@ def relatorio_pdf():
 
         elementos.append(
             Paragraph(
-                "Relatório gerado pelo sistema Almoxarifado Valenet.",
+                "Relatório gerado pelo sistema "
+                "Almoxarifado Valenet.",
                 estilos["Normal"]
             )
         )
-
-        # =================================================
-        # GERA PDF
-        # =================================================
 
         documento.build(
             elementos
@@ -2057,7 +2944,8 @@ def relatorio_pdf():
         )
 
         return (
-            "Não foi possível gerar o relatório PDF.",
+            "Não foi possível gerar "
+            "o relatório PDF.",
             500
         )
 
@@ -2072,7 +2960,7 @@ def relatorio_pdf():
 @app.route(
     "/deletar/<int:id>"
 )
-def concluir_atividade(id):
+def concluir(id):
 
     if "usuario" not in session:
 
@@ -2080,107 +2968,39 @@ def concluir_atividade(id):
             url_for("login")
         )
 
-    # =====================================================
-    # BUSCA A ATIVIDADE
-    # =====================================================
+    db = get_db()
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE id = %s
-        AND status = 'Pendente'
-        """,
-        (
-            id,
-        )
-    )
+    cursor = None
 
-    atividade = cursor.fetchone()
-
-    fechar_cursor(cursor)
-
-    if not atividade:
-
-        return redirect(
-            request.referrer
-            or url_for("index")
-        )
-
-    # =====================================================
-    # MOMENTO DA CONCLUSÃO
-    # =====================================================
-
-    if usando_postgresql():
-
-        concluido_em = agora_utc_naive()
-
-    else:
-
-        concluido_em = agora_sqlite()
-
-    # =====================================================
-    # CONCLUI A ATIVIDADE
-    # =====================================================
-
-    cursor = executar(
-        """
-        UPDATE atividades
-        SET
-            status = 'Concluído',
-            concluido_em = %s
-        WHERE id = %s
-        AND status = 'Pendente'
-        """,
-        (
-            concluido_em,
-            id
-        )
-    )
-
-    get_db().commit()
-
-    fechar_cursor(cursor)
-
-    # =====================================================
-    # SE FOR SEPARAÇÃO:
-    #
-    # CRIA AUTOMATICAMENTE A EXPEDIÇÃO
-    # =====================================================
-
-    categoria_original = atividade["categoria"]
-
-    if categoria_original == "Separação":
-
-        num_requisicao = (
-            atividade["num_requisicao"]
-            or ""
-        ).strip()
-
-        prioridade = (
-            atividade["prioridade"]
-            or "Baixa"
-        )
-
-        responsavel = (
-            atividade["responsavel"]
-            or session["usuario"]
-        )
-
-        prazo = (
-            atividade["prazo"]
-            or ""
-        )
+    try:
 
         # =================================================
-        # SEGURANÇA
+        # BUSCA ATIVIDADE
         # =================================================
 
-        if not num_requisicao:
+        cursor = executar(
+            """
+            SELECT *
+            FROM atividades
+            WHERE id = %s
+            AND status = 'Pendente'
+            """,
+            (
+                id,
+            )
+        )
 
-            print(
-                "[AVISO] Separação concluída "
-                "sem número de requisição."
+        atividade = cursor.fetchone()
+
+        fechar_cursor(cursor)
+        cursor = None
+
+        if not atividade:
+
+            flash(
+                "A atividade não foi encontrada "
+                "ou já foi concluída.",
+                "warning"
             )
 
             return redirect(
@@ -2189,88 +3009,206 @@ def concluir_atividade(id):
             )
 
         # =================================================
-        # VERIFICA DUPLICIDADE
+        # DATA DA CONCLUSÃO
+        # =================================================
+
+        if usando_postgresql():
+
+            concluido_em = agora_utc_naive()
+
+        else:
+
+            concluido_em = agora_sqlite()
+
+        # =================================================
+        # CONCLUI ATIVIDADE
         # =================================================
 
         cursor = executar(
             """
-            SELECT COUNT(*)
-            FROM atividades
-            WHERE categoria = 'Expedição'
-            AND num_requisicao = %s
+            UPDATE atividades
+            SET
+                status = 'Concluído',
+                concluido_em = %s
+            WHERE id = %s
+            AND status = 'Pendente'
             """,
             (
-                num_requisicao,
+                concluido_em,
+                id
             )
-        )
-
-        existe_expedicao = obter_valor(
-            cursor
         )
 
         fechar_cursor(cursor)
+        cursor = None
 
         # =================================================
-        # CRIA EXPEDIÇÃO
+        # SEPARAÇÃO → EXPEDIÇÃO
         # =================================================
 
-        if existe_expedicao == 0:
+        if atividade["categoria"] == "Separação":
 
-            if usando_postgresql():
+            num_requisicao = (
+                atividade["num_requisicao"]
+                or ""
+            ).strip()
 
-                inicio_expedicao = agora_utc_naive()
+            prioridade = (
+                atividade["prioridade"]
+                or "Baixa"
+            )
+
+            responsavel = (
+                atividade["responsavel"]
+                or session["usuario"]
+            )
+
+            prazo = (
+                atividade["prazo"]
+                or ""
+            )
+
+            if num_requisicao:
+
+                cursor = executar(
+                    """
+                    SELECT COUNT(*)
+                    FROM atividades
+                    WHERE categoria = 'Expedição'
+                    AND num_requisicao = %s
+                    AND status <> 'Arquivada'
+                    """,
+                    (
+                        num_requisicao,
+                    )
+                )
+
+                existe_expedicao = obter_valor(
+                    cursor
+                )
+
+                fechar_cursor(cursor)
+                cursor = None
+
+                if existe_expedicao == 0:
+
+                    if usando_postgresql():
+
+                        inicio_expedicao = (
+                            agora_utc_naive()
+                        )
+
+                    else:
+
+                        inicio_expedicao = (
+                            agora_sqlite()
+                        )
+
+                    cursor = executar(
+                        """
+                        INSERT INTO atividades
+                        (
+                            num_requisicao,
+                            prioridade,
+                            atividade,
+                            descricao,
+                            categoria,
+                            responsavel,
+                            prazo,
+                            status,
+                            inicio_em,
+                            concluido_em
+                        )
+                        VALUES
+                        (
+                            %s,
+                            %s,
+                            %s,
+                            %s,
+                            'Expedição',
+                            %s,
+                            %s,
+                            'Pendente',
+                            %s,
+                            NULL
+                        )
+                        """,
+                        (
+                            num_requisicao,
+                            prioridade,
+                            (
+                                "Expedição da requisição "
+                                f"{num_requisicao}"
+                            ),
+                            (
+                                "Expedição gerada "
+                                "automaticamente após "
+                                "a conclusão da Separação."
+                            ),
+                            responsavel,
+                            prazo,
+                            inicio_expedicao
+                        )
+                    )
+
+                    fechar_cursor(cursor)
+                    cursor = None
+
+                    flash(
+                        (
+                            f"Separação concluída. "
+                            f"Expedição da requisição "
+                            f"{num_requisicao} criada "
+                            f"automaticamente."
+                        ),
+                        "success"
+                    )
+
+                else:
+
+                    flash(
+                        "Atividade concluída com sucesso.",
+                        "success"
+                    )
 
             else:
 
-                inicio_expedicao = agora_sqlite()
+                flash(
+                    "Separação concluída, mas não foi "
+                    "possível criar a Expedição porque "
+                    "não existe número de requisição.",
+                    "warning"
+                )
 
-            cursor = executar(
-                """
-                INSERT INTO atividades
-                (
-                    num_requisicao,
-                    prioridade,
-                    atividade,
-                    categoria,
-                    responsavel,
-                    prazo,
-                    status,
-                    inicio_em,
-                    concluido_em
-                )
-                VALUES
-                (
-                    %s,
-                    %s,
-                    %s,
-                    'Expedição',
-                    %s,
-                    %s,
-                    'Pendente',
-                    %s,
-                    NULL
-                )
-                """,
-                (
-                    num_requisicao,
-                    prioridade,
-                    f"Expedição da requisição {num_requisicao}",
-                    responsavel,
-                    prazo,
-                    inicio_expedicao
-                )
+        else:
+
+            flash(
+                "Atividade concluída com sucesso.",
+                "success"
             )
 
-            get_db().commit()
+        # =================================================
+        # COMMIT ÚNICO
+        # =================================================
 
-            fechar_cursor(cursor)
+        db.commit()
 
-            print(
-                f"[EXPEDIÇÃO] "
-                f"Criada automaticamente "
-                f"para a requisição "
-                f"{num_requisicao}."
-            )
+    except Exception as erro:
+
+        db.rollback()
+
+        print(
+            f"[ERRO CONCLUSÃO] {erro}"
+        )
+
+        flash(
+            "Não foi possível concluir a atividade.",
+            "danger"
+        )
+
+    finally:
+
+        fechar_cursor(cursor)
 
     return redirect(
         request.referrer
@@ -2293,24 +3231,111 @@ def deletar_estoque(id):
             url_for("login")
         )
 
-    cursor = executar(
-        """
-        DELETE FROM estoque
-        WHERE id = %s
-        """,
-        (
-            id,
+    cursor = None
+
+    try:
+
+        cursor = executar(
+            """
+            DELETE FROM estoque
+            WHERE id = %s
+            """,
+            (
+                id,
+            )
         )
-    )
 
-    get_db().commit()
+        get_db().commit()
 
-    fechar_cursor(cursor)
+        flash(
+            "Item removido do estoque.",
+            "success"
+        )
+
+    except Exception as erro:
+
+        get_db().rollback()
+
+        print(
+            f"[ERRO EXCLUSÃO ESTOQUE] {erro}"
+        )
+
+        flash(
+            "Não foi possível remover "
+            "o item do estoque.",
+            "danger"
+        )
+
+    finally:
+
+        fechar_cursor(cursor)
 
     return redirect(
         url_for(
             "modulo",
             nome="Estoque"
+        )
+    )
+
+
+# =========================================================
+# EXCLUIR MELHORIA / PDCA
+# =========================================================
+
+@app.route(
+    "/deletar_melhoria/<int:id>"
+)
+def deletar_melhoria(id):
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    cursor = None
+
+    try:
+
+        cursor = executar(
+            """
+            DELETE FROM melhorias
+            WHERE id = %s
+            """,
+            (
+                id,
+            )
+        )
+
+        get_db().commit()
+
+        flash(
+            "Melhoria removida.",
+            "success"
+        )
+
+    except Exception as erro:
+
+        get_db().rollback()
+
+        print(
+            f"[ERRO EXCLUSÃO PDCA] {erro}"
+        )
+
+        flash(
+            "Não foi possível remover "
+            "a melhoria.",
+            "danger"
+        )
+
+    finally:
+
+        fechar_cursor(cursor)
+
+    return redirect(
+        url_for(
+            "modulo",
+            nome="Melhorias / PDCA"
         )
     )
 
@@ -2342,4 +3367,3 @@ if __name__ == "__main__":
         port=port,
         debug=False
     )
-```

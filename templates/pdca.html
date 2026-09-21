@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -794,26 +793,3 @@
 </body>
 
 </html>
-```
-
-### ⚠️ Um detalhe importante
-
-Esse HTML agora chama:
-
-```python
-url_for('deletar_melhoria', id=m.id)
-```
-
-Portanto, quando formos montar o `app.py` definitivo, precisamos ter essa rota.
-
-E existe uma decisão que vale manter no nosso projeto: **atividades do almoxarifado não serão excluídas**; elas serão concluídas e depois arquivadas. Para **Melhorias/PDCA**, deixei a exclusão disponível porque é um registro administrativo separado das atividades operacionais.
-
-Também deixei o formulário enviando para:
-
-```python
-url_for('modulo', nome='Melhorias / PDCA')
-```
-
-Então o próprio `app.py` poderá tratar o `POST`, gravar a melhoria no banco e retornar para a página.
-
-**Esse arquivo pode ser considerado a versão definitiva do `pdca.html` por enquanto.**

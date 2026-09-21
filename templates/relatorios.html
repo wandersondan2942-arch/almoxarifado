@@ -1,83 +1,147 @@
+```html
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
 
-```
-<title>Relatórios - Valenet</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
 
-<link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-    rel="stylesheet"
->
+    <title>Relatórios - Valenet</title>
 
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-<style>
-    body {
-        background-color: #f5f6fa;
-        font-family: 'Segoe UI', sans-serif;
-        color: #2d3748;
-    }
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
 
-    .card {
-        border-radius: 10px;
-    }
+    <style>
 
-    .table {
-        font-size: 13px;
-    }
-</style>
-```
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', sans-serif;
+            color: #2d3748;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .table {
+            font-size: 13px;
+        }
+
+        .table th {
+            white-space: nowrap;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .titulo-relatorio {
+            font-size: 1.25rem;
+        }
+
+        .stat-card {
+            transition: transform 0.15s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .badge-categoria {
+            font-size: 11px;
+        }
+
+        .data-hora {
+            white-space: nowrap;
+            font-size: 12px;
+        }
+
+        .numero-requisicao {
+            font-weight: 600;
+            color: #0d6efd;
+        }
+
+    </style>
 
 </head>
 
-<body class="p-4">
 
-```
-<div class="container" style="max-width: 1200px;">
+<body class="p-3 p-md-4">
 
+<div
+    class="container-fluid"
+    style="max-width: 1400px;"
+>
+
+
+    <!-- ===================================================== -->
     <!-- CABEÇALHO -->
+    <!-- ===================================================== -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+    >
 
         <div>
-            <h4 class="fw-bold m-0">
-                <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+
+            <h4 class="fw-bold m-0 titulo-relatorio">
+
+                <i
+                    class="fa-solid fa-chart-pie text-primary me-2"
+                ></i>
+
                 Relatório Geral Consolidado
+
             </h4>
 
             <small class="text-muted">
+
                 Histórico das atividades do almoxarifado
+
             </small>
+
         </div>
 
-        <div class="d-flex gap-2">
+
+        <div class="d-flex gap-2 flex-wrap">
 
             <!-- PDF DO DIA -->
 
             <a
-                href="/relatorio_pdf"
+                href="{{ url_for('relatorio_pdf') }}"
                 class="btn btn-danger btn-sm fw-bold"
                 target="_blank"
             >
+
                 <i class="fa-solid fa-file-pdf me-1"></i>
+
                 PDF do Dia
+
             </a>
+
 
             <!-- VOLTAR -->
 
             <a
-                href="/"
+                href="{{ url_for('index') }}"
                 class="btn btn-outline-primary btn-sm fw-bold"
             >
+
                 <i class="fa-solid fa-arrow-left me-1"></i>
+
                 Voltar
+
             </a>
 
         </div>
@@ -85,78 +149,207 @@
     </div>
 
 
+
+    <!-- ===================================================== -->
+    <!-- MENSAGENS FLASH -->
+    <!-- ===================================================== -->
+
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+
+        {% if mensagens %}
+
+            {% for categoria, mensagem in mensagens %}
+
+                <div
+                    class="alert alert-{{ categoria }}
+                           alert-dismissible fade show"
+                    role="alert"
+                >
+
+                    {{ mensagem }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+
+    <!-- ===================================================== -->
     <!-- RESUMO -->
+    <!-- ===================================================== -->
 
     <div class="row g-3 mb-4">
 
-        <div class="col-md-3">
 
-            <div class="card shadow-sm border-0 p-3">
+        <!-- TOTAL -->
 
-                <small class="text-muted">
-                    Total de atividades
-                </small>
+        <div class="col-12 col-sm-6 col-lg-3">
 
-                <h3 class="fw-bold text-primary mb-0">
-                    {{ itens|length }}
-                </h3>
+            <div
+                class="card shadow-sm border-0 p-3 stat-card h-100"
+            >
 
-            </div>
+                <div
+                    class="d-flex justify-content-between align-items-center"
+                >
 
-        </div>
+                    <div>
 
+                        <small class="text-muted">
+                            Total de atividades
+                        </small>
 
-        <div class="col-md-3">
+                        <h3 class="fw-bold text-primary mb-0 mt-1">
+                            {{ itens|length }}
+                        </h3>
 
-            <div class="card shadow-sm border-0 p-3">
+                    </div>
 
-                <small class="text-muted">
-                    Concluídas
-                </small>
+                    <i
+                        class="fa-solid fa-list-check
+                               fa-2x text-primary opacity-25"
+                    ></i>
 
-                <h3 class="fw-bold text-success mb-0">
-
-                    {{ itens|selectattr('status', 'equalto', 'Concluído')|list|length }}
-
-                </h3>
-
-            </div>
-
-        </div>
-
-
-        <div class="col-md-3">
-
-            <div class="card shadow-sm border-0 p-3">
-
-                <small class="text-muted">
-                    Pendentes
-                </small>
-
-                <h3 class="fw-bold text-warning mb-0">
-
-                    {{ itens|selectattr('status', 'equalto', 'Pendente')|list|length }}
-
-                </h3>
+                </div>
 
             </div>
 
         </div>
 
 
-        <div class="col-md-3">
+        <!-- CONCLUÍDAS -->
 
-            <div class="card shadow-sm border-0 p-3">
+        <div class="col-12 col-sm-6 col-lg-3">
 
-                <small class="text-muted">
-                    Arquivadas
-                </small>
+            <div
+                class="card shadow-sm border-0 p-3 stat-card h-100"
+            >
 
-                <h3 class="fw-bold text-secondary mb-0">
+                <div
+                    class="d-flex justify-content-between align-items-center"
+                >
 
-                    {{ itens|selectattr('status', 'equalto', 'Arquivada')|list|length }}
+                    <div>
 
-                </h3>
+                        <small class="text-muted">
+                            Concluídas
+                        </small>
+
+                        <h3 class="fw-bold text-success mb-0 mt-1">
+
+                            {{
+                                itens
+                                | selectattr('status', 'equalto', 'Concluído')
+                                | list
+                                | length
+                            }}
+
+                        </h3>
+
+                    </div>
+
+                    <i
+                        class="fa-solid fa-circle-check
+                               fa-2x text-success opacity-25"
+                    ></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- PENDENTES -->
+
+        <div class="col-12 col-sm-6 col-lg-3">
+
+            <div
+                class="card shadow-sm border-0 p-3 stat-card h-100"
+            >
+
+                <div
+                    class="d-flex justify-content-between align-items-center"
+                >
+
+                    <div>
+
+                        <small class="text-muted">
+                            Pendentes
+                        </small>
+
+                        <h3 class="fw-bold text-warning mb-0 mt-1">
+
+                            {{
+                                itens
+                                | selectattr('status', 'equalto', 'Pendente')
+                                | list
+                                | length
+                            }}
+
+                        </h3>
+
+                    </div>
+
+                    <i
+                        class="fa-solid fa-clock
+                               fa-2x text-warning opacity-25"
+                    ></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ARQUIVADAS -->
+
+        <div class="col-12 col-sm-6 col-lg-3">
+
+            <div
+                class="card shadow-sm border-0 p-3 stat-card h-100"
+            >
+
+                <div
+                    class="d-flex justify-content-between align-items-center"
+                >
+
+                    <div>
+
+                        <small class="text-muted">
+                            Arquivadas
+                        </small>
+
+                        <h3 class="fw-bold text-secondary mb-0 mt-1">
+
+                            {{
+                                itens
+                                | selectattr('status', 'equalto', 'Arquivada')
+                                | list
+                                | length
+                            }}
+
+                        </h3>
+
+                    </div>
+
+                    <i
+                        class="fa-solid fa-box-archive
+                               fa-2x text-secondary opacity-25"
+                    ></i>
+
+                </div>
 
             </div>
 
@@ -165,27 +358,64 @@
     </div>
 
 
+
+    <!-- ===================================================== -->
     <!-- TABELA -->
+    <!-- ===================================================== -->
 
-    <div class="card p-4 shadow-sm border-0">
+    <div class="card p-3 p-md-4 shadow-sm border-0">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
 
-            <h6 class="fw-bold mb-0">
-                <i class="fa-solid fa-list-check text-primary me-2"></i>
-                Histórico de Atividades
-            </h6>
+        <!-- CABEÇALHO DA TABELA -->
+
+        <div
+            class="d-flex flex-column flex-md-row
+                   justify-content-between
+                   align-items-md-center
+                   gap-2 mb-3"
+        >
+
+            <div>
+
+                <h6 class="fw-bold mb-1">
+
+                    <i
+                        class="fa-solid fa-clock-rotate-left
+                               text-primary me-2"
+                    ></i>
+
+                    Histórico de Atividades
+
+                </h6>
+
+                <small class="text-muted">
+
+                    Todas as atividades registradas no sistema
+
+                </small>
+
+            </div>
+
 
             <span class="badge bg-light text-dark border">
+
+                <i class="fa-solid fa-database me-1"></i>
+
                 {{ itens|length }} registros
+
             </span>
 
         </div>
 
 
+
+        <!-- TABELA RESPONSIVA -->
+
         <div class="table-responsive">
 
-            <table class="table table-striped table-hover align-middle">
+            <table
+                class="table table-striped table-hover align-middle mb-0"
+            >
 
                 <thead class="table-light">
 
@@ -214,27 +444,40 @@
 
                 <tbody>
 
+
                     {% for i in itens %}
 
                     <tr>
 
+
+                        <!-- ID -->
+
                         <td>
-                            #{{ i.id }}
+
+                            <span class="text-muted">
+                                #{{ i.id }}
+                            </span>
+
                         </td>
 
+
+
+                        <!-- REQUISIÇÃO -->
 
                         <td>
 
                             {% if i.num_requisicao %}
 
-                                <span class="fw-semibold text-primary">
+                                <span class="numero-requisicao">
+
                                     {{ i.num_requisicao }}
+
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-                                    -
+                                    —
                                 </span>
 
                             {% endif %}
@@ -242,26 +485,137 @@
                         </td>
 
 
-                        <td class="fw-semibold">
-                            {{ i.atividade }}
-                        </td>
 
+                        <!-- ATIVIDADE -->
 
                         <td>
 
-                            <span class="badge bg-light text-dark border">
-                                {{ i.categoria }}
+                            <div class="fw-semibold">
+
+                                {{ i.atividade }}
+
+                            </div>
+
+
+                            {% if i.descricao %}
+
+                                <small class="text-muted">
+
+                                    {{ i.descricao }}
+
+                                </small>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- CATEGORIA -->
+
+                        <td>
+
+                            {% if i.categoria == 'Separação' %}
+
+                                <span
+                                    class="badge bg-primary-subtle
+                                           text-primary border
+                                           badge-categoria"
+                                >
+
+                                    <i class="fa-solid fa-box me-1"></i>
+
+                                    Separação
+
+                                </span>
+
+
+                            {% elif i.categoria == 'Expedição' %}
+
+                                <span
+                                    class="badge bg-info-subtle
+                                           text-info border
+                                           badge-categoria"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-truck-fast me-1"
+                                    ></i>
+
+                                    Expedição
+
+                                </span>
+
+
+                            {% elif i.categoria == 'Inventário' %}
+
+                                <span
+                                    class="badge bg-warning-subtle
+                                           text-warning-emphasis border
+                                           badge-categoria"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-clipboard-list me-1"
+                                    ></i>
+
+                                    Inventário
+
+                                </span>
+
+
+                            {% elif i.categoria == 'Recebimento' %}
+
+                                <span
+                                    class="badge bg-success-subtle
+                                           text-success border
+                                           badge-categoria"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-arrow-down me-1"
+                                    ></i>
+
+                                    Recebimento
+
+                                </span>
+
+
+                            {% else %}
+
+                                <span
+                                    class="badge bg-light
+                                           text-dark border
+                                           badge-categoria"
+                                >
+
+                                    {{ i.categoria }}
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- RESPONSÁVEL -->
+
+                        <td>
+
+                            <span class="fw-semibold">
+
+                                {{ i.responsavel }}
+
                             </span>
 
                         </td>
 
 
-                        <td>
-                            {{ i.responsavel }}
-                        </td>
 
+                        <!-- INÍCIO -->
 
-                        <td>
+                        <td class="data-hora">
 
                             {% if i.inicio_em %}
 
@@ -270,7 +624,7 @@
                             {% else %}
 
                                 <span class="text-muted">
-                                    -
+                                    —
                                 </span>
 
                             {% endif %}
@@ -278,18 +632,23 @@
                         </td>
 
 
-                        <td>
+
+                        <!-- CONCLUSÃO -->
+
+                        <td class="data-hora">
 
                             {% if i.concluido_em %}
 
-                                <span class="text-success">
+                                <span class="text-success fw-semibold">
+
                                     {{ i.concluido_em }}
+
                                 </span>
 
                             {% else %}
 
                                 <span class="text-muted">
-                                    -
+                                    —
                                 </span>
 
                             {% endif %}
@@ -297,42 +656,87 @@
                         </td>
 
 
+
+                        <!-- STATUS -->
+
                         <td>
+
 
                             {% if i.status == 'Concluído' %}
 
                                 <span class="badge bg-success">
-                                    <i class="fa-solid fa-check me-1"></i>
+
+                                    <i
+                                        class="fa-solid fa-check me-1"
+                                    ></i>
+
                                     Concluído
+
                                 </span>
+
 
                             {% elif i.status == 'Arquivada' %}
 
                                 <span class="badge bg-secondary">
-                                    <i class="fa-solid fa-box-archive me-1"></i>
+
+                                    <i
+                                        class="fa-solid fa-box-archive me-1"
+                                    ></i>
+
                                     Arquivada
+
                                 </span>
+
 
                             {% elif i.status == 'Pendente' %}
 
-                                <span class="badge bg-warning text-dark">
-                                    <i class="fa-solid fa-clock me-1"></i>
+                                <span
+                                    class="badge bg-warning text-dark"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-clock me-1"
+                                    ></i>
+
                                     Pendente
+
                                 </span>
+
+
+                            {% elif i.status == 'Em andamento' %}
+
+                                <span class="badge bg-info">
+
+                                    <i
+                                        class="fa-solid fa-spinner me-1"
+                                    ></i>
+
+                                    Em andamento
+
+                                </span>
+
 
                             {% else %}
 
                                 <span class="badge bg-secondary">
+
                                     {{ i.status }}
+
                                 </span>
 
                             {% endif %}
 
+
                         </td>
+
 
                     </tr>
 
+
                     {% else %}
+
+
+                    <!-- NENHUM REGISTRO -->
 
                     <tr>
 
@@ -341,17 +745,30 @@
                             class="text-center text-muted py-5"
                         >
 
-                            <i class="fa-solid fa-inbox fa-2x mb-2"></i>
+                            <i
+                                class="fa-solid fa-inbox fa-2x mb-3"
+                            ></i>
 
                             <br>
 
-                            Nenhuma atividade registrada.
+                            <strong>
+                                Nenhuma atividade registrada.
+                            </strong>
+
+                            <br>
+
+                            <small>
+                                Quando houver atividades,
+                                elas aparecerão neste histórico.
+                            </small>
 
                         </td>
 
                     </tr>
 
+
                     {% endfor %}
+
 
                 </tbody>
 
@@ -361,8 +778,41 @@
 
     </div>
 
+
+
+    <!-- ===================================================== -->
+    <!-- RODAPÉ -->
+    <!-- ===================================================== -->
+
+    <div class="text-center text-muted mt-4">
+
+        <small>
+
+            <i class="fa-solid fa-box me-1"></i>
+
+            Almoxarifado Valenet
+
+            <span class="mx-1">•</span>
+
+            Relatório Geral
+
+        </small>
+
+    </div>
+
+
 </div>
-```
+
+
+
+<!-- BOOTSTRAP JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
 
 </body>
+
 </html>
+```

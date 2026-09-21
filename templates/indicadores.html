@@ -1,59 +1,335 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Indicadores - Almoxarifado Valenet</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    >
+
     <style>
-        body { background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif; color: #2d3748; }
-        .main-content { max-width: 900px; margin: 40px auto; padding: 20px; }
+        body {
+            background-color: #f5f6fa;
+            font-family: 'Segoe UI', sans-serif;
+            color: #2d3748;
+        }
+
+        .main-content {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .card {
+            border-radius: 16px;
+        }
+
+        .indicator-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .indicator-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .indicator-number {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .progress {
+            height: 28px;
+            border-radius: 14px;
+            overflow: hidden;
+            background-color: #e9ecef;
+        }
+
+        .progress-bar {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            font-weight: 700;
+        }
+
+        .small-description {
+            font-size: 0.95rem;
+        }
     </style>
 </head>
+
 <body>
-    <div class="main-content">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="fw-bold m-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Indicadores de Desempenho</h3>
-            <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</a>
+
+<div class="main-content">
+
+    <!-- CABEÇALHO -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h3 class="fw-bold m-0">
+                <i class="fa-solid fa-chart-pie text-primary me-2"></i>
+                Indicadores de Desempenho
+            </h3>
+
+            <p class="text-muted mb-0 mt-1">
+                Acompanhamento operacional do almoxarifado
+            </p>
         </div>
 
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-center">
-                    <span class="text-muted fw-semibold">Total de Atividades</span>
-                    <h2 class="fw-bold text-primary mt-2">{{ total_geral }}</h2>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-center">
-                    <span class="text-muted fw-semibold">Concluídas</span>
-                    <h2 class="fw-bold text-success mt-2">{{ concluidas }}</h2>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm p-4 text-center">
-                    <span class="text-muted fw-semibold">Pendentes</span>
-                    <h2 class="fw-bold text-warning mt-2">{{ pendentes }}</h2>
-                </div>
-            </div>
-        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i>
+            Voltar
+        </a>
 
-        <div class="card border-0 shadow-sm p-4">
-            <h5 class="fw-bold text-dark mb-3">Resumo da Produtividade</h5>
-            <p class="text-muted">O acompanhamento em tempo real permite avaliar o fluxo de separação de materiais, conferência de estoque e atendimento às demandas técnicas da Valenet.</p>
-            
-            {% set total = total_geral | int %}
-            {% set conc = concluidas | int %}
-            {% set porcentagem = ((conc / total) * 100) | int if total > 0 else 0 %}
-
-            <div class="progress mt-3" style="height: 25px;">
-            </div>
-                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar"style="width: {{ porcentagem }}%;" aria-valuenow="{{ porcentagem }}" aria-valuemin="0" aria-valuemax="100">
-                    {{ porcentagem }}% Concluído
-                </div>
-            </div>
-        </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- CARDS PRINCIPAIS -->
+    <div class="row g-4 mb-4">
+
+        <!-- TOTAL -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+                <span class="text-muted fw-semibold">
+                    <i class="fa-solid fa-list-check me-1"></i>
+                    Total de Atividades
+                </span>
+
+                <div class="indicator-number text-primary mt-2">
+                    {{ total_geral }}
+                </div>
+
+                <small class="text-muted">
+                    Atividades registradas no sistema
+                </small>
+
+            </div>
+        </div>
+
+
+        <!-- CONCLUÍDAS -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+                <span class="text-muted fw-semibold">
+                    <i class="fa-solid fa-circle-check me-1"></i>
+                    Concluídas
+                </span>
+
+                <div class="indicator-number text-success mt-2">
+                    {{ concluidas }}
+                </div>
+
+                <small class="text-muted">
+                    Atividades finalizadas
+                </small>
+
+            </div>
+        </div>
+
+
+        <!-- PENDENTES -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+                <span class="text-muted fw-semibold">
+                    <i class="fa-solid fa-clock me-1"></i>
+                    Pendentes
+                </span>
+
+                <div class="indicator-number text-warning mt-2">
+                    {{ pendentes }}
+                </div>
+
+                <small class="text-muted">
+                    Atividades aguardando conclusão
+                </small>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- PRODUTIVIDADE -->
+    <div class="card border-0 shadow-sm p-4 mb-4">
+
+        <h5 class="section-title text-dark mb-3">
+            <i class="fa-solid fa-chart-line text-success me-2"></i>
+            Resumo da Produtividade
+        </h5>
+
+        <p class="text-muted small-description">
+            O acompanhamento dos indicadores permite visualizar o andamento
+            das atividades do almoxarifado, incluindo separação, inventário,
+            expedição e recebimento.
+        </p>
+
+
+        {% set total = total_geral | int %}
+        {% set conc = concluidas | int %}
+
+        {% if total > 0 %}
+            {% set porcentagem = ((conc / total) * 100) | round(0) | int %}
+        {% else %}
+            {% set porcentagem = 0 %}
+        {% endif %}
+
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+
+            <span class="fw-semibold">
+                Atividades concluídas
+            </span>
+
+            <span class="fw-bold text-success">
+                {{ porcentagem }}%
+            </span>
+
+        </div>
+
+
+        <!-- BARRA DE PROGRESSO -->
+        <div
+            class="progress"
+            role="progressbar"
+            aria-label="Percentual de atividades concluídas"
+            aria-valuenow="{{ porcentagem }}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+        >
+
+            <div
+                class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                style="width: {{ porcentagem }}%;"
+            >
+                {{ porcentagem }}% Concluído
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- INDICADORES OPERACIONAIS -->
+    <div class="card border-0 shadow-sm p-4">
+
+        <h5 class="section-title mb-4">
+            <i class="fa-solid fa-gauge-high text-primary me-2"></i>
+            Indicadores Operacionais
+        </h5>
+
+        <div class="row g-4">
+
+            <!-- ATENDIMENTO -->
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 text-center h-100">
+
+                    <i class="fa-solid fa-headset fa-2x text-primary mb-3"></i>
+
+                    <h6 class="fw-bold">
+                        Atendimento
+                    </h6>
+
+                    <div class="fs-3 fw-bold text-primary">
+                        {{ perc_atendidas | default(0) }}%
+                    </div>
+
+                    <small class="text-muted">
+                        Atividades atendidas
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- INVENTÁRIO -->
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 text-center h-100">
+
+                    <i class="fa-solid fa-boxes-stacked fa-2x text-warning mb-3"></i>
+
+                    <h6 class="fw-bold">
+                        Inventário
+                    </h6>
+
+                    <div class="fs-3 fw-bold text-warning">
+                        {{ perc_inventario | default(0) }}%
+                    </div>
+
+                    <small class="text-muted">
+                        Inventários concluídos
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXPEDIÇÃO -->
+            <div class="col-md-4">
+
+                <div class="border rounded-4 p-4 text-center h-100">
+
+                    <i class="fa-solid fa-truck-fast fa-2x text-success mb-3"></i>
+
+                    <h6 class="fw-bold">
+                        Expedição
+                    </h6>
+
+                    <div class="fs-3 fw-bold text-success">
+                        {{ perc_expedicao | default(0) }}%
+                    </div>
+
+                    <small class="text-muted">
+                        Expedições concluídas
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RODAPÉ -->
+    <div class="text-center mt-4">
+
+        <small class="text-muted">
+            Almoxarifado Valenet • Indicadores Operacionais
+        </small>
+
+    </div>
+
+</div>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+</script>
+
 </body>
 </html>
+```
+
+Esse já fica compatível com os indicadores que estamos estruturando no `app.py`, incluindo `perc_atendidas`, `perc_inventario` e `perc_expedicao`.
+
+**Importante:** o próximo ponto que precisamos conferir é o `app.py`, porque esse HTML agora espera que essas três variáveis sejam enviadas pela rota de **Indicadores**. Se a rota ainda não estiver calculando/enviando elas, a página abrirá, mas mostrará `0%`.

@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -715,15 +714,3 @@
 </body>
 
 </html>
-```
-
-Uma observação importante: **não mantenha a versão anterior e esta ao mesmo tempo**. O arquivo deve ser somente esse `templates/modulo.html`.
-
-E ele depende de uma rota no `app.py` com o nome:
-
-```python
-@app.route("/concluir/<int:id>")
-def concluir(id):
-```
-
-que é justamente a parte que vai registrar o **horário de conclusão** e, quando for uma **Separação**, criar automaticamente a respectiva **Expedição** da mesma requisição.

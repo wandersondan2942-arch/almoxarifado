@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
+from io import BytesIO
 
 import psycopg2
 import psycopg2.extras
@@ -12,7 +13,20 @@ from flask import (
     redirect,
     url_for,
     g,
-    session
+    session,
+    send_file
+)
+
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer
 )
 
 
@@ -40,6 +54,13 @@ def usando_postgresql():
 
 
 def get_db():
+    """
+    Render:
+        PostgreSQL
+
+    Computador local:
+        SQLite
+    """
 
     db = getattr(g, "_database", None)
 
@@ -89,6 +110,9 @@ def close_connection(exception):
 # =========================================================
 
 def executar(sql, parametros=()):
+    """
+    Executa SQL compatível com SQLite e PostgreSQL.
+    """
 
     db = get_db()
 
@@ -170,7 +194,7 @@ def contar(sql, parametros=()):
 
 
 # =========================================================
-# CRIAÇÃO / ATUALIZAÇÃO DO BANCO
+# CRIAÇÃO DO BANCO
 # =========================================================
 
 def init_db():
@@ -207,10 +231,6 @@ def init_db():
                 concluido_em TIMESTAMP
             )
         """)
-
-        # -------------------------------------------------
-        # MIGRAÇÕES
-        # -------------------------------------------------
 
         cursor.execute("""
             ALTER TABLE atividades
@@ -253,20 +273,6 @@ def init_db():
             )
         """)
 
-        # -------------------------------------------------
-        # PREENCHE inicio_em DE REGISTROS ANTIGOS
-        # -------------------------------------------------
-
-        cursor.execute("""
-            UPDATE atividades
-            SET inicio_em = COALESCE(
-                inicio_em,
-                concluido_em,
-                CURRENT_TIMESTAMP
-            )
-            WHERE inicio_em IS NULL
-        """)
-
     # =====================================================
     # SQLITE
     # =====================================================
@@ -296,10 +302,6 @@ def init_db():
             )
         """)
 
-        # -------------------------------------------------
-        # VERIFICA COLUNAS EXISTENTES
-        # -------------------------------------------------
-
         cursor.execute("""
             PRAGMA table_info(atividades)
         """)
@@ -311,10 +313,6 @@ def init_db():
             for coluna in colunas
         ]
 
-        # -------------------------------------------------
-        # ADICIONA inicio_em SE NÃO EXISTIR
-        # -------------------------------------------------
-
         if "inicio_em" not in nomes_colunas:
 
             print(
@@ -325,10 +323,6 @@ def init_db():
                 ALTER TABLE atividades
                 ADD COLUMN inicio_em TEXT
             """)
-
-        # -------------------------------------------------
-        # ADICIONA concluido_em SE NÃO EXISTIR
-        # -------------------------------------------------
 
         if "concluido_em" not in nomes_colunas:
 
@@ -372,17 +366,10 @@ def init_db():
             )
         """)
 
-        # -------------------------------------------------
-        # PREENCHE inicio_em DE REGISTROS ANTIGOS
-        # -------------------------------------------------
-
+        # Preenche início das atividades antigas que ainda não possuem
         cursor.execute("""
             UPDATE atividades
-            SET inicio_em = COALESCE(
-                inicio_em,
-                concluido_em,
-                datetime('now')
-            )
+            SET inicio_em = COALESCE(concluido_em, datetime('now'))
             WHERE inicio_em IS NULL
         """)
 
@@ -438,6 +425,22 @@ def init_db():
 # =========================================================
 
 def arquivar_atividades_expiradas():
+
+    """
+    Procura atividades que:
+
+        status = Concluído
+
+    e que foram concluídas há pelo menos 24 horas.
+
+    Depois altera:
+
+        Concluído
+              ↓
+        Arquivada
+
+    O registro NÃO é apagado.
+    """
 
     try:
 
@@ -667,10 +670,6 @@ def index():
             url_for("login")
         )
 
-    # =====================================================
-    # VERIFICA ARQUIVAMENTO
-    # =====================================================
-
     arquivar_atividades_expiradas()
 
     usuario_atual = session["usuario"]
@@ -730,7 +729,7 @@ def index():
 
         prioridade = request.form.get(
             "prioridade"
-        )
+        ) or "Baixa"
 
         atividade = request.form.get(
             "atividade"
@@ -738,7 +737,7 @@ def index():
 
         categoria = request.form.get(
             "categoria"
-        )
+        ) or "Separação"
 
         responsavel = (
             request.form.get("responsavel")
@@ -747,29 +746,25 @@ def index():
 
         prazo = request.form.get(
             "prazo"
-        )
-
-        # =================================================
-        # HORÁRIO DE INÍCIO
-        # =================================================
+        ) or ""
 
         agora = datetime.now(
             timezone.utc
         )
 
-        if usando_postgresql():
-
-            inicio_em = agora
-
-        else:
-
-            inicio_em = agora.strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-
         if atividade:
 
             try:
+
+                if usando_postgresql():
+
+                    inicio_em = agora
+
+                else:
+
+                    inicio_em = agora.strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
 
                 cursor = executar(
                     """
@@ -877,4 +872,1290 @@ def index():
     cursor = executar(
         """
         SELECT *
-   
+        FROM chat
+        ORDER BY id DESC
+        LIMIT 15
+        """
+    )
+
+    mensagens_chat = cursor.fetchall()
+
+    fechar_cursor(cursor)
+
+    # =====================================================
+    # INDICADORES
+    # =====================================================
+
+    total_req = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Separação'
+        AND status = 'Pendente'
+        """
+    )
+
+    inv_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        AND status = 'Pendente'
+        """
+    )
+
+    inv_concluido = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        AND status = 'Concluído'
+        """
+    )
+
+    inv_total_indicador = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        AND status IN ('Pendente', 'Concluído')
+        """
+    )
+
+    exp_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status = 'Pendente'
+        """
+    )
+
+    exp_concluido = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status = 'Concluído'
+        """
+    )
+
+    exp_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        AND status IN ('Pendente', 'Concluído')
+        """
+    )
+
+    rec_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Recebimento'
+        AND status = 'Pendente'
+        """
+    )
+
+    total_oco = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE prioridade = 'Alta'
+        AND status = 'Pendente'
+        """
+    )
+
+    total_atividades = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status IN ('Pendente', 'Concluído')
+        """
+    )
+
+    atividades_concluidas = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = 'Concluído'
+        """
+    )
+
+    atividades_arquivadas = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = 'Arquivada'
+        """
+    )
+
+    if total_atividades > 0:
+
+        perc_atendidas = round(
+            (
+                atividades_concluidas
+                / total_atividades
+            ) * 100
+        )
+
+    else:
+
+        perc_atendidas = 0
+
+    if inv_total_indicador > 0:
+
+        perc_inventario = round(
+            (
+                inv_concluido
+                / inv_total_indicador
+            ) * 100
+        )
+
+    else:
+
+        perc_inventario = 0
+
+    if exp_total > 0:
+
+        perc_expedicao = round(
+            (
+                exp_concluido
+                / exp_total
+            ) * 100
+        )
+
+    else:
+
+        perc_expedicao = 0
+
+    # =====================================================
+    # USUÁRIOS
+    # =====================================================
+
+    cursor = executar(
+        """
+        SELECT *
+        FROM usuarios
+        ORDER BY nome
+        """
+    )
+
+    usuarios = cursor.fetchall()
+
+    fechar_cursor(cursor)
+
+    # =====================================================
+    # RENDERIZA PAINEL
+    # =====================================================
+
+    return render_template(
+        "index.html",
+
+        atividades=atividades,
+
+        mensagens_chat=mensagens_chat,
+
+        usuarios=usuarios,
+
+        busca=busca,
+
+        total_req=total_req,
+
+        inv_conc=inv_concluido,
+
+        inv_total=inv_total,
+
+        exp_pend=exp_pend,
+
+        rec_pend=rec_pend,
+
+        total_oco=total_oco,
+
+        perc_atendidas=perc_atendidas,
+
+        perc_inventario=perc_inventario,
+
+        perc_expedicao=perc_expedicao,
+
+        atividades_arquivadas=atividades_arquivadas
+    )
+
+
+# =========================================================
+# MÓDULOS
+# =========================================================
+
+@app.route(
+    "/modulo/<path:nome>",
+    methods=["GET", "POST"]
+)
+def modulo(nome):
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    nome_limpo = nome
+
+    # =====================================================
+    # CONFIGURAÇÕES
+    # =====================================================
+
+    if "Configurações" in nome_limpo:
+
+        return render_template(
+            "configuracoes.html"
+        )
+
+    # =====================================================
+    # INDICADORES
+    # =====================================================
+
+    if "Indicadores" in nome_limpo:
+
+        total_geral = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE status IN ('Pendente', 'Concluído')
+            """
+        )
+
+        concluidas = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE status = 'Concluído'
+            """
+        )
+
+        pendentes = contar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE status = 'Pendente'
+            """
+        )
+
+        return render_template(
+            "indicadores.html",
+
+            total_geral=total_geral,
+
+            concluidas=concluidas,
+
+            pendentes=pendentes
+        )
+
+    # =====================================================
+    # PDCA / MELHORIAS
+    # =====================================================
+
+    if (
+        "PDCA" in nome_limpo
+        or "Melhorias" in nome_limpo
+    ):
+
+        if request.method == "POST":
+
+            titulo = request.form.get(
+                "titulo"
+            )
+
+            descricao = request.form.get(
+                "descricao"
+            )
+
+            etapa = request.form.get(
+                "etapa"
+            )
+
+            autor = session["usuario"]
+
+            if titulo:
+
+                cursor = executar(
+                    """
+                    INSERT INTO melhorias
+                    (
+                        titulo,
+                        descricao,
+                        autor,
+                        etapa
+                    )
+                    VALUES
+                    (
+                        %s,
+                        %s,
+                        %s,
+                        %s
+                    )
+                    """,
+                    (
+                        titulo,
+                        descricao,
+                        autor,
+                        etapa
+                    )
+                )
+
+                get_db().commit()
+
+                fechar_cursor(cursor)
+
+            return redirect(
+                url_for(
+                    "modulo",
+                    nome="Melhorias / PDCA"
+                )
+            )
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM melhorias
+            ORDER BY id DESC
+            """
+        )
+
+        melhorias = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "pdca.html",
+            melhorias=melhorias
+        )
+
+    # =====================================================
+    # RELATÓRIOS
+    # =====================================================
+
+    if "Relatórios" in nome_limpo:
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM atividades
+            ORDER BY id DESC
+            """
+        )
+
+        itens = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "relatorios.html",
+            itens=itens
+        )
+
+    # =====================================================
+    # ESTOQUE
+    # =====================================================
+
+    if (
+        "Estoque" in nome_limpo
+        or "Cadastros" in nome_limpo
+    ):
+
+        if request.method == "POST":
+
+            acao = request.form.get(
+                "acao_estoque"
+            )
+
+            if acao == "cadastrar_manual":
+
+                rua = request.form.get(
+                    "rua"
+                )
+
+                prateleira = request.form.get(
+                    "prateleira"
+                )
+
+                codigo = request.form.get(
+                    "codigo_material"
+                )
+
+                descricao = request.form.get(
+                    "descricao"
+                )
+
+                try:
+
+                    quantidade = int(
+                        request.form.get(
+                            "quantidade",
+                            0
+                        )
+                    )
+
+                except ValueError:
+
+                    quantidade = 0
+
+                cursor = executar(
+                    """
+                    INSERT INTO estoque
+                    (
+                        rua,
+                        prateleira,
+                        codigo_material,
+                        descricao,
+                        quantidade
+                    )
+                    VALUES
+                    (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s
+                    )
+                    """,
+                    (
+                        rua,
+                        prateleira,
+                        codigo,
+                        descricao,
+                        quantidade
+                    )
+                )
+
+                get_db().commit()
+
+                fechar_cursor(cursor)
+
+                return redirect(
+                    url_for(
+                        "modulo",
+                        nome="Estoque"
+                    )
+                )
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM usuarios
+            ORDER BY nome
+            """
+        )
+
+        usuarios = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM estoque
+            ORDER BY id DESC
+            """
+        )
+
+        estoque_items = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "estoque.html",
+
+            usuarios=usuarios,
+
+            estoque_items=estoque_items
+        )
+
+    # =====================================================
+    # MÓDULOS OPERACIONAIS
+    # =====================================================
+
+    categoria_map = {
+
+        "Requisições": "Separação",
+
+        "Inventário": "Inventário",
+
+        "Expedição": "Expedição",
+
+        "Recebimento": "Recebimento"
+    }
+
+    categoria = categoria_map.get(
+        nome_limpo
+    )
+
+    itens = []
+
+    if categoria:
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM atividades
+            WHERE categoria = %s
+            ORDER BY id DESC
+            """,
+            (
+                categoria,
+            )
+        )
+
+        itens = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+    return render_template(
+        "modulo.html",
+
+        nome=nome_limpo,
+
+        itens=itens
+    )
+
+
+# =========================================================
+# RELATÓRIO PDF DO DIA
+# =========================================================
+
+@app.route("/relatorio_pdf")
+def relatorio_pdf():
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    try:
+
+        # =================================================
+        # DATA ATUAL
+        #
+        # Horário do Brasil: UTC-3
+        # =================================================
+
+        agora_utc = datetime.now(
+            timezone.utc
+        )
+
+        agora_brasil = (
+            agora_utc
+            - timedelta(hours=3)
+        )
+
+        data_hoje = agora_brasil.strftime(
+            "%Y-%m-%d"
+        )
+
+        data_formatada = agora_brasil.strftime(
+            "%d/%m/%Y"
+        )
+
+        # =================================================
+        # BUSCA ATIVIDADES DO DIA
+        # =================================================
+
+        if usando_postgresql():
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE
+                    (
+                        inicio_em IS NOT NULL
+                        AND DATE(
+                            inicio_em AT TIME ZONE
+                            'America/Sao_Paulo'
+                        ) = %s
+                    )
+                    OR
+                    (
+                        concluido_em IS NOT NULL
+                        AND DATE(
+                            concluido_em AT TIME ZONE
+                            'America/Sao_Paulo'
+                        ) = %s
+                    )
+                ORDER BY id ASC
+                """,
+                (
+                    data_hoje,
+                    data_hoje
+                )
+            )
+
+        else:
+
+            cursor = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE
+                    (
+                        inicio_em IS NOT NULL
+                        AND date(
+                            datetime(inicio_em, '-3 hours')
+                        ) = ?
+                    )
+                    OR
+                    (
+                        concluido_em IS NOT NULL
+                        AND date(
+                            datetime(concluido_em, '-3 hours')
+                        ) = ?
+                    )
+                ORDER BY id ASC
+                """,
+                (
+                    data_hoje,
+                    data_hoje
+                )
+            )
+
+        atividades_dia = cursor.fetchall()
+
+        fechar_cursor(cursor)
+
+        # =================================================
+        # QUANTIDADES
+        # =================================================
+
+        total = len(
+            atividades_dia
+        )
+
+        concluidas = sum(
+            1
+            for item in atividades_dia
+            if item["status"] == "Concluído"
+        )
+
+        pendentes = sum(
+            1
+            for item in atividades_dia
+            if item["status"] == "Pendente"
+        )
+
+        arquivadas = sum(
+            1
+            for item in atividades_dia
+            if item["status"] == "Arquivada"
+        )
+
+        # =================================================
+        # CRIA PDF NA MEMÓRIA
+        # =================================================
+
+        buffer = BytesIO()
+
+        documento = SimpleDocTemplate(
+            buffer,
+            pagesize=landscape(A4),
+            rightMargin=1 * cm,
+            leftMargin=1 * cm,
+            topMargin=1 * cm,
+            bottomMargin=1 * cm
+        )
+
+        estilos = getSampleStyleSheet()
+
+        elementos = []
+
+        # =================================================
+        # TÍTULO
+        # =================================================
+
+        elementos.append(
+            Paragraph(
+                "RELATÓRIO DIÁRIO - ALMOXARIFADO",
+                estilos["Title"]
+            )
+        )
+
+        elementos.append(
+            Spacer(
+                1,
+                0.2 * cm
+            )
+        )
+
+        elementos.append(
+            Paragraph(
+                f"Data: {data_formatada}",
+                estilos["Normal"]
+            )
+        )
+
+        elementos.append(
+            Spacer(
+                1,
+                0.3 * cm
+            )
+        )
+
+        # =================================================
+        # RESUMO
+        # =================================================
+
+        resumo = [
+            [
+                "Total",
+                "Concluídas",
+                "Pendentes",
+                "Arquivadas"
+            ],
+            [
+                str(total),
+                str(concluidas),
+                str(pendentes),
+                str(arquivadas)
+            ]
+        ]
+
+        tabela_resumo = Table(
+            resumo,
+            colWidths=[
+                5 * cm,
+                5 * cm,
+                5 * cm,
+                5 * cm
+            ]
+        )
+
+        tabela_resumo.setStyle(
+            TableStyle([
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor("#212529")
+                ),
+                (
+                    "TEXTCOLOR",
+                    (0, 0),
+                    (-1, 0),
+                    colors.white
+                ),
+                (
+                    "ALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "CENTER"
+                ),
+                (
+                    "FONTNAME",
+                    (0, 0),
+                    (-1, 0),
+                    "Helvetica-Bold"
+                ),
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.5,
+                    colors.grey
+                ),
+                (
+                    "BACKGROUND",
+                    (0, 1),
+                    (-1, 1),
+                    colors.whitesmoke
+                )
+            ])
+        )
+
+        elementos.append(
+            tabela_resumo
+        )
+
+        elementos.append(
+            Spacer(
+                1,
+                0.5 * cm
+            )
+        )
+
+        # =================================================
+        # TABELA PRINCIPAL
+        # =================================================
+
+        dados = [
+            [
+                "Req.",
+                "Atividade",
+                "Categoria",
+                "Responsável",
+                "Prioridade",
+                "Início",
+                "Conclusão",
+                "Status"
+            ]
+        ]
+
+        for item in atividades_dia:
+
+            inicio = item["inicio_em"]
+
+            conclusao = item["concluido_em"]
+
+            if inicio:
+                inicio = str(inicio)[:19]
+            else:
+                inicio = "-"
+
+            if conclusao:
+                conclusao = str(conclusao)[:19]
+            else:
+                conclusao = "-"
+
+            requisicao = (
+                item["num_requisicao"]
+                or "-"
+            )
+
+            atividade = (
+                item["atividade"]
+                or "-"
+            )
+
+            categoria = (
+                item["categoria"]
+                or "-"
+            )
+
+            responsavel = (
+                item["responsavel"]
+                or "-"
+            )
+
+            prioridade = (
+                item["prioridade"]
+                or "-"
+            )
+
+            status = (
+                item["status"]
+                or "-"
+            )
+
+            dados.append([
+                requisicao,
+                atividade,
+                categoria,
+                responsavel,
+                prioridade,
+                inicio,
+                conclusao,
+                status
+            ])
+
+        # =================================================
+        # CASO NÃO TENHA ATIVIDADES
+        # =================================================
+
+        if len(dados) == 1:
+
+            dados.append([
+                "-",
+                "Nenhuma atividade registrada no dia.",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-",
+                "-"
+            ])
+
+        tabela = Table(
+            dados,
+            repeatRows=1,
+            colWidths=[
+                2.2 * cm,
+                5.5 * cm,
+                3.2 * cm,
+                4.0 * cm,
+                2.5 * cm,
+                3.5 * cm,
+                3.5 * cm,
+                2.8 * cm
+            ]
+        )
+
+        tabela.setStyle(
+            TableStyle([
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor("#343a40")
+                ),
+                (
+                    "TEXTCOLOR",
+                    (0, 0),
+                    (-1, 0),
+                    colors.white
+                ),
+                (
+                    "FONTNAME",
+                    (0, 0),
+                    (-1, 0),
+                    "Helvetica-Bold"
+                ),
+                (
+                    "FONTSIZE",
+                    (0, 0),
+                    (-1, -1),
+                    7
+                ),
+                (
+                    "GRID",
+                    (0, 0),
+                    (-1, -1),
+                    0.4,
+                    colors.grey
+                ),
+                (
+                    "VALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "MIDDLE"
+                ),
+                (
+                    "ALIGN",
+                    (0, 0),
+                    (-1, -1),
+                    "CENTER"
+                ),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [
+                        colors.white,
+                        colors.HexColor("#f8f9fa")
+                    ]
+                )
+            ])
+        )
+
+        elementos.append(
+            tabela
+        )
+
+        elementos.append(
+            Spacer(
+                1,
+                0.5 * cm
+            )
+        )
+
+        elementos.append(
+            Paragraph(
+                "Relatório gerado pelo sistema Almoxarifado Valenet.",
+                estilos["Normal"]
+            )
+        )
+
+        # =================================================
+        # GERA PDF
+        # =================================================
+
+        documento.build(
+            elementos
+        )
+
+        buffer.seek(0)
+
+        nome_arquivo = (
+            f"relatorio_almoxarifado_"
+            f"{data_hoje}.pdf"
+        )
+
+        return send_file(
+            buffer,
+            as_attachment=True,
+            download_name=nome_arquivo,
+            mimetype="application/pdf"
+        )
+
+    except Exception as erro:
+
+        print(
+            f"[ERRO PDF] {erro}"
+        )
+
+        return (
+            "Não foi possível gerar o relatório PDF.",
+            500
+        )
+
+
+# =========================================================
+# CONCLUIR ATIVIDADE
+# =========================================================
+
+@app.route(
+    "/deletar/<int:id>"
+)
+def deletar(id):
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # =====================================================
+    # BUSCA A ATIVIDADE ANTES DE CONCLUIR
+    # =====================================================
+
+    cursor = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = %s
+        AND status = 'Pendente'
+        """,
+        (
+            id,
+        )
+    )
+
+    atividade = cursor.fetchone()
+
+    fechar_cursor(cursor)
+
+    if not atividade:
+
+        return redirect(
+            request.referrer
+            or url_for("index")
+        )
+
+    # =====================================================
+    # MOMENTO DA CONCLUSÃO
+    # =====================================================
+
+    agora = datetime.now(
+        timezone.utc
+    )
+
+    if usando_postgresql():
+
+        concluido_em = agora
+
+    else:
+
+        concluido_em = agora.strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+    # =====================================================
+    # CONCLUI A ATIVIDADE
+    # =====================================================
+
+    cursor = executar(
+        """
+        UPDATE atividades
+        SET
+            status = 'Concluído',
+            concluido_em = %s
+        WHERE id = %s
+        AND status = 'Pendente'
+        """,
+        (
+            concluido_em,
+            id
+        )
+    )
+
+    get_db().commit()
+
+    fechar_cursor(cursor)
+
+    # =====================================================
+    # SE FOR SEPARAÇÃO:
+    #
+    # CRIA AUTOMATICAMENTE A EXPEDIÇÃO
+    # =====================================================
+
+    categoria_original = atividade["categoria"]
+
+    if categoria_original == "Separação":
+
+        num_requisicao = (
+            atividade["num_requisicao"]
+            or ""
+        )
+
+        prioridade = (
+            atividade["prioridade"]
+            or "Baixa"
+        )
+
+        responsavel = (
+            atividade["responsavel"]
+            or session["usuario"]
+        )
+
+        prazo = (
+            atividade["prazo"]
+            or ""
+        )
+
+        # Verifica se já existe uma Expedição
+        # para evitar duplicidade.
+
+        cursor = executar(
+            """
+            SELECT COUNT(*)
+            FROM atividades
+            WHERE categoria = 'Expedição'
+            AND num_requisicao = %s
+            """,
+            (
+                num_requisicao,
+            )
+        )
+
+        existe_expedicao = obter_valor(
+            cursor
+        )
+
+        fechar_cursor(cursor)
+
+        if existe_expedicao == 0:
+
+            if usando_postgresql():
+
+                inicio_expedicao = agora
+
+            else:
+
+                inicio_expedicao = agora.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+            cursor = executar(
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    prioridade,
+                    atividade,
+                    categoria,
+                    responsavel,
+                    prazo,
+                    status,
+                    inicio_em,
+                    concluido_em
+                )
+                VALUES
+                (
+                    %s,
+                    %s,
+                    %s,
+                    'Expedição',
+                    %s,
+                    %s,
+                    'Pendente',
+                    %s,
+                    NULL
+                )
+                """,
+                (
+                    num_requisicao,
+                    prioridade,
+                    f"Expedição da requisição {num_requisicao}",
+                    responsavel,
+                    prazo,
+                    inicio_expedicao
+                )
+            )
+
+            get_db().commit()
+
+            fechar_cursor(cursor)
+
+            print(
+                f"[EXPEDIÇÃO] Criada automaticamente "
+                f"para a requisição {num_requisicao}."
+            )
+
+    return redirect(
+        request.referrer
+        or url_for("index")
+    )
+
+
+# =========================================================
+# EXCLUIR ITEM DO ESTOQUE
+# =========================================================
+
+@app.route(
+    "/deletar_estoque/<int:id>"
+)
+def deletar_estoque(id):
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    cursor = executar(
+        """
+        DELETE FROM estoque
+        WHERE id = %s
+        """,
+        (
+            id,
+        )
+    )
+
+    get_db().commit()
+
+    fechar_cursor(cursor)
+
+    return redirect(
+        url_for(
+            "modulo",
+            nome="Estoque"
+        )
+    )
+
+
+# =========================================================
+# INICIALIZAÇÃO DO BANCO
+# =========================================================
+
+with app.app_context():
+
+    init_db()
+
+
+# =========================================================
+# EXECUÇÃO LOCAL
+# =========================================================
+
+if __name__ == "__main__":
+
+    port = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
+    app.run(
+        host="0.0.0.0",
+        port=port,
+        debug=False
+    )

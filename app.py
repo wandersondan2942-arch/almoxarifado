@@ -46,7 +46,7 @@ app.secret_key = os.environ.get(
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Horário oficial utilizado para EXIBIÇÃO
+# Horário oficial para EXIBIÇÃO
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
 
@@ -138,6 +138,49 @@ def executar(sql, parametros=()):
     return cursor
 
 
+def linha_para_dict(linha):
+    """
+    Converte uma linha do banco para dict.
+
+    PostgreSQL:
+        RealDictRow
+
+    SQLite:
+        sqlite3.Row
+
+    Isso evita problemas quando o sistema utiliza
+    .get(), principalmente no relatório PDF.
+    """
+
+    if linha is None:
+        return {}
+
+    if isinstance(linha, dict):
+        return dict(linha)
+
+    try:
+        return dict(linha)
+
+    except Exception:
+
+        try:
+            return {
+                chave: linha[chave]
+                for chave in linha.keys()
+            }
+
+        except Exception:
+            return {}
+
+
+def linhas_para_dict(itens):
+
+    return [
+        linha_para_dict(item)
+        for item in itens
+    ]
+
+
 def obter_valor(cursor):
 
     resultado = cursor.fetchone()
@@ -148,7 +191,16 @@ def obter_valor(cursor):
     if isinstance(resultado, dict):
         return list(resultado.values())[0]
 
-    return resultado[0]
+    try:
+        return resultado[0]
+
+    except Exception:
+
+        try:
+            return list(resultado.values())[0]
+
+        except Exception:
+            return 0
 
 
 def fechar_cursor(cursor):
@@ -315,8 +367,8 @@ def converter_para_brasil(valor):
                     "%Y-%m-%d %H:%M:%S"
                 )
 
-        # Valores antigos do sistema são UTC
-        # armazenados sem timezone.
+        # Banco armazena valores antigos sem timezone
+        # como UTC.
         if dt.tzinfo is None:
 
             dt = dt.replace(
@@ -339,10 +391,9 @@ def converter_para_brasil(valor):
 
 def formatar_data_hora(valor):
     """
-    Exemplo:
-        2026-09-22 21:30:00 UTC
-        ->
-        22/09/2026 18:30
+    Converte para:
+
+        DD/MM/AAAA HH:MM
     """
 
     dt = converter_para_brasil(
@@ -374,6 +425,13 @@ def formatar_hora(valor):
 def calcular_duracao(inicio, fim):
     """
     Calcula a duração entre início e conclusão.
+
+    Exemplo:
+        01/09/2026 08:00
+        01/09/2026 10:35
+
+        Resultado:
+        2h 35min
     """
 
     dt_inicio = converter_para_brasil(
@@ -418,19 +476,24 @@ def preparar_atividade(item):
     """
     Prepara uma atividade para exibição.
 
-    Mantém os dados originais importantes,
-    mas substitui início/conclusão por
-    horário de Brasília para que templates
-    antigos continuem funcionando.
+    Acrescenta:
 
-    Também acrescenta:
         encerrado_por
         inicio_formatado
         conclusao_formatada
         duracao
+
+    E mantém:
+
+        inicio_em
+        concluido_em
+
+    compatíveis com templates antigos.
     """
 
-    dados = dict(item)
+    dados = linha_para_dict(
+        item
+    )
 
     inicio_original = dados.get(
         "inicio_em"
@@ -460,7 +523,7 @@ def preparar_atividade(item):
         )
     )
 
-    # Mantém compatibilidade com HTML antigo
+    # Compatibilidade com HTML antigo
     dados["inicio_em"] = (
         dados["inicio_formatado"]
     )
@@ -595,7 +658,6 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
             """)
 
-            # NOVA COLUNA DE AUDITORIA
             cursor.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN IF NOT EXISTS encerrado_por TEXT
@@ -753,10 +815,20 @@ def init_db():
 
             colunas = cursor.fetchall()
 
-            nomes_colunas = [
-                coluna[1]
-                for coluna in colunas
-            ]
+            nomes_colunas = []
+
+            for coluna in colunas:
+
+                try:
+                    nomes_colunas.append(
+                        coluna["name"]
+                    )
+
+                except Exception:
+
+                    nomes_colunas.append(
+                        coluna[1]
+                    )
 
             colunas_necessarias = {
 
@@ -800,7 +872,6 @@ def init_db():
                     "ALTER TABLE atividades "
                     "ADD COLUMN concluido_em TEXT",
 
-                # NOVA COLUNA
                 "encerrado_por":
                     "ALTER TABLE atividades "
                     "ADD COLUMN encerrado_por TEXT"
@@ -853,6 +924,8 @@ def init_db():
                 WHERE descricao IS NULL
             """)
 
+            # Somente registros antigos que não possuem início
+            # recebem uma referência de início.
             cursor.execute("""
                 UPDATE atividades
                 SET inicio_em = COALESCE(
@@ -897,10 +970,20 @@ def init_db():
 
             colunas_melhorias = cursor.fetchall()
 
-            nomes_melhorias = [
-                coluna[1]
-                for coluna in colunas_melhorias
-            ]
+            nomes_melhorias = []
+
+            for coluna in colunas_melhorias:
+
+                try:
+                    nomes_melhorias.append(
+                        coluna["name"]
+                    )
+
+                except Exception:
+
+                    nomes_melhorias.append(
+                        coluna[1]
+                    )
 
             colunas_melhoria_necessarias = {
 
@@ -1140,7 +1223,13 @@ def login():
 
             if user:
 
-                session["usuario"] = user["nome"]
+                usuario = linha_para_dict(
+                    user
+                )
+
+                session["usuario"] = (
+                    usuario["nome"]
+                )
 
                 return redirect(
                     url_for("index")
@@ -1610,6 +1699,10 @@ def index():
 
         mensagens_chat = cursor.fetchall()
 
+        mensagens_chat = linhas_para_dict(
+            mensagens_chat
+        )
+
     except Exception as erro:
 
         print(
@@ -1791,6 +1884,10 @@ def index():
         )
 
         usuarios = cursor.fetchall()
+
+        usuarios = linhas_para_dict(
+            usuarios
+        )
 
     except Exception as erro:
 
@@ -2110,6 +2207,10 @@ def modulo(nome):
 
             melhorias = cursor.fetchall()
 
+            melhorias = linhas_para_dict(
+                melhorias
+            )
+
         except Exception as erro:
 
             print(
@@ -2187,6 +2288,10 @@ def modulo(nome):
             )
 
             usuarios = cursor.fetchall()
+
+            usuarios = linhas_para_dict(
+                usuarios
+            )
 
         except Exception as erro:
 
@@ -2725,6 +2830,10 @@ def modulo(nome):
 
             estoque_itens = cursor.fetchall()
 
+            estoque_itens = linhas_para_dict(
+                estoque_itens
+            )
+
         except Exception as erro:
 
             print(
@@ -2911,6 +3020,10 @@ def relatorio_pdf():
 
         atividades_dia = cursor.fetchall()
 
+        atividades_dia = linhas_para_dict(
+            atividades_dia
+        )
+
         fechar_cursor(cursor)
         cursor = None
 
@@ -2925,19 +3038,19 @@ def relatorio_pdf():
         concluidas = sum(
             1
             for item in atividades_dia
-            if item["status"] == "Concluído"
+            if item.get("status") == "Concluído"
         )
 
         pendentes = sum(
             1
             for item in atividades_dia
-            if item["status"] == "Pendente"
+            if item.get("status") == "Pendente"
         )
 
         arquivadas = sum(
             1
             for item in atividades_dia
-            if item["status"] == "Arquivada"
+            if item.get("status") == "Arquivada"
         )
 
         # =================================================
@@ -2949,10 +3062,10 @@ def relatorio_pdf():
         documento = SimpleDocTemplate(
             buffer,
             pagesize=landscape(A4),
-            rightMargin=0.7 * cm,
-            leftMargin=0.7 * cm,
-            topMargin=0.8 * cm,
-            bottomMargin=0.8 * cm
+            rightMargin=0.5 * cm,
+            leftMargin=0.5 * cm,
+            topMargin=0.7 * cm,
+            bottomMargin=0.7 * cm
         )
 
         estilos = getSampleStyleSheet()
@@ -2961,17 +3074,26 @@ def relatorio_pdf():
             "Celula",
             parent=estilos["Normal"],
             fontName="Helvetica",
-            fontSize=6.5,
-            leading=7.5,
+            fontSize=6,
+            leading=7,
             alignment=1
+        )
+
+        estilo_celula_esquerda = ParagraphStyle(
+            "CelulaEsquerda",
+            parent=estilos["Normal"],
+            fontName="Helvetica",
+            fontSize=6,
+            leading=7,
+            alignment=0
         )
 
         estilo_cabecalho = ParagraphStyle(
             "Cabecalho",
             parent=estilos["Normal"],
             fontName="Helvetica-Bold",
-            fontSize=6.5,
-            leading=7.5,
+            fontSize=6,
+            leading=7,
             textColor=colors.white,
             alignment=1
         )
@@ -2995,6 +3117,14 @@ def relatorio_pdf():
         elementos.append(
             Paragraph(
                 f"Data: {data_formatada}",
+                estilos["Normal"]
+            )
+        )
+
+        elementos.append(
+            Paragraph(
+                "Horários exibidos no fuso "
+                "America/Sao_Paulo (Brasília).",
                 estilos["Normal"]
             )
         )
@@ -3100,7 +3230,7 @@ def relatorio_pdf():
                 Paragraph("Responsável", estilo_cabecalho),
                 Paragraph("Encerrado por", estilo_cabecalho),
                 Paragraph("Início", estilo_cabecalho),
-                Paragraph("Conclusão", estilo_cabecalho),
+                Paragraph("Encerramento", estilo_cabecalho),
                 Paragraph("Duração", estilo_cabecalho),
                 Paragraph("Status", estilo_cabecalho)
             ]
@@ -3109,22 +3239,22 @@ def relatorio_pdf():
         for item in atividades_dia:
 
             requisicao = (
-                item["num_requisicao"]
+                item.get("num_requisicao")
                 or "-"
             )
 
             atividade = (
-                item["atividade"]
+                item.get("atividade")
                 or "-"
             )
 
             categoria_item = (
-                item["categoria"]
+                item.get("categoria")
                 or "-"
             )
 
             responsavel = (
-                item["responsavel"]
+                item.get("responsavel")
                 or "-"
             )
 
@@ -3134,20 +3264,20 @@ def relatorio_pdf():
             )
 
             inicio = formatar_data_hora(
-                item["inicio_em"]
+                item.get("inicio_em")
             )
 
             conclusao = formatar_data_hora(
-                item["concluido_em"]
+                item.get("concluido_em")
             )
 
             duracao = calcular_duracao(
-                item["inicio_em"],
-                item["concluido_em"]
+                item.get("inicio_em"),
+                item.get("concluido_em")
             )
 
             status = (
-                item["status"]
+                item.get("status")
                 or "-"
             )
 
@@ -3159,7 +3289,7 @@ def relatorio_pdf():
 
                 Paragraph(
                     str(atividade),
-                    estilo_celula
+                    estilo_celula_esquerda
                 ),
 
                 Paragraph(
@@ -3243,14 +3373,14 @@ def relatorio_pdf():
             dados,
             repeatRows=1,
             colWidths=[
-                1.8 * cm,  # Req.
-                4.5 * cm,  # Atividade
-                2.8 * cm,  # Categoria
-                3.4 * cm,  # Responsável
-                3.4 * cm,  # Encerrado por
-                3.1 * cm,  # Início
-                3.1 * cm,  # Conclusão
-                2.2 * cm,  # Duração
+                1.7 * cm,  # Req.
+                4.6 * cm,  # Atividade
+                2.7 * cm,  # Categoria
+                3.3 * cm,  # Responsável
+                3.3 * cm,  # Encerrado por
+                3.0 * cm,  # Início
+                3.0 * cm,  # Encerramento
+                2.1 * cm,  # Duração
                 2.4 * cm   # Status
             ]
         )
@@ -3314,6 +3444,22 @@ def relatorio_pdf():
             Spacer(
                 1,
                 0.5 * cm
+            )
+        )
+
+        elementos.append(
+            Paragraph(
+                "Legenda: Responsável = usuário atribuído "
+                "à atividade. Encerrado por = usuário que "
+                "realmente realizou o encerramento.",
+                estilos["Normal"]
+            )
+        )
+
+        elementos.append(
+            Spacer(
+                1,
+                0.15 * cm
             )
         )
 
@@ -3401,12 +3547,12 @@ def concluir(id):
             )
         )
 
-        atividade = cursor.fetchone()
+        atividade_raw = cursor.fetchone()
 
         fechar_cursor(cursor)
         cursor = None
 
-        if not atividade:
+        if not atividade_raw:
 
             flash(
                 "A atividade não foi encontrada "
@@ -3418,6 +3564,10 @@ def concluir(id):
                 request.referrer
                 or url_for("index")
             )
+
+        atividade = linha_para_dict(
+            atividade_raw
+        )
 
         # =================================================
         # MOMENTO EXATO DO ENCERRAMENTO
@@ -3439,14 +3589,13 @@ def concluir(id):
         # ENCERRA A ATIVIDADE
         #
         # responsavel:
-        #     pessoa atribuída à atividade
+        #     pessoa atribuída
         #
         # encerrado_por:
-        #     usuário que realmente clicou
-        #     em "Encerrar"
+        #     pessoa que clicou em Encerrar
         #
         # concluido_em:
-        #     horário exato do encerramento
+        #     momento exato
         # =================================================
 
         cursor = executar(
@@ -3492,25 +3641,25 @@ def concluir(id):
         # SEPARAÇÃO → EXPEDIÇÃO
         # =================================================
 
-        if atividade["categoria"] == "Separação":
+        if atividade.get("categoria") == "Separação":
 
             num_requisicao = (
-                atividade["num_requisicao"]
+                atividade.get("num_requisicao")
                 or ""
             ).strip()
 
             prioridade = (
-                atividade["prioridade"]
+                atividade.get("prioridade")
                 or "Baixa"
             )
 
             responsavel = (
-                atividade["responsavel"]
+                atividade.get("responsavel")
                 or usuario_que_encerrou
             )
 
             prazo = (
-                atividade["prazo"]
+                atividade.get("prazo")
                 or ""
             )
 
@@ -3549,7 +3698,7 @@ def concluir(id):
                 ) == 0:
 
                     # A Expedição começa exatamente
-                    # quando a Separação é encerrada.
+                    # quando a Separação foi encerrada.
                     inicio_expedicao = (
                         momento_encerramento
                     )
@@ -3770,7 +3919,7 @@ def deletar_compatibilidade(id):
     IMPORTANTE:
     Não apaga a atividade.
 
-    Apenas direciona para o processo de conclusão.
+    Direciona para o processo de conclusão.
     """
 
     return concluir(id)

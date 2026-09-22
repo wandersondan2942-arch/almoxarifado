@@ -104,7 +104,11 @@ def close_connection(exception=None):
     db = getattr(g, "_database", None)
 
     if db is not None:
-        db.close()
+
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 # =========================================================
@@ -181,15 +185,15 @@ def contar(sql, parametros=()):
             parametros
         )
 
-        valor = obter_valor(cursor)
+        valor = obter_valor(
+            cursor
+        )
 
-        fechar_cursor(cursor)
-
-        return int(valor or 0)
+        return int(
+            valor or 0
+        )
 
     except Exception as erro:
-
-        fechar_cursor(cursor)
 
         try:
             get_db().rollback()
@@ -201,6 +205,10 @@ def contar(sql, parametros=()):
         )
 
         return 0
+
+    finally:
+
+        fechar_cursor(cursor)
 
 
 # =========================================================
@@ -218,7 +226,8 @@ def agora_utc_naive():
 
     """
     PostgreSQL utiliza TIMESTAMP sem timezone.
-    Armazenamos UTC sem tzinfo.
+
+    O sistema armazena UTC sem tzinfo.
     """
 
     return agora_utc().replace(
@@ -229,7 +238,7 @@ def agora_utc_naive():
 def agora_sqlite():
 
     """
-    SQLite armazena a data/hora como texto UTC.
+    SQLite armazena data/hora como texto UTC.
     """
 
     return agora_utc().strftime(
@@ -261,15 +270,15 @@ def init_db():
 
     try:
 
-        # =================================================
+        # =====================================================
         # POSTGRESQL
-        # =================================================
+        # =====================================================
 
         if usando_postgresql():
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # USUÁRIOS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
@@ -279,9 +288,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # ATIVIDADES
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS atividades (
@@ -299,9 +308,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # MIGRAÇÃO ATIVIDADES
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 ALTER TABLE atividades
@@ -353,9 +362,9 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
             """)
 
-            # ---------------------------------------------
-            # CORREÇÃO DE VALORES ANTIGOS
-            # ---------------------------------------------
+            # -------------------------------------------------
+            # CORREÇÃO DE DADOS ANTIGOS
+            # -------------------------------------------------
 
             cursor.execute("""
                 UPDATE atividades
@@ -387,9 +396,9 @@ def init_db():
                 WHERE descricao IS NULL
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # CHAT
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS chat (
@@ -400,9 +409,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # MELHORIAS / PDCA
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS melhorias (
@@ -423,12 +432,12 @@ def init_db():
 
             cursor.execute("""
                 ALTER TABLE melhorias
-                ADD COLUMN IF NOT EXISTS etapa TEXT
+                ADD COLUMN IF NOT EXISTS autor TEXT
             """)
 
             cursor.execute("""
                 ALTER TABLE melhorias
-                ADD COLUMN IF NOT EXISTS autor TEXT
+                ADD COLUMN IF NOT EXISTS etapa TEXT
             """)
 
             cursor.execute("""
@@ -441,9 +450,9 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # ESTOQUE
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS estoque (
@@ -456,15 +465,15 @@ def init_db():
                 )
             """)
 
-        # =================================================
+        # =====================================================
         # SQLITE
-        # =================================================
+        # =====================================================
 
         else:
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # USUÁRIOS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
@@ -474,9 +483,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # ATIVIDADES
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS atividades (
@@ -494,9 +503,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # MIGRAÇÃO SQLITE
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 PRAGMA table_info(atividades)
@@ -551,11 +560,13 @@ def init_db():
                         f"{nome_coluna}..."
                     )
 
-                    cursor.execute(comando)
+                    cursor.execute(
+                        comando
+                    )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # CORREÇÃO DE DADOS ANTIGOS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 UPDATE atividades
@@ -596,9 +607,9 @@ def init_db():
                 WHERE inicio_em IS NULL
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # CHAT
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS chat (
@@ -609,9 +620,9 @@ def init_db():
                 )
             """)
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # MELHORIAS
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS melhorias (
@@ -658,11 +669,13 @@ def init_db():
 
                 if nome_coluna not in nomes_melhorias:
 
-                    cursor.execute(comando)
+                    cursor.execute(
+                        comando
+                    )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # ESTOQUE
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS estoque (
@@ -675,9 +688,9 @@ def init_db():
                 )
             """)
 
-        # =================================================
+        # =====================================================
         # USUÁRIO INICIAL
-        # =================================================
+        # =====================================================
 
         cursor.execute(
             "SELECT COUNT(*) FROM usuarios"
@@ -744,6 +757,8 @@ def init_db():
 
 def arquivar_atividades_expiradas():
 
+    cursor = None
+
     try:
 
         db = get_db()
@@ -798,8 +813,6 @@ def arquivar_atividades_expiradas():
 
         db.commit()
 
-        fechar_cursor(cursor)
-
         if quantidade > 0:
 
             print(
@@ -818,6 +831,10 @@ def arquivar_atividades_expiradas():
             f"[ERRO ARQUIVAMENTO] {erro}"
         )
 
+    finally:
+
+        fechar_cursor(cursor)
+
 
 # =========================================================
 # LOGIN
@@ -830,6 +847,7 @@ def arquivar_atividades_expiradas():
 def login():
 
     erro = None
+    cursor = None
 
     if request.method == "POST":
 
@@ -842,8 +860,6 @@ def login():
             "senha",
             ""
         ).strip()
-
-        cursor = None
 
         try:
 
@@ -903,6 +919,7 @@ def login():
 def cadastro_usuario():
 
     erro = None
+    cursor = None
 
     if request.method == "POST":
 
@@ -921,8 +938,6 @@ def cadastro_usuario():
             erro = "Preencha todos os campos."
 
         else:
-
-            cursor = None
 
             try:
 
@@ -1930,9 +1945,9 @@ def modulo(nome):
                 "acao_estoque"
             )
 
-            # =============================================
+            # =================================================
             # CADASTRO MANUAL
-            # =============================================
+            # =================================================
 
             if acao == "cadastrar_manual":
 
@@ -2101,9 +2116,9 @@ def modulo(nome):
                     )
                 )
 
-            # =============================================
+            # =================================================
             # IMPORTAÇÃO EXCEL / CSV
-            # =============================================
+            # =================================================
 
             if acao == "importar_excel":
 
@@ -2163,9 +2178,9 @@ def modulo(nome):
                             arquivo
                         )
 
-                    # -------------------------------------
+                    # -----------------------------------------
                     # NORMALIZA NOMES DAS COLUNAS
-                    # -------------------------------------
+                    # -----------------------------------------
 
                     mapa_colunas = {}
 
@@ -2297,12 +2312,16 @@ def modulo(nome):
                                 else 0
                             )
 
-                            if pd.isna(valor_codigo):
+                            if pd.isna(
+                                valor_codigo
+                            ):
 
                                 ignorados += 1
                                 continue
 
-                            if pd.isna(valor_descricao):
+                            if pd.isna(
+                                valor_descricao
+                            ):
 
                                 ignorados += 1
                                 continue
@@ -2416,9 +2435,9 @@ def modulo(nome):
                     )
                 )
 
-        # =============================================
+        # =================================================
         # LISTAGEM DO ESTOQUE
-        # =============================================
+        # =================================================
 
         cursor = None
 
@@ -2991,7 +3010,7 @@ def relatorio_pdf():
 
 
 # =========================================================
-# CONCLUIR ATIVIDADE
+# ENCERRAR ATIVIDADE / REQUISIÇÃO
 # =========================================================
 
 @app.route(
@@ -3012,7 +3031,7 @@ def concluir(id):
     try:
 
         # =================================================
-        # BUSCA ATIVIDADE
+        # BUSCA ATIVIDADE PENDENTE
         # =================================================
 
         cursor = executar(
@@ -3058,7 +3077,7 @@ def concluir(id):
             concluido_em = agora_sqlite()
 
         # =================================================
-        # CONCLUI ATIVIDADE
+        # ENCERRA A ATIVIDADE
         # =================================================
 
         cursor = executar(
@@ -3076,8 +3095,25 @@ def concluir(id):
             )
         )
 
+        quantidade_atualizada = cursor.rowcount
+
         fechar_cursor(cursor)
         cursor = None
+
+        if quantidade_atualizada == 0:
+
+            db.rollback()
+
+            flash(
+                "A atividade já foi concluída "
+                "ou não está mais disponível.",
+                "warning"
+            )
+
+            return redirect(
+                request.referrer
+                or url_for("index")
+            )
 
         # =================================================
         # SEPARAÇÃO → EXPEDIÇÃO
@@ -3107,6 +3143,10 @@ def concluir(id):
 
             if num_requisicao:
 
+                # -----------------------------------------
+                # VERIFICA SE JÁ EXISTE EXPEDIÇÃO
+                # -----------------------------------------
+
                 cursor = executar(
                     """
                     SELECT COUNT(*)
@@ -3127,7 +3167,11 @@ def concluir(id):
                 fechar_cursor(cursor)
                 cursor = None
 
-                if existe_expedicao == 0:
+                # -----------------------------------------
+                # CRIA EXPEDIÇÃO
+                # -----------------------------------------
+
+                if int(existe_expedicao or 0) == 0:
 
                     if usando_postgresql():
 
@@ -3193,9 +3237,9 @@ def concluir(id):
 
                     flash(
                         (
-                            f"Separação concluída. "
-                            f"Expedição da requisição "
-                            f"{num_requisicao} criada "
+                            f"Separação da requisição "
+                            f"{num_requisicao} encerrada. "
+                            f"A Expedição foi criada "
                             f"automaticamente."
                         ),
                         "success"
@@ -3204,14 +3248,15 @@ def concluir(id):
                 else:
 
                     flash(
-                        "Atividade concluída com sucesso.",
+                        "Atividade encerrada com sucesso. "
+                        "A Expedição já estava cadastrada.",
                         "success"
                     )
 
             else:
 
                 flash(
-                    "Separação concluída, mas não foi "
+                    "Separação encerrada, porém não foi "
                     "possível criar a Expedição porque "
                     "não existe número de requisição.",
                     "warning"
@@ -3220,12 +3265,12 @@ def concluir(id):
         else:
 
             flash(
-                "Atividade concluída com sucesso.",
+                "Atividade encerrada com sucesso.",
                 "success"
             )
 
         # =================================================
-        # COMMIT ÚNICO
+        # COMMIT
         # =================================================
 
         db.commit()
@@ -3239,7 +3284,7 @@ def concluir(id):
         )
 
         flash(
-            "Não foi possível concluir a atividade.",
+            "Não foi possível encerrar a atividade.",
             "danger"
         )
 
@@ -3327,7 +3372,7 @@ def arquivar(id):
 
 
 # =========================================================
-# COMPATIBILIDADE COM LINK ANTIGO /deletar
+# COMPATIBILIDADE COM VERSÃO ANTIGA
 # =========================================================
 
 @app.route(
@@ -3336,11 +3381,13 @@ def arquivar(id):
 def deletar_compatibilidade(id):
 
     """
-    Mantém compatibilidade com versões anteriores
+    Mantém compatibilidade com versões antigas
     do HTML que ainda utilizem /deletar/<id>.
 
+    IMPORTANTE:
     Não apaga a atividade.
-    Apenas conclui a atividade.
+
+    Apenas direciona para o processo de conclusão.
     """
 
     return concluir(id)

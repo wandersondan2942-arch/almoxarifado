@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -11,11 +12,13 @@
 
     <title>Relatórios - Valenet</title>
 
+    <!-- Bootstrap -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
+    <!-- Font Awesome -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -39,6 +42,7 @@
 
         .table th {
             white-space: nowrap;
+            vertical-align: middle;
         }
 
         .table td {
@@ -71,6 +75,80 @@
             color: #0d6efd;
         }
 
+        .responsavel {
+            font-weight: 600;
+        }
+
+        .encerrado-por {
+            font-weight: 600;
+        }
+
+        .duracao {
+            white-space: nowrap;
+            font-size: 12px;
+        }
+
+        .linha-concluida {
+            background-color: rgba(25, 135, 84, 0.03);
+        }
+
+        .linha-arquivada {
+            background-color: rgba(108, 117, 125, 0.04);
+        }
+
+        .descricao {
+            max-width: 320px;
+            display: block;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        .cabecalho-tabela {
+            background-color: #f8f9fa;
+        }
+
+        .info-auditoria {
+            font-size: 11px;
+            line-height: 1.35;
+        }
+
+        .etapa-fluxo {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+        }
+
+        .timeline .linha {
+            width: 25px;
+            height: 2px;
+            background-color: #dee2e6;
+        }
+
+        .filtro-info {
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+
+            .titulo-relatorio {
+                font-size: 1.1rem;
+            }
+
+            .table {
+                font-size: 12px;
+            }
+
+        }
+
     </style>
 
 </head>
@@ -78,9 +156,10 @@
 
 <body class="p-3 p-md-4">
 
+
 <div
     class="container-fluid"
-    style="max-width: 1400px;"
+    style="max-width: 1600px;"
 >
 
 
@@ -89,7 +168,10 @@
     <!-- ===================================================== -->
 
     <div
-        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
+        class="d-flex flex-column flex-md-row
+               justify-content-between
+               align-items-md-center
+               gap-3 mb-4"
     >
 
         <div>
@@ -106,7 +188,7 @@
 
             <small class="text-muted">
 
-                Histórico das atividades do almoxarifado
+                Histórico completo das atividades do almoxarifado
 
             </small>
 
@@ -115,7 +197,7 @@
 
         <div class="d-flex gap-2 flex-wrap">
 
-            <!-- PDF DO DIA -->
+            <!-- PDF -->
 
             <a
                 href="{{ url_for('relatorio_pdf') }}"
@@ -150,7 +232,7 @@
 
 
     <!-- ===================================================== -->
-    <!-- MENSAGENS FLASH -->
+    <!-- FLASH -->
     <!-- ===================================================== -->
 
     {% with mensagens = get_flashed_messages(with_categories=true) %}
@@ -184,7 +266,7 @@
 
 
     <!-- ===================================================== -->
-    <!-- RESUMO -->
+    <!-- CARDS DE RESUMO -->
     <!-- ===================================================== -->
 
     <div class="row g-3 mb-4">
@@ -199,7 +281,9 @@
             >
 
                 <div
-                    class="d-flex justify-content-between align-items-center"
+                    class="d-flex
+                           justify-content-between
+                           align-items-center"
                 >
 
                     <div>
@@ -208,8 +292,13 @@
                             Total de atividades
                         </small>
 
-                        <h3 class="fw-bold text-primary mb-0 mt-1">
+                        <h3
+                            class="fw-bold text-primary
+                                   mb-0 mt-1"
+                        >
+
                             {{ itens|length }}
+
                         </h3>
 
                     </div>
@@ -226,6 +315,7 @@
         </div>
 
 
+
         <!-- CONCLUÍDAS -->
 
         <div class="col-12 col-sm-6 col-lg-3">
@@ -235,7 +325,9 @@
             >
 
                 <div
-                    class="d-flex justify-content-between align-items-center"
+                    class="d-flex
+                           justify-content-between
+                           align-items-center"
                 >
 
                     <div>
@@ -244,7 +336,10 @@
                             Concluídas
                         </small>
 
-                        <h3 class="fw-bold text-success mb-0 mt-1">
+                        <h3
+                            class="fw-bold text-success
+                                   mb-0 mt-1"
+                        >
 
                             {{
                                 itens
@@ -269,6 +364,7 @@
         </div>
 
 
+
         <!-- PENDENTES -->
 
         <div class="col-12 col-sm-6 col-lg-3">
@@ -278,7 +374,9 @@
             >
 
                 <div
-                    class="d-flex justify-content-between align-items-center"
+                    class="d-flex
+                           justify-content-between
+                           align-items-center"
                 >
 
                     <div>
@@ -287,7 +385,10 @@
                             Pendentes
                         </small>
 
-                        <h3 class="fw-bold text-warning mb-0 mt-1">
+                        <h3
+                            class="fw-bold text-warning
+                                   mb-0 mt-1"
+                        >
 
                             {{
                                 itens
@@ -312,6 +413,7 @@
         </div>
 
 
+
         <!-- ARQUIVADAS -->
 
         <div class="col-12 col-sm-6 col-lg-3">
@@ -321,7 +423,9 @@
             >
 
                 <div
-                    class="d-flex justify-content-between align-items-center"
+                    class="d-flex
+                           justify-content-between
+                           align-items-center"
                 >
 
                     <div>
@@ -330,7 +434,10 @@
                             Arquivadas
                         </small>
 
-                        <h3 class="fw-bold text-secondary mb-0 mt-1">
+                        <h3
+                            class="fw-bold text-secondary
+                                   mb-0 mt-1"
+                        >
 
                             {{
                                 itens
@@ -359,13 +466,13 @@
 
 
     <!-- ===================================================== -->
-    <!-- TABELA -->
+    <!-- CARD PRINCIPAL -->
     <!-- ===================================================== -->
 
     <div class="card p-3 p-md-4 shadow-sm border-0">
 
 
-        <!-- CABEÇALHO DA TABELA -->
+        <!-- CABEÇALHO -->
 
         <div
             class="d-flex flex-column flex-md-row
@@ -389,34 +496,93 @@
 
                 <small class="text-muted">
 
-                    Todas as atividades registradas no sistema
+                    Todas as atividades registradas no sistema,
+                    incluindo atividades encerradas e arquivadas.
 
                 </small>
 
             </div>
 
 
-            <span class="badge bg-light text-dark border">
+            <div class="d-flex gap-2 flex-wrap">
 
-                <i class="fa-solid fa-database me-1"></i>
+                <span
+                    class="badge bg-light
+                           text-dark border filtro-info"
+                >
 
-                {{ itens|length }} registros
+                    <i class="fa-solid fa-database me-1"></i>
 
-            </span>
+                    {{ itens|length }} registros
+
+                </span>
+
+                <span
+                    class="badge bg-success-subtle
+                           text-success border filtro-info"
+                >
+
+                    <i class="fa-solid fa-shield-halved me-1"></i>
+
+                    Histórico preservado
+
+                </span>
+
+            </div>
 
         </div>
 
 
 
-        <!-- TABELA RESPONSIVA -->
+        <!-- ================================================= -->
+        <!-- EXPLICAÇÃO DA AUDITORIA -->
+        <!-- ================================================= -->
+
+        <div
+            class="alert alert-light border
+                   d-flex align-items-start gap-3 mb-3"
+        >
+
+            <i
+                class="fa-solid fa-circle-info
+                       text-primary mt-1"
+            ></i>
+
+            <div class="small">
+
+                <strong>Rastreamento da atividade:</strong>
+
+                o relatório registra o responsável pela atividade,
+                o horário de início, quem efetivamente encerrou
+                a atividade e o horário da conclusão.
+
+                <br>
+
+                <span class="text-muted">
+
+                    Isso permite acompanhar a sequência da
+                    Separação → Expedição da requisição.
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ================================================= -->
+        <!-- TABELA -->
+        <!-- ================================================= -->
 
         <div class="table-responsive">
 
             <table
-                class="table table-striped table-hover align-middle mb-0"
+                class="table table-striped
+                       table-hover align-middle mb-0"
             >
 
-                <thead class="table-light">
+                <thead class="cabecalho-tabela">
 
                     <tr>
 
@@ -432,7 +598,11 @@
 
                         <th>Início</th>
 
+                        <th>Encerrado por</th>
+
                         <th>Conclusão</th>
+
+                        <th>Duração</th>
 
                         <th>Status</th>
 
@@ -446,28 +616,54 @@
 
                     {% for i in itens %}
 
-                    <tr>
+
+                    <!-- ================================================= -->
+                    <!-- LINHA -->
+                    <!-- ================================================= -->
+
+                    <tr
+                        class="
+                        {% if i.status == 'Concluído' %}
+                            linha-concluida
+                        {% elif i.status == 'Arquivada' %}
+                            linha-arquivada
+                        {% endif %}
+                        "
+                    >
 
 
+                        <!-- ================================================= -->
                         <!-- ID -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             <span class="text-muted">
+
                                 #{{ i.id }}
+
                             </span>
 
                         </td>
 
 
 
+                        <!-- ================================================= -->
                         <!-- REQUISIÇÃO -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             {% if i.num_requisicao %}
 
-                                <span class="numero-requisicao">
+                                <span
+                                    class="numero-requisicao"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-hashtag
+                                               me-1"
+                                    ></i>
 
                                     {{ i.num_requisicao }}
 
@@ -485,7 +681,9 @@
 
 
 
+                        <!-- ================================================= -->
                         <!-- ATIVIDADE -->
+                        <!-- ================================================= -->
 
                         <td>
 
@@ -498,7 +696,9 @@
 
                             {% if i.descricao %}
 
-                                <small class="text-muted">
+                                <small
+                                    class="text-muted descricao"
+                                >
 
                                     {{ i.descricao }}
 
@@ -510,19 +710,27 @@
 
 
 
+                        <!-- ================================================= -->
                         <!-- CATEGORIA -->
+                        <!-- ================================================= -->
 
                         <td>
+
 
                             {% if i.categoria == 'Separação' %}
 
                                 <span
-                                    class="badge bg-primary-subtle
-                                           text-primary border
+                                    class="badge
+                                           bg-primary-subtle
+                                           text-primary
+                                           border
                                            badge-categoria"
                                 >
 
-                                    <i class="fa-solid fa-box me-1"></i>
+                                    <i
+                                        class="fa-solid fa-box
+                                               me-1"
+                                    ></i>
 
                                     Separação
 
@@ -532,13 +740,17 @@
                             {% elif i.categoria == 'Expedição' %}
 
                                 <span
-                                    class="badge bg-info-subtle
-                                           text-info border
+                                    class="badge
+                                           bg-info-subtle
+                                           text-info
+                                           border
                                            badge-categoria"
                                 >
 
                                     <i
-                                        class="fa-solid fa-truck-fast me-1"
+                                        class="fa-solid
+                                               fa-truck-fast
+                                               me-1"
                                     ></i>
 
                                     Expedição
@@ -549,13 +761,17 @@
                             {% elif i.categoria == 'Inventário' %}
 
                                 <span
-                                    class="badge bg-warning-subtle
-                                           text-warning-emphasis border
+                                    class="badge
+                                           bg-warning-subtle
+                                           text-warning-emphasis
+                                           border
                                            badge-categoria"
                                 >
 
                                     <i
-                                        class="fa-solid fa-clipboard-list me-1"
+                                        class="fa-solid
+                                               fa-clipboard-list
+                                               me-1"
                                     ></i>
 
                                     Inventário
@@ -566,13 +782,17 @@
                             {% elif i.categoria == 'Recebimento' %}
 
                                 <span
-                                    class="badge bg-success-subtle
-                                           text-success border
+                                    class="badge
+                                           bg-success-subtle
+                                           text-success
+                                           border
                                            badge-categoria"
                                 >
 
                                     <i
-                                        class="fa-solid fa-arrow-down me-1"
+                                        class="fa-solid
+                                               fa-arrow-down
+                                               me-1"
                                     ></i>
 
                                     Recebimento
@@ -583,8 +803,10 @@
                             {% else %}
 
                                 <span
-                                    class="badge bg-light
-                                           text-dark border
+                                    class="badge
+                                           bg-light
+                                           text-dark
+                                           border
                                            badge-categoria"
                                 >
 
@@ -598,27 +820,113 @@
 
 
 
+                        <!-- ================================================= -->
                         <!-- RESPONSÁVEL -->
+                        <!-- ================================================= -->
 
                         <td>
 
-                            <span class="fw-semibold">
+                            <div
+                                class="responsavel"
+                            >
 
-                                {{ i.responsavel }}
+                                <i
+                                    class="fa-solid
+                                           fa-user
+                                           text-muted
+                                           me-1"
+                                ></i>
 
-                            </span>
+                                {{ i.responsavel or '—' }}
+
+                            </div>
+
+
+                            {% if i.categoria == 'Separação' %}
+
+                                <div
+                                    class="info-auditoria
+                                           text-muted mt-1"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-box-open
+                                               me-1"
+                                    ></i>
+
+                                    Responsável pela separação
+
+                                </div>
+
+                            {% elif i.categoria == 'Expedição' %}
+
+                                <div
+                                    class="info-auditoria
+                                           text-muted mt-1"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-truck
+                                               me-1"
+                                    ></i>
+
+                                    Responsável pela expedição
+
+                                </div>
+
+                            {% endif %}
 
                         </td>
 
 
 
+                        <!-- ================================================= -->
                         <!-- INÍCIO -->
+                        <!-- ================================================= -->
 
                         <td class="data-hora">
 
-                            {% if i.inicio_em %}
+                            {% if i.inicio_formatado is defined %}
 
-                                {{ i.inicio_em }}
+                                {% if i.inicio_formatado %}
+
+                                    <span>
+
+                                        <i
+                                            class="fa-regular
+                                                   fa-clock
+                                                   text-primary
+                                                   me-1"
+                                        ></i>
+
+                                        {{ i.inicio_formatado }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            {% elif i.inicio_em %}
+
+                                <span>
+
+                                    <i
+                                        class="fa-regular
+                                               fa-clock
+                                               text-primary
+                                               me-1"
+                                    ></i>
+
+                                    {{ i.inicio_em }}
+
+                                </span>
 
                             {% else %}
 
@@ -632,13 +940,120 @@
 
 
 
+                        <!-- ================================================= -->
+                        <!-- QUEM ENCERROU -->
+                        <!-- ================================================= -->
+
+                        <td>
+
+                            {% if i.encerrado_por %}
+
+                                <div
+                                    class="encerrado-por
+                                           text-success"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-user-check
+                                               me-1"
+                                    ></i>
+
+                                    {{ i.encerrado_por }}
+
+                                </div>
+
+
+                                <div
+                                    class="info-auditoria
+                                           text-muted mt-1"
+                                >
+
+                                    Atividade encerrada
+
+                                </div>
+
+                            {% else %}
+
+                                {% if i.status == 'Pendente' %}
+
+                                    <span
+                                        class="text-muted"
+                                    >
+
+                                        <i
+                                            class="fa-regular
+                                                   fa-hourglass
+                                                   me-1"
+                                        ></i>
+
+                                        Aguardando encerramento
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span
+                                        class="text-muted"
+                                    >
+
+                                        Não registrado
+
+                                    </span>
+
+                                {% endif %}
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- ================================================= -->
                         <!-- CONCLUSÃO -->
+                        <!-- ================================================= -->
 
                         <td class="data-hora">
 
-                            {% if i.concluido_em %}
+                            {% if i.concluido_formatado is defined %}
 
-                                <span class="text-success fw-semibold">
+                                {% if i.concluido_formatado %}
+
+                                    <span
+                                        class="text-success
+                                               fw-semibold"
+                                    >
+
+                                        <i
+                                            class="fa-solid
+                                                   fa-check
+                                                   me-1"
+                                        ></i>
+
+                                        {{ i.concluido_formatado }}
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            {% elif i.concluido_em %}
+
+                                <span
+                                    class="text-success
+                                           fw-semibold"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-check
+                                               me-1"
+                                    ></i>
 
                                     {{ i.concluido_em }}
 
@@ -656,17 +1071,76 @@
 
 
 
+                        <!-- ================================================= -->
+                        <!-- DURAÇÃO -->
+                        <!-- ================================================= -->
+
+                        <td class="duracao">
+
+                            {% if i.duracao is defined
+                                  and i.duracao %}
+
+                                <span
+                                    class="badge
+                                           bg-light
+                                           text-dark
+                                           border"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-stopwatch
+                                               me-1"
+                                    ></i>
+
+                                    {{ i.duracao }}
+
+                                </span>
+
+                            {% elif i.concluido_em
+                                  and i.inicio_em %}
+
+                                <span
+                                    class="text-muted"
+                                >
+
+                                    Calculada no sistema
+
+                                </span>
+
+                            {% else %}
+
+                                <span
+                                    class="text-muted"
+                                >
+
+                                    Em andamento
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+
+                        <!-- ================================================= -->
                         <!-- STATUS -->
+                        <!-- ================================================= -->
 
                         <td>
 
 
                             {% if i.status == 'Concluído' %}
 
-                                <span class="badge bg-success">
+                                <span
+                                    class="badge bg-success"
+                                >
 
                                     <i
-                                        class="fa-solid fa-check me-1"
+                                        class="fa-solid
+                                               fa-circle-check
+                                               me-1"
                                     ></i>
 
                                     Concluído
@@ -676,10 +1150,15 @@
 
                             {% elif i.status == 'Arquivada' %}
 
-                                <span class="badge bg-secondary">
+                                <span
+                                    class="badge
+                                           bg-secondary"
+                                >
 
                                     <i
-                                        class="fa-solid fa-box-archive me-1"
+                                        class="fa-solid
+                                               fa-box-archive
+                                               me-1"
                                     ></i>
 
                                     Arquivada
@@ -690,11 +1169,15 @@
                             {% elif i.status == 'Pendente' %}
 
                                 <span
-                                    class="badge bg-warning text-dark"
+                                    class="badge
+                                           bg-warning
+                                           text-dark"
                                 >
 
                                     <i
-                                        class="fa-solid fa-clock me-1"
+                                        class="fa-solid
+                                               fa-clock
+                                               me-1"
                                     ></i>
 
                                     Pendente
@@ -704,10 +1187,14 @@
 
                             {% elif i.status == 'Em andamento' %}
 
-                                <span class="badge bg-info">
+                                <span
+                                    class="badge bg-info"
+                                >
 
                                     <i
-                                        class="fa-solid fa-spinner me-1"
+                                        class="fa-solid
+                                               fa-spinner
+                                               me-1"
                                     ></i>
 
                                     Em andamento
@@ -717,7 +1204,10 @@
 
                             {% else %}
 
-                                <span class="badge bg-secondary">
+                                <span
+                                    class="badge
+                                           bg-secondary"
+                                >
 
                                     {{ i.status }}
 
@@ -735,30 +1225,41 @@
                     {% else %}
 
 
+                    <!-- ================================================= -->
                     <!-- NENHUM REGISTRO -->
+                    <!-- ================================================= -->
 
                     <tr>
 
                         <td
-                            colspan="8"
-                            class="text-center text-muted py-5"
+                            colspan="10"
+                            class="text-center
+                                   text-muted
+                                   py-5"
                         >
 
                             <i
-                                class="fa-solid fa-inbox fa-2x mb-3"
+                                class="fa-solid
+                                       fa-inbox
+                                       fa-2x
+                                       mb-3"
                             ></i>
 
                             <br>
 
                             <strong>
+
                                 Nenhuma atividade registrada.
+
                             </strong>
 
                             <br>
 
                             <small>
+
                                 Quando houver atividades,
                                 elas aparecerão neste histórico.
+
                             </small>
 
                         </td>
@@ -780,6 +1281,131 @@
 
 
     <!-- ===================================================== -->
+    <!-- LEGENDA DA AUDITORIA -->
+    <!-- ===================================================== -->
+
+    <div class="row g-3 mt-3">
+
+
+        <div class="col-12 col-lg-4">
+
+            <div class="card border-0 shadow-sm p-3 h-100">
+
+                <div class="d-flex gap-3">
+
+                    <div>
+
+                        <i
+                            class="fa-solid fa-user
+                                   text-primary fa-lg"
+                        ></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Responsável
+                        </strong>
+
+                        <div class="small text-muted mt-1">
+
+                            Pessoa atribuída à atividade,
+                            como responsável pela Separação
+                            ou Expedição.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-12 col-lg-4">
+
+            <div class="card border-0 shadow-sm p-3 h-100">
+
+                <div class="d-flex gap-3">
+
+                    <div>
+
+                        <i
+                            class="fa-solid fa-user-check
+                                   text-success fa-lg"
+                        ></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Encerrado por
+                        </strong>
+
+                        <div class="small text-muted mt-1">
+
+                            Usuário que efetivamente clicou
+                            para encerrar a atividade.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-12 col-lg-4">
+
+            <div class="card border-0 shadow-sm p-3 h-100">
+
+                <div class="d-flex gap-3">
+
+                    <div>
+
+                        <i
+                            class="fa-solid fa-clock
+                                   text-info fa-lg"
+                        ></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Início e conclusão
+                        </strong>
+
+                        <div class="small text-muted mt-1">
+
+                            Os horários permitem acompanhar
+                            quanto tempo cada etapa permaneceu
+                            em processo.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================================== -->
     <!-- RODAPÉ -->
     <!-- ===================================================== -->
 
@@ -787,13 +1413,23 @@
 
         <small>
 
-            <i class="fa-solid fa-box me-1"></i>
+            <i
+                class="fa-solid fa-box me-1"
+            ></i>
 
             Almoxarifado Valenet
 
-            <span class="mx-1">•</span>
+            <span class="mx-1">
+                •
+            </span>
 
             Relatório Geral
+
+            <span class="mx-1">
+                •
+            </span>
+
+            Histórico preservado
 
         </small>
 
@@ -804,7 +1440,9 @@
 
 
 
+<!-- ===================================================== -->
 <!-- BOOTSTRAP JS -->
+<!-- ===================================================== -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
@@ -814,4 +1452,3 @@
 </body>
 
 </html>
-

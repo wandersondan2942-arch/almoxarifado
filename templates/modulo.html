@@ -91,9 +91,7 @@
         /* ========================================================= */
 
         .module-title {
-
             font-weight: 700;
-
             color: #1a202c;
         }
 
@@ -103,7 +101,6 @@
         /* ========================================================= */
 
         .table {
-
             margin-bottom: 0;
         }
 
@@ -131,7 +128,6 @@
 
 
         .table-hover tbody tr:hover {
-
             background-color: #f8fafc;
         }
 
@@ -305,26 +301,6 @@
 
 
         /* ========================================================= */
-        /* TOOLTIP / INFORMAÇÕES */
-        /* ========================================================= */
-
-        .info-label {
-
-            display: block;
-
-            font-size: 0.68rem;
-
-            color: #6c757d;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.03em;
-
-            margin-bottom: 2px;
-        }
-
-
-        /* ========================================================= */
         /* RESPONSIVIDADE */
         /* ========================================================= */
 
@@ -397,53 +373,43 @@
 
                 <div class="module-icon me-3">
 
-
                     {% if nome == 'Requisições' or nome == 'Separação' %}
 
                         <i class="fa-solid fa-box-open"></i>
-
 
                     {% elif nome == 'Inventário' %}
 
                         <i class="fa-solid fa-boxes-stacked"></i>
 
-
                     {% elif nome == 'Expedição' %}
 
                         <i class="fa-solid fa-truck-fast"></i>
-
 
                     {% elif nome == 'Recebimento' %}
 
                         <i class="fa-solid fa-dolly"></i>
 
-
                     {% elif nome == 'Estoque' %}
 
                         <i class="fa-solid fa-boxes-stacked"></i>
-
 
                     {% elif nome == 'Relatórios' %}
 
                         <i class="fa-solid fa-chart-column"></i>
 
-
                     {% elif nome == 'Indicadores' %}
 
                         <i class="fa-solid fa-chart-line"></i>
 
-
                     {% elif nome == 'Melhorias' or nome == 'PDCA' %}
 
                         <i class="fa-solid fa-lightbulb"></i>
-
 
                     {% else %}
 
                         <i class="fa-solid fa-folder-open"></i>
 
                     {% endif %}
-
 
                 </div>
 
@@ -453,25 +419,21 @@
                 <div>
 
                     <h2 class="module-title mb-1">
-
                         {{ nome }}
-
                     </h2>
 
-
                     <small class="text-muted">
-
                         Registros operacionais do almoxarifado
-
                     </small>
 
                 </div>
 
-
             </div>
 
 
+            <!-- ===================================================== -->
             <!-- VOLTAR -->
+            <!-- ===================================================== -->
 
             <a
                 href="{{ url_for('index') }}"
@@ -483,7 +445,6 @@
                 Voltar ao Painel
 
             </a>
-
 
         </div>
 
@@ -497,14 +458,11 @@
             class="d-flex justify-content-between align-items-center mb-3"
         >
 
-
             <div>
 
                 <span class="text-muted module-counter">
 
-
                     <i class="fa-solid fa-list me-1"></i>
-
 
                     {% if itens %}
 
@@ -512,18 +470,15 @@
 
                         registro(s) encontrado(s)
 
-
                     {% else %}
 
                         Nenhum registro encontrado
 
                     {% endif %}
 
-
                 </span>
 
             </div>
-
 
         </div>
 
@@ -535,18 +490,13 @@
 
         {% if itens %}
 
-
         <div class="table-responsive">
-
 
             <table class="table table-hover align-middle">
 
-
                 <thead class="table-dark">
 
-
                     <tr>
-
 
                         <th>ID</th>
 
@@ -572,32 +522,21 @@
 
                         <th>Ação</th>
 
-
                     </tr>
-
 
                 </thead>
 
 
-
                 <tbody>
-
 
                     {% for item in itens %}
 
-
                     <tr
-
                         {% if item.status == 'Concluído' %}
-
                             class="row-concluida"
-
                         {% elif item.status == 'Arquivada' %}
-
                             class="row-arquivada"
-
                         {% endif %}
-
                     >
 
 
@@ -608,9 +547,7 @@
                         <td>
 
                             <span class="text-muted">
-
                                 #{{ item.id }}
-
                             </span>
 
                         </td>
@@ -623,29 +560,19 @@
 
                         <td>
 
-
                             {% if item.num_requisicao %}
 
-
                                 <span class="request-number">
-
                                     {{ item.num_requisicao }}
-
                                 </span>
-
 
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -657,26 +584,17 @@
 
                         <td>
 
-
                             <div class="activity-name">
-
-                                {{ item.atividade }}
-
+                                {{ item.atividade or 'Atividade não informada' }}
                             </div>
-
 
                             {% if item.descricao %}
 
-
                                 <small class="text-muted activity-description">
-
                                     {{ item.descricao }}
-
                                 </small>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -688,9 +606,7 @@
 
                         <td>
 
-
                             {% if item.categoria == 'Separação' %}
-
 
                                 <span class="badge bg-primary">
 
@@ -700,9 +616,7 @@
 
                                 </span>
 
-
                             {% elif item.categoria == 'Inventário' %}
-
 
                                 <span class="badge bg-warning text-dark">
 
@@ -712,9 +626,7 @@
 
                                 </span>
 
-
                             {% elif item.categoria == 'Expedição' %}
-
 
                                 <span class="badge bg-success">
 
@@ -724,9 +636,7 @@
 
                                 </span>
 
-
                             {% elif item.categoria == 'Recebimento' %}
-
 
                                 <span class="badge bg-info text-dark">
 
@@ -736,9 +646,7 @@
 
                                 </span>
 
-
                             {% else %}
-
 
                                 <span class="badge bg-secondary">
 
@@ -746,9 +654,7 @@
 
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -760,9 +666,7 @@
 
                         <td>
 
-
                             {% if item.responsavel %}
-
 
                                 <span class="responsible-name">
 
@@ -770,9 +674,7 @@
 
                                 </span>
 
-
                             {% else %}
-
 
                                 <span class="text-muted">
 
@@ -780,9 +682,7 @@
 
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -794,9 +694,7 @@
 
                         <td>
 
-
                             {% if item.inicio_em %}
-
 
                                 <span class="date-value">
 
@@ -808,19 +706,13 @@
 
                                 </span>
 
-
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -832,9 +724,7 @@
 
                         <td>
 
-
                             {% if item.prazo %}
-
 
                                 <span class="date-value">
 
@@ -846,19 +736,13 @@
 
                                 </span>
 
-
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -870,9 +754,7 @@
 
                         <td>
 
-
                             {% if item.encerrado_por %}
-
 
                                 <span
                                     class="closed-by text-success"
@@ -887,45 +769,29 @@
 
                                 </span>
 
-
                             {% else %}
-
 
                                 {% if item.status == 'Pendente' %}
 
-
                                     <span class="text-muted">
-
                                         —
-
                                     </span>
-
 
                                 {% elif item.status == 'Arquivada' %}
 
-
                                     <span class="text-muted">
-
                                         Não registrado
-
                                     </span>
-
 
                                 {% else %}
 
-
                                     <span class="text-muted">
-
                                         Não informado
-
                                     </span>
-
 
                                 {% endif %}
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -937,9 +803,7 @@
 
                         <td>
 
-
                             {% if item.concluido_em %}
-
 
                                 <span
                                     class="date-value text-success"
@@ -954,19 +818,13 @@
 
                                 </span>
 
-
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -978,9 +836,7 @@
 
                         <td>
 
-
                             {% if item.duracao %}
-
 
                                 <span
                                     class="duration-value"
@@ -995,19 +851,13 @@
 
                                 </span>
 
-
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -1019,77 +869,55 @@
 
                         <td>
 
-
                             {% if item.status == 'Concluído' %}
 
-
                                 <span class="badge bg-success">
-
 
                                     <i
                                         class="fa-solid fa-circle-check me-1"
                                     ></i>
 
-
                                     Concluído
-
 
                                 </span>
 
-
                             {% elif item.status == 'Arquivada' %}
 
-
                                 <span class="badge bg-secondary">
-
 
                                     <i
                                         class="fa-solid fa-box-archive me-1"
                                     ></i>
 
-
                                     Arquivada
-
 
                                 </span>
 
-
                             {% elif item.status == 'Pendente' %}
 
-
                                 <span class="badge bg-warning text-dark">
-
 
                                     <i
                                         class="fa-solid fa-clock me-1"
                                     ></i>
 
-
                                     Pendente
-
 
                                 </span>
 
-
                             {% elif item.status == 'Em andamento' %}
 
-
                                 <span class="badge bg-info text-dark">
-
 
                                     <i
                                         class="fa-solid fa-spinner me-1"
                                     ></i>
 
-
                                     Em andamento
-
 
                                 </span>
 
-
                             {% else %}
-
 
                                 <span class="badge bg-secondary">
 
@@ -1097,9 +925,7 @@
 
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
@@ -1111,14 +937,7 @@
 
                         <td>
 
-
                             {% if item.status == 'Pendente' %}
-
-
-                                <!-- ========================================= -->
-                                <!-- ENCERRAR -->
-                                <!-- ========================================= -->
-
 
                                 <a
                                     href="{{ url_for('concluir', id=item.id) }}"
@@ -1127,99 +946,77 @@
                                     title="Encerrar esta atividade"
                                 >
 
-
                                     <i
                                         class="fa-solid fa-circle-check me-1"
                                     ></i>
 
-
                                     Encerrar
-
 
                                 </a>
 
 
                             {% elif item.status == 'Concluído' %}
 
-
                                 <span
                                     class="text-success"
                                     title="Atividade concluída"
                                 >
 
-
                                     <i
                                         class="fa-solid fa-check-double status-icon"
                                     ></i>
-
 
                                 </span>
 
 
                             {% elif item.status == 'Arquivada' %}
 
-
                                 <span
                                     class="text-muted"
                                     title="Atividade arquivada e preservada no histórico"
                                 >
 
-
                                     <i
                                         class="fa-solid fa-box-archive status-icon"
                                     ></i>
-
 
                                 </span>
 
 
                             {% elif item.status == 'Em andamento' %}
 
-
                                 <span
                                     class="text-info"
                                     title="Atividade em andamento"
                                 >
 
-
                                     <i
                                         class="fa-solid fa-spinner status-icon"
                                     ></i>
-
 
                                 </span>
 
 
                             {% else %}
 
-
                                 <span class="text-muted">
-
                                     —
-
                                 </span>
 
-
                             {% endif %}
-
 
                         </td>
 
 
                     </tr>
 
-
                     {% endfor %}
-
 
                 </tbody>
 
-
             </table>
 
-
         </div>
-
 
 
         {% else %}
@@ -1231,38 +1028,28 @@
 
         <div class="text-center empty-state">
 
-
             <i
                 class="fa-solid fa-inbox text-muted mb-3"
             ></i>
 
-
             <h5 class="fw-bold text-dark">
-
 
                 Nenhum registro encontrado
 
-
             </h5>
-
 
             <p class="text-muted mb-0">
 
-
                 Ainda não existem atividades registradas neste módulo.
-
 
             </p>
 
-
         </div>
-
 
         {% endif %}
 
 
     </div>
-
 
 </div>
 
@@ -1274,12 +1061,10 @@
 
 <script>
 
-
     /**
      * Confirmação antes de encerrar uma atividade.
      */
     function confirmarConclusao(id) {
-
 
         return confirm(
 
@@ -1302,7 +1087,6 @@
         );
 
     }
-
 
 </script>
 

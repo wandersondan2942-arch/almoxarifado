@@ -2,6 +2,7 @@ import os
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import psycopg2
@@ -21,7 +22,7 @@ from flask import (
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import (
     SimpleDocTemplate,
@@ -43,13 +44,15 @@ app.secret_key = os.environ.get(
     "chave-temporaria-apenas-para-desenvolvimento"
 )
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Horário oficial utilizado para EXIBIÇÃO
+FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
+
 
 # =========================================================
 # CONFIGURAÇÃO DO BANCO
 # =========================================================
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-
 
 def usando_postgresql():
     return bool(DATABASE_URL)
@@ -216,14 +219,26 @@ def contar(sql, parametros=()):
 # =========================================================
 
 def agora_utc():
+    """
+    Retorna o momento atual em UTC.
+    """
 
     return datetime.now(
         timezone.utc
     )
 
 
-def agora_utc_naive():
+def agora_brasil():
+    """
+    Retorna o momento atual no horário de Brasília.
+    """
 
+    return agora_utc().astimezone(
+        FUSO_BRASIL
+    )
+
+
+def agora_utc_naive():
     """
     PostgreSQL utiliza TIMESTAMP sem timezone.
 
@@ -236,7 +251,6 @@ def agora_utc_naive():
 
 
 def agora_sqlite():
-
     """
     SQLite armazena data/hora como texto UTC.
     """
@@ -247,15 +261,233 @@ def agora_sqlite():
 
 
 def data_brasil():
-
     """
     Retorna a data atual do Brasil.
     """
 
+    return agora_brasil().date()
+
+
+def converter_para_brasil(valor):
+    """
+    Converte valores armazenados em UTC
+    para horário de Brasília.
+
+    Aceita:
+        - datetime
+        - texto ISO
+        - texto YYYY-MM-DD HH:MM:SS
+    """
+
+    if not valor:
+        return None
+
+    try:
+
+        if isinstance(valor, datetime):
+
+            dt = valor
+
+        else:
+
+            texto = str(
+                valor
+            ).strip()
+
+            if not texto:
+                return None
+
+            texto = texto.replace(
+                "Z",
+                "+00:00"
+            )
+
+            try:
+
+                dt = datetime.fromisoformat(
+                    texto
+                )
+
+            except Exception:
+
+                dt = datetime.strptime(
+                    texto[:19],
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+        # Valores antigos do sistema são UTC
+        # armazenados sem timezone.
+        if dt.tzinfo is None:
+
+            dt = dt.replace(
+                tzinfo=timezone.utc
+            )
+
+        return dt.astimezone(
+            FUSO_BRASIL
+        )
+
+    except Exception as erro:
+
+        print(
+            f"[ERRO CONVERSÃO DATA] "
+            f"{valor} -> {erro}"
+        )
+
+        return None
+
+
+def formatar_data_hora(valor):
+    """
+    Exemplo:
+        2026-09-22 21:30:00 UTC
+        ->
+        22/09/2026 18:30
+    """
+
+    dt = converter_para_brasil(
+        valor
+    )
+
+    if not dt:
+        return "-"
+
+    return dt.strftime(
+        "%d/%m/%Y %H:%M"
+    )
+
+
+def formatar_hora(valor):
+
+    dt = converter_para_brasil(
+        valor
+    )
+
+    if not dt:
+        return "-"
+
+    return dt.strftime(
+        "%H:%M"
+    )
+
+
+def calcular_duracao(inicio, fim):
+    """
+    Calcula a duração entre início e conclusão.
+    """
+
+    dt_inicio = converter_para_brasil(
+        inicio
+    )
+
+    dt_fim = converter_para_brasil(
+        fim
+    )
+
+    if not dt_inicio or not dt_fim:
+        return "-"
+
+    diferenca = dt_fim - dt_inicio
+
+    segundos = int(
+        diferenca.total_seconds()
+    )
+
+    if segundos < 0:
+        return "-"
+
+    horas = segundos // 3600
+
+    minutos = (
+        segundos % 3600
+    ) // 60
+
+    if horas > 0:
+
+        return (
+            f"{horas}h "
+            f"{minutos:02d}min"
+        )
+
     return (
-        agora_utc()
-        - timedelta(hours=3)
-    ).date()
+        f"{minutos}min"
+    )
+
+
+def preparar_atividade(item):
+    """
+    Prepara uma atividade para exibição.
+
+    Mantém os dados originais importantes,
+    mas substitui início/conclusão por
+    horário de Brasília para que templates
+    antigos continuem funcionando.
+
+    Também acrescenta:
+        encerrado_por
+        inicio_formatado
+        conclusao_formatada
+        duracao
+    """
+
+    dados = dict(item)
+
+    inicio_original = dados.get(
+        "inicio_em"
+    )
+
+    conclusao_original = dados.get(
+        "concluido_em"
+    )
+
+    dados["inicio_original"] = (
+        inicio_original
+    )
+
+    dados["conclusao_original"] = (
+        conclusao_original
+    )
+
+    dados["inicio_formatado"] = (
+        formatar_data_hora(
+            inicio_original
+        )
+    )
+
+    dados["conclusao_formatada"] = (
+        formatar_data_hora(
+            conclusao_original
+        )
+    )
+
+    # Mantém compatibilidade com HTML antigo
+    dados["inicio_em"] = (
+        dados["inicio_formatado"]
+    )
+
+    dados["concluido_em"] = (
+        dados["conclusao_formatada"]
+    )
+
+    dados["encerrado_por"] = (
+        dados.get("encerrado_por")
+        or "-"
+    )
+
+    dados["duracao"] = calcular_duracao(
+        inicio_original,
+        conclusao_original
+    )
+
+    return dados
+
+
+def preparar_lista_atividades(itens):
+
+    return [
+        preparar_atividade(item)
+        for item in itens
+    ]
 
 
 # =========================================================
@@ -304,7 +536,8 @@ def init_db():
                     prazo TEXT NOT NULL DEFAULT '',
                     status TEXT DEFAULT 'Pendente',
                     inicio_em TIMESTAMP,
-                    concluido_em TIMESTAMP
+                    concluido_em TIMESTAMP,
+                    encerrado_por TEXT
                 )
             """)
 
@@ -360,6 +593,12 @@ def init_db():
             cursor.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
+            """)
+
+            # NOVA COLUNA DE AUDITORIA
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS encerrado_por TEXT
             """)
 
             # -------------------------------------------------
@@ -499,7 +738,8 @@ def init_db():
                     prazo TEXT NOT NULL DEFAULT '',
                     status TEXT DEFAULT 'Pendente',
                     inicio_em TEXT,
-                    concluido_em TEXT
+                    concluido_em TEXT,
+                    encerrado_por TEXT
                 )
             """)
 
@@ -521,34 +761,49 @@ def init_db():
             colunas_necessarias = {
 
                 "num_requisicao":
-                    "ALTER TABLE atividades ADD COLUMN num_requisicao TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN num_requisicao TEXT",
 
                 "prioridade":
-                    "ALTER TABLE atividades ADD COLUMN prioridade TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN prioridade TEXT",
 
                 "atividade":
-                    "ALTER TABLE atividades ADD COLUMN atividade TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN atividade TEXT",
 
                 "descricao":
-                    "ALTER TABLE atividades ADD COLUMN descricao TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN descricao TEXT",
 
                 "categoria":
-                    "ALTER TABLE atividades ADD COLUMN categoria TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN categoria TEXT",
 
                 "responsavel":
-                    "ALTER TABLE atividades ADD COLUMN responsavel TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN responsavel TEXT",
 
                 "prazo":
-                    "ALTER TABLE atividades ADD COLUMN prazo TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN prazo TEXT",
 
                 "status":
-                    "ALTER TABLE atividades ADD COLUMN status TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN status TEXT",
 
                 "inicio_em":
-                    "ALTER TABLE atividades ADD COLUMN inicio_em TEXT",
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN inicio_em TEXT",
 
                 "concluido_em":
-                    "ALTER TABLE atividades ADD COLUMN concluido_em TEXT"
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN concluido_em TEXT",
+
+                # NOVA COLUNA
+                "encerrado_por":
+                    "ALTER TABLE atividades "
+                    "ADD COLUMN encerrado_por TEXT"
             }
 
             for nome_coluna, comando in colunas_necessarias.items():
@@ -650,19 +905,24 @@ def init_db():
             colunas_melhoria_necessarias = {
 
                 "descricao":
-                    "ALTER TABLE melhorias ADD COLUMN descricao TEXT",
+                    "ALTER TABLE melhorias "
+                    "ADD COLUMN descricao TEXT",
 
                 "autor":
-                    "ALTER TABLE melhorias ADD COLUMN autor TEXT",
+                    "ALTER TABLE melhorias "
+                    "ADD COLUMN autor TEXT",
 
                 "etapa":
-                    "ALTER TABLE melhorias ADD COLUMN etapa TEXT",
+                    "ALTER TABLE melhorias "
+                    "ADD COLUMN etapa TEXT",
 
                 "status":
-                    "ALTER TABLE melhorias ADD COLUMN status TEXT",
+                    "ALTER TABLE melhorias "
+                    "ADD COLUMN status TEXT",
 
                 "criado_em":
-                    "ALTER TABLE melhorias ADD COLUMN criado_em TIMESTAMP"
+                    "ALTER TABLE melhorias "
+                    "ADD COLUMN criado_em TIMESTAMP"
             }
 
             for nome_coluna, comando in colunas_melhoria_necessarias.items():
@@ -1201,7 +1461,8 @@ def index():
                     prazo,
                     status,
                     inicio_em,
-                    concluido_em
+                    concluido_em,
+                    encerrado_por
                 )
                 VALUES
                 (
@@ -1214,6 +1475,7 @@ def index():
                     %s,
                     'Pendente',
                     %s,
+                    NULL,
                     NULL
                 )
                 """,
@@ -1286,9 +1548,11 @@ def index():
                     OR responsavel LIKE %s
                     OR num_requisicao LIKE %s
                     OR status LIKE %s
+                    OR encerrado_por LIKE %s
                 ORDER BY id DESC
                 """,
                 (
+                    termo,
                     termo,
                     termo,
                     termo,
@@ -1310,6 +1574,10 @@ def index():
             )
 
         atividades = cursor.fetchall()
+
+        atividades = preparar_lista_atividades(
+            atividades
+        )
 
     except Exception as erro:
 
@@ -1878,6 +2146,10 @@ def modulo(nome):
             )
 
             itens = cursor.fetchall()
+
+            itens = preparar_lista_atividades(
+                itens
+            )
 
         except Exception as erro:
 
@@ -2511,6 +2783,10 @@ def modulo(nome):
 
             itens = cursor.fetchall()
 
+            itens = preparar_lista_atividades(
+                itens
+            )
+
         except Exception as erro:
 
             print(
@@ -2553,18 +2829,13 @@ def relatorio_pdf():
         # DATA DO BRASIL
         # =================================================
 
-        agora_atual = agora_utc()
+        agora_atual = agora_brasil()
 
-        agora_brasil = (
-            agora_atual
-            - timedelta(hours=3)
-        )
-
-        data_hoje = agora_brasil.strftime(
+        data_hoje = agora_atual.strftime(
             "%Y-%m-%d"
         )
 
-        data_formatada = agora_brasil.strftime(
+        data_formatada = agora_atual.strftime(
             "%d/%m/%Y"
         )
 
@@ -2678,13 +2949,32 @@ def relatorio_pdf():
         documento = SimpleDocTemplate(
             buffer,
             pagesize=landscape(A4),
-            rightMargin=1 * cm,
-            leftMargin=1 * cm,
-            topMargin=1 * cm,
-            bottomMargin=1 * cm
+            rightMargin=0.7 * cm,
+            leftMargin=0.7 * cm,
+            topMargin=0.8 * cm,
+            bottomMargin=0.8 * cm
         )
 
         estilos = getSampleStyleSheet()
+
+        estilo_celula = ParagraphStyle(
+            "Celula",
+            parent=estilos["Normal"],
+            fontName="Helvetica",
+            fontSize=6.5,
+            leading=7.5,
+            alignment=1
+        )
+
+        estilo_cabecalho = ParagraphStyle(
+            "Cabecalho",
+            parent=estilos["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=6.5,
+            leading=7.5,
+            textColor=colors.white,
+            alignment=1
+        )
 
         elementos = []
 
@@ -2799,35 +3089,24 @@ def relatorio_pdf():
         )
 
         # =================================================
-        # TABELA
+        # TABELA PRINCIPAL
         # =================================================
 
         dados = [
             [
-                "Req.",
-                "Atividade",
-                "Categoria",
-                "Responsável",
-                "Prioridade",
-                "Início",
-                "Conclusão",
-                "Status"
+                Paragraph("Req.", estilo_cabecalho),
+                Paragraph("Atividade", estilo_cabecalho),
+                Paragraph("Categoria", estilo_cabecalho),
+                Paragraph("Responsável", estilo_cabecalho),
+                Paragraph("Encerrado por", estilo_cabecalho),
+                Paragraph("Início", estilo_cabecalho),
+                Paragraph("Conclusão", estilo_cabecalho),
+                Paragraph("Duração", estilo_cabecalho),
+                Paragraph("Status", estilo_cabecalho)
             ]
         ]
 
         for item in atividades_dia:
-
-            inicio = (
-                str(item["inicio_em"])[:19]
-                if item["inicio_em"]
-                else "-"
-            )
-
-            conclusao = (
-                str(item["concluido_em"])[:19]
-                if item["concluido_em"]
-                else "-"
-            )
 
             requisicao = (
                 item["num_requisicao"]
@@ -2849,9 +3128,22 @@ def relatorio_pdf():
                 or "-"
             )
 
-            prioridade = (
-                item["prioridade"]
+            encerrado_por = (
+                item.get("encerrado_por")
                 or "-"
+            )
+
+            inicio = formatar_data_hora(
+                item["inicio_em"]
+            )
+
+            conclusao = formatar_data_hora(
+                item["concluido_em"]
+            )
+
+            duracao = calcular_duracao(
+                item["inicio_em"],
+                item["concluido_em"]
             )
 
             status = (
@@ -2860,41 +3152,106 @@ def relatorio_pdf():
             )
 
             dados.append([
-                requisicao,
-                atividade,
-                categoria_item,
-                responsavel,
-                prioridade,
-                inicio,
-                conclusao,
-                status
+                Paragraph(
+                    str(requisicao),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(atividade),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(categoria_item),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(responsavel),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(encerrado_por),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(inicio),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(conclusao),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(duracao),
+                    estilo_celula
+                ),
+
+                Paragraph(
+                    str(status),
+                    estilo_celula
+                )
             ])
 
         if len(dados) == 1:
 
             dados.append([
-                "-",
-                "Nenhuma atividade registrada no dia.",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-",
-                "-"
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "Nenhuma atividade registrada no dia.",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                ),
+                Paragraph(
+                    "-",
+                    estilo_celula
+                )
             ])
 
         tabela = Table(
             dados,
             repeatRows=1,
             colWidths=[
-                2.2 * cm,
-                5.5 * cm,
-                3.2 * cm,
-                4.0 * cm,
-                2.5 * cm,
-                3.5 * cm,
-                3.5 * cm,
-                2.8 * cm
+                1.8 * cm,  # Req.
+                4.5 * cm,  # Atividade
+                2.8 * cm,  # Categoria
+                3.4 * cm,  # Responsável
+                3.4 * cm,  # Encerrado por
+                3.1 * cm,  # Início
+                3.1 * cm,  # Conclusão
+                2.2 * cm,  # Duração
+                2.4 * cm   # Status
             ]
         )
 
@@ -2917,12 +3274,6 @@ def relatorio_pdf():
                     (0, 0),
                     (-1, 0),
                     "Helvetica-Bold"
-                ),
-                (
-                    "FONTSIZE",
-                    (0, 0),
-                    (-1, -1),
-                    7
                 ),
                 (
                     "GRID",
@@ -3030,6 +3381,10 @@ def concluir(id):
 
     try:
 
+        usuario_que_encerrou = session[
+            "usuario"
+        ]
+
         # =================================================
         # BUSCA ATIVIDADE PENDENTE
         # =================================================
@@ -3065,19 +3420,33 @@ def concluir(id):
             )
 
         # =================================================
-        # DATA DA CONCLUSÃO
+        # MOMENTO EXATO DO ENCERRAMENTO
         # =================================================
 
         if usando_postgresql():
 
-            concluido_em = agora_utc_naive()
+            momento_encerramento = (
+                agora_utc_naive()
+            )
 
         else:
 
-            concluido_em = agora_sqlite()
+            momento_encerramento = (
+                agora_sqlite()
+            )
 
         # =================================================
         # ENCERRA A ATIVIDADE
+        #
+        # responsavel:
+        #     pessoa atribuída à atividade
+        #
+        # encerrado_por:
+        #     usuário que realmente clicou
+        #     em "Encerrar"
+        #
+        # concluido_em:
+        #     horário exato do encerramento
         # =================================================
 
         cursor = executar(
@@ -3085,17 +3454,21 @@ def concluir(id):
             UPDATE atividades
             SET
                 status = 'Concluído',
-                concluido_em = %s
+                concluido_em = %s,
+                encerrado_por = %s
             WHERE id = %s
             AND status = 'Pendente'
             """,
             (
-                concluido_em,
+                momento_encerramento,
+                usuario_que_encerrou,
                 id
             )
         )
 
-        quantidade_atualizada = cursor.rowcount
+        quantidade_atualizada = (
+            cursor.rowcount
+        )
 
         fechar_cursor(cursor)
         cursor = None
@@ -3133,7 +3506,7 @@ def concluir(id):
 
             responsavel = (
                 atividade["responsavel"]
-                or session["usuario"]
+                or usuario_que_encerrou
             )
 
             prazo = (
@@ -3171,19 +3544,15 @@ def concluir(id):
                 # CRIA EXPEDIÇÃO
                 # -----------------------------------------
 
-                if int(existe_expedicao or 0) == 0:
+                if int(
+                    existe_expedicao or 0
+                ) == 0:
 
-                    if usando_postgresql():
-
-                        inicio_expedicao = (
-                            agora_utc_naive()
-                        )
-
-                    else:
-
-                        inicio_expedicao = (
-                            agora_sqlite()
-                        )
+                    # A Expedição começa exatamente
+                    # quando a Separação é encerrada.
+                    inicio_expedicao = (
+                        momento_encerramento
+                    )
 
                     cursor = executar(
                         """
@@ -3198,7 +3567,8 @@ def concluir(id):
                             prazo,
                             status,
                             inicio_em,
-                            concluido_em
+                            concluido_em,
+                            encerrado_por
                         )
                         VALUES
                         (
@@ -3211,6 +3581,7 @@ def concluir(id):
                             %s,
                             'Pendente',
                             %s,
+                            NULL,
                             NULL
                         )
                         """,
@@ -3238,7 +3609,8 @@ def concluir(id):
                     flash(
                         (
                             f"Separação da requisição "
-                            f"{num_requisicao} encerrada. "
+                            f"{num_requisicao} encerrada por "
+                            f"{usuario_que_encerrou}. "
                             f"A Expedição foi criada "
                             f"automaticamente."
                         ),
@@ -3248,24 +3620,35 @@ def concluir(id):
                 else:
 
                     flash(
-                        "Atividade encerrada com sucesso. "
-                        "A Expedição já estava cadastrada.",
+                        (
+                            "Atividade encerrada por "
+                            f"{usuario_que_encerrou}. "
+                            "A Expedição já estava "
+                            "cadastrada."
+                        ),
                         "success"
                     )
 
             else:
 
                 flash(
-                    "Separação encerrada, porém não foi "
-                    "possível criar a Expedição porque "
-                    "não existe número de requisição.",
+                    (
+                        "Separação encerrada por "
+                        f"{usuario_que_encerrou}, porém não "
+                        "foi possível criar a Expedição "
+                        "porque não existe número de "
+                        "requisição."
+                    ),
                     "warning"
                 )
 
         else:
 
             flash(
-                "Atividade encerrada com sucesso.",
+                (
+                    "Atividade encerrada por "
+                    f"{usuario_que_encerrou} com sucesso."
+                ),
                 "success"
             )
 

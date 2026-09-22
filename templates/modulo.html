@@ -12,11 +12,13 @@
 
     <title>Módulo: {{ nome }} - Almoxarifado Valenet</title>
 
+    <!-- Bootstrap -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
+    <!-- Font Awesome -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -53,6 +55,7 @@
             justify-content: center;
             font-size: 24px;
             color: #0d6efd;
+            flex-shrink: 0;
         }
 
         .module-title {
@@ -106,6 +109,15 @@
             white-space: nowrap;
         }
 
+        .btn-encerrar {
+            min-width: 105px;
+            font-weight: 600;
+        }
+
+        .status-icon {
+            font-size: 18px;
+        }
+
         @media (max-width: 768px) {
 
             .main-container {
@@ -128,7 +140,7 @@
             }
 
             .table {
-                min-width: 1100px;
+                min-width: 1200px;
             }
 
         }
@@ -144,7 +156,9 @@
 
     <div class="card-custom">
 
+        <!-- ========================================================= -->
         <!-- CABEÇALHO -->
+        <!-- ========================================================= -->
 
         <div class="d-flex justify-content-between align-items-center header-area mb-4">
 
@@ -206,7 +220,9 @@
         </div>
 
 
+        <!-- ========================================================= -->
         <!-- RESUMO -->
+        <!-- ========================================================= -->
 
         <div class="d-flex justify-content-between align-items-center mb-3">
 
@@ -233,7 +249,9 @@
         </div>
 
 
+        <!-- ========================================================= -->
         <!-- TABELA -->
+        <!-- ========================================================= -->
 
         {% if itens %}
 
@@ -276,16 +294,22 @@
 
                     <tr>
 
+                        <!-- ================================================= -->
                         <!-- ID -->
+                        <!-- ================================================= -->
 
                         <td>
+
                             <span class="text-muted">
                                 #{{ item.id }}
                             </span>
+
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- NÚMERO DA REQUISIÇÃO -->
+                        <!-- ================================================= -->
 
                         <td>
 
@@ -306,7 +330,9 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- ATIVIDADE -->
+                        <!-- ================================================= -->
 
                         <td>
 
@@ -325,7 +351,9 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- CATEGORIA -->
+                        <!-- ================================================= -->
 
                         <td>
 
@@ -382,25 +410,33 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- RESPONSÁVEL -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             <span class="fw-semibold">
+
                                 {{ item.responsavel or 'Não informado' }}
+
                             </span>
 
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- INÍCIO -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             {% if item.inicio_em %}
 
                                 <span class="date-value">
+
                                     {{ item.inicio_em }}
+
                                 </span>
 
                             {% else %}
@@ -414,14 +450,18 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- PRAZO -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             {% if item.prazo %}
 
                                 <span class="date-value">
+
                                     {{ item.prazo }}
+
                                 </span>
 
                             {% else %}
@@ -435,14 +475,18 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- CONCLUSÃO -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             {% if item.concluido_em %}
 
                                 <span class="date-value text-success">
+
                                     {{ item.concluido_em }}
+
                                 </span>
 
                             {% else %}
@@ -456,7 +500,9 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- STATUS -->
+                        <!-- ================================================= -->
 
                         <td>
 
@@ -517,22 +563,29 @@
                         </td>
 
 
+                        <!-- ================================================= -->
                         <!-- AÇÃO -->
+                        <!-- ================================================= -->
 
                         <td>
 
                             {% if item.status == 'Pendente' %}
 
+                                <!-- BOTÃO ENCERRAR -->
+
                                 <a
                                     href="{{ url_for('concluir', id=item.id) }}"
-                                    class="btn btn-sm btn-success"
+                                    class="btn btn-success btn-sm btn-encerrar"
                                     onclick="return confirmarConclusao('{{ item.id }}');"
-                                    title="Concluir atividade"
+                                    title="Encerrar esta requisição"
                                 >
 
-                                    <i class="fa-solid fa-check"></i>
+                                    <i class="fa-solid fa-circle-check me-1"></i>
+
+                                    Encerrar
 
                                 </a>
+
 
                             {% elif item.status == 'Concluído' %}
 
@@ -541,9 +594,12 @@
                                     title="Atividade concluída"
                                 >
 
-                                    <i class="fa-solid fa-check-double"></i>
+                                    <i
+                                        class="fa-solid fa-check-double status-icon"
+                                    ></i>
 
                                 </span>
+
 
                             {% elif item.status == 'Arquivada' %}
 
@@ -552,9 +608,26 @@
                                     title="Atividade arquivada"
                                 >
 
-                                    <i class="fa-solid fa-box-archive"></i>
+                                    <i
+                                        class="fa-solid fa-box-archive status-icon"
+                                    ></i>
 
                                 </span>
+
+
+                            {% elif item.status == 'Em andamento' %}
+
+                                <span
+                                    class="text-info"
+                                    title="Atividade em andamento"
+                                >
+
+                                    <i
+                                        class="fa-solid fa-spinner status-icon"
+                                    ></i>
+
+                                </span>
+
 
                             {% else %}
 
@@ -579,18 +652,24 @@
 
         {% else %}
 
+        <!-- ========================================================= -->
         <!-- ESTADO VAZIO -->
+        <!-- ========================================================= -->
 
         <div class="text-center empty-state">
 
             <i class="fa-solid fa-inbox text-muted mb-3"></i>
 
             <h5 class="fw-bold text-dark">
+
                 Nenhum registro encontrado
+
             </h5>
 
             <p class="text-muted mb-0">
+
                 Ainda não existem atividades registradas neste módulo.
+
             </p>
 
         </div>
@@ -602,14 +681,18 @@
 </div>
 
 
+<!-- ========================================================= -->
 <!-- JAVASCRIPT -->
+<!-- ========================================================= -->
 
 <script>
 
     function confirmarConclusao(id) {
 
         return confirm(
-            "Deseja realmente concluir esta atividade?"
+            "Deseja realmente encerrar esta requisição?\n\n" +
+            "Ao confirmar, a atividade será marcada como CONCLUÍDA " +
+            "e ficará disponível nos Relatórios."
         );
 
     }
@@ -617,9 +700,12 @@
 </script>
 
 
+<!-- Bootstrap JS -->
+
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
 </script>
+
 
 </body>
 

@@ -204,7 +204,7 @@ def contar(sql, parametros=()):
 
 
 # =========================================================
-# DATA/HORA
+# DATA / HORA
 # =========================================================
 
 def agora_utc():
@@ -218,7 +218,7 @@ def agora_utc_naive():
 
     """
     PostgreSQL utiliza TIMESTAMP sem timezone.
-    Portanto armazenamos UTC sem tzinfo.
+    Armazenamos UTC sem tzinfo.
     """
 
     return agora_utc().replace(
@@ -229,7 +229,7 @@ def agora_utc_naive():
 def agora_sqlite():
 
     """
-    SQLite armazena a data/hora em texto UTC.
+    SQLite armazena a data/hora como texto UTC.
     """
 
     return agora_utc().strftime(
@@ -241,7 +241,6 @@ def data_brasil():
 
     """
     Retorna a data atual do Brasil.
-    Atualmente o Brasil utiliza UTC-3.
     """
 
     return (
@@ -290,6 +289,7 @@ def init_db():
                     num_requisicao TEXT,
                     prioridade TEXT NOT NULL DEFAULT 'Baixa',
                     atividade TEXT NOT NULL,
+                    descricao TEXT,
                     categoria TEXT NOT NULL DEFAULT 'Separação',
                     responsavel TEXT NOT NULL,
                     prazo TEXT NOT NULL DEFAULT '',
@@ -299,7 +299,9 @@ def init_db():
                 )
             """)
 
-            # Migração de bancos antigos
+            # ---------------------------------------------
+            # MIGRAÇÃO ATIVIDADES
+            # ---------------------------------------------
 
             cursor.execute("""
                 ALTER TABLE atividades
@@ -314,6 +316,11 @@ def init_db():
             cursor.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN IF NOT EXISTS atividade TEXT
+            """)
+
+            cursor.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS descricao TEXT
             """)
 
             cursor.execute("""
@@ -346,7 +353,9 @@ def init_db():
                 ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
             """)
 
-            # Corrige valores nulos antigos
+            # ---------------------------------------------
+            # CORREÇÃO DE VALORES ANTIGOS
+            # ---------------------------------------------
 
             cursor.execute("""
                 UPDATE atividades
@@ -370,6 +379,12 @@ def init_db():
                 UPDATE atividades
                 SET status = 'Pendente'
                 WHERE status IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET descricao = ''
+                WHERE descricao IS NULL
             """)
 
             # ---------------------------------------------
@@ -399,6 +414,11 @@ def init_db():
                     status TEXT DEFAULT 'Pendente',
                     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
+
+            cursor.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN IF NOT EXISTS descricao TEXT
             """)
 
             cursor.execute("""
@@ -464,6 +484,7 @@ def init_db():
                     num_requisicao TEXT,
                     prioridade TEXT NOT NULL DEFAULT 'Baixa',
                     atividade TEXT NOT NULL,
+                    descricao TEXT,
                     categoria TEXT NOT NULL DEFAULT 'Separação',
                     responsavel TEXT NOT NULL,
                     prazo TEXT NOT NULL DEFAULT '',
@@ -472,6 +493,10 @@ def init_db():
                     concluido_em TEXT
                 )
             """)
+
+            # ---------------------------------------------
+            # MIGRAÇÃO SQLITE
+            # ---------------------------------------------
 
             cursor.execute("""
                 PRAGMA table_info(atividades)
@@ -494,6 +519,9 @@ def init_db():
 
                 "atividade":
                     "ALTER TABLE atividades ADD COLUMN atividade TEXT",
+
+                "descricao":
+                    "ALTER TABLE atividades ADD COLUMN descricao TEXT",
 
                 "categoria":
                     "ALTER TABLE atividades ADD COLUMN categoria TEXT",
@@ -525,7 +553,9 @@ def init_db():
 
                     cursor.execute(comando)
 
-            # Corrige dados antigos
+            # ---------------------------------------------
+            # CORREÇÃO DE DADOS ANTIGOS
+            # ---------------------------------------------
 
             cursor.execute("""
                 UPDATE atividades
@@ -551,7 +581,11 @@ def init_db():
                 WHERE status IS NULL
             """)
 
-            # Preenche início de atividades antigas
+            cursor.execute("""
+                UPDATE atividades
+                SET descricao = ''
+                WHERE descricao IS NULL
+            """)
 
             cursor.execute("""
                 UPDATE atividades
@@ -602,33 +636,29 @@ def init_db():
                 for coluna in colunas_melhorias
             ]
 
-            if "autor" not in nomes_melhorias:
+            colunas_melhoria_necessarias = {
 
-                cursor.execute("""
-                    ALTER TABLE melhorias
-                    ADD COLUMN autor TEXT
-                """)
+                "descricao":
+                    "ALTER TABLE melhorias ADD COLUMN descricao TEXT",
 
-            if "etapa" not in nomes_melhorias:
+                "autor":
+                    "ALTER TABLE melhorias ADD COLUMN autor TEXT",
 
-                cursor.execute("""
-                    ALTER TABLE melhorias
-                    ADD COLUMN etapa TEXT
-                """)
+                "etapa":
+                    "ALTER TABLE melhorias ADD COLUMN etapa TEXT",
 
-            if "status" not in nomes_melhorias:
+                "status":
+                    "ALTER TABLE melhorias ADD COLUMN status TEXT",
 
-                cursor.execute("""
-                    ALTER TABLE melhorias
-                    ADD COLUMN status TEXT
-                """)
+                "criado_em":
+                    "ALTER TABLE melhorias ADD COLUMN criado_em TIMESTAMP"
+            }
 
-            if "criado_em" not in nomes_melhorias:
+            for nome_coluna, comando in colunas_melhoria_necessarias.items():
 
-                cursor.execute("""
-                    ALTER TABLE melhorias
-                    ADD COLUMN criado_em TIMESTAMP
-                """)
+                if nome_coluna not in nomes_melhorias:
+
+                    cursor.execute(comando)
 
             # ---------------------------------------------
             # ESTOQUE
@@ -722,8 +752,9 @@ def arquivar_atividades_expiradas():
 
         if usando_postgresql():
 
-            limite = agora_utc_naive() - timedelta(
-                hours=24
+            limite = (
+                agora_utc_naive()
+                - timedelta(hours=24)
             )
 
             cursor.execute(
@@ -773,8 +804,7 @@ def arquivar_atividades_expiradas():
 
             print(
                 f"[ARQUIVAMENTO] "
-                f"{quantidade} atividade(s) "
-                f"arquivada(s)."
+                f"{quantidade} atividade(s) arquivada(s)."
             )
 
     except Exception as erro:
@@ -2194,7 +2224,6 @@ def modulo(nome):
 
                     coluna_descricao = encontrar_coluna([
                         "descricao",
-                        "descrição",
                         "descricao_material",
                         "material_descricao"
                     ])
@@ -2206,21 +2235,25 @@ def modulo(nome):
                     ])
 
                     if not coluna_rua:
+
                         raise ValueError(
                             "A coluna 'Rua' não foi encontrada."
                         )
 
                     if not coluna_codigo:
+
                         raise ValueError(
                             "A coluna 'Código' não foi encontrada."
                         )
 
                     if not coluna_descricao:
+
                         raise ValueError(
                             "A coluna 'Descrição' não foi encontrada."
                         )
 
                     if not coluna_quantidade:
+
                         raise ValueError(
                             "A coluna 'Quantidade' não foi encontrada."
                         )
@@ -2493,6 +2526,8 @@ def relatorio_pdf():
             url_for("login")
         )
 
+    cursor = None
+
     try:
 
         # =================================================
@@ -2587,6 +2622,7 @@ def relatorio_pdf():
         atividades_dia = cursor.fetchall()
 
         fechar_cursor(cursor)
+        cursor = None
 
         # =================================================
         # QUANTIDADES
@@ -2784,7 +2820,7 @@ def relatorio_pdf():
                 or "-"
             )
 
-            categoria = (
+            categoria_item = (
                 item["categoria"]
                 or "-"
             )
@@ -2807,7 +2843,7 @@ def relatorio_pdf():
             dados.append([
                 requisicao,
                 atividade,
-                categoria,
+                categoria_item,
                 responsavel,
                 prioridade,
                 inicio,
@@ -2949,6 +2985,10 @@ def relatorio_pdf():
             500
         )
 
+    finally:
+
+        fechar_cursor(cursor)
+
 
 # =========================================================
 # CONCLUIR ATIVIDADE
@@ -2956,9 +2996,6 @@ def relatorio_pdf():
 
 @app.route(
     "/concluir/<int:id>"
-)
-@app.route(
-    "/deletar/<int:id>"
 )
 def concluir(id):
 
@@ -3214,6 +3251,99 @@ def concluir(id):
         request.referrer
         or url_for("index")
     )
+
+
+# =========================================================
+# ARQUIVAR ATIVIDADE MANUALMENTE
+# =========================================================
+
+@app.route(
+    "/arquivar/<int:id>"
+)
+def arquivar(id):
+
+    if "usuario" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    cursor = None
+
+    try:
+
+        cursor = executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivada'
+            WHERE id = %s
+            AND status = 'Concluído'
+            """,
+            (
+                id,
+            )
+        )
+
+        quantidade = cursor.rowcount
+
+        get_db().commit()
+
+        if quantidade > 0:
+
+            flash(
+                "Atividade arquivada com sucesso.",
+                "success"
+            )
+
+        else:
+
+            flash(
+                "A atividade não foi encontrada "
+                "ou ainda não está concluída.",
+                "warning"
+            )
+
+    except Exception as erro:
+
+        get_db().rollback()
+
+        print(
+            f"[ERRO ARQUIVAMENTO MANUAL] {erro}"
+        )
+
+        flash(
+            "Não foi possível arquivar a atividade.",
+            "danger"
+        )
+
+    finally:
+
+        fechar_cursor(cursor)
+
+    return redirect(
+        request.referrer
+        or url_for("index")
+    )
+
+
+# =========================================================
+# COMPATIBILIDADE COM LINK ANTIGO /deletar
+# =========================================================
+
+@app.route(
+    "/deletar/<int:id>"
+)
+def deletar_compatibilidade(id):
+
+    """
+    Mantém compatibilidade com versões anteriores
+    do HTML que ainda utilizem /deletar/<id>.
+
+    Não apaga a atividade.
+    Apenas conclui a atividade.
+    """
+
+    return concluir(id)
 
 
 # =========================================================

@@ -3,31 +3,41 @@
 <html lang="pt-BR">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Estoque - Almoxarifado Valenet</title>
 
+<!-- Bootstrap -->
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
 >
 
+<!-- Font Awesome -->
 <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
 >
 
 <style>
+
     body {
         background-color: #f4f6f9;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: "Segoe UI", Arial, sans-serif;
         color: #333;
         min-height: 100vh;
     }
 
-    /* MENU LATERAL */
+    /* =====================================================
+       MENU LATERAL
+    ===================================================== */
+
     .sidebar {
         background-color: #1e293b;
         min-height: 100vh;
@@ -38,6 +48,7 @@
         left: 0;
         padding-top: 20px;
         z-index: 1000;
+        overflow-y: auto;
     }
 
     .sidebar a {
@@ -46,7 +57,7 @@
         display: block;
         padding: 12px 20px;
         font-weight: 500;
-        transition: 0.2s;
+        transition: 0.2s ease;
     }
 
     .sidebar a:hover,
@@ -60,10 +71,19 @@
         padding: 0 15px;
     }
 
-    /* CONTEÚDO */
+    .sidebar hr {
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    /* =====================================================
+       CONTEÚDO
+    ===================================================== */
+
     .main-content {
         margin-left: 250px;
         padding: 30px;
+        min-height: 100vh;
     }
 
     .card {
@@ -76,6 +96,10 @@
         color: #495057;
     }
 
+    /* =====================================================
+       TABELA
+    ===================================================== */
+
     .table th {
         white-space: nowrap;
         font-size: 0.82rem;
@@ -85,11 +109,31 @@
         font-size: 0.88rem;
     }
 
+    .table tbody tr {
+        transition: 0.15s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    /* =====================================================
+       ESTADO VAZIO
+    ===================================================== */
+
     .empty-state {
-        padding: 45px 20px;
+        padding: 55px 20px;
         text-align: center;
         color: #6c757d;
     }
+
+    .empty-state i {
+        opacity: 0.55;
+    }
+
+    /* =====================================================
+       CAIXAS DE INFORMAÇÃO
+    ===================================================== */
 
     .info-box {
         background: #eef6ff;
@@ -106,10 +150,35 @@
         background: #fafbfc;
     }
 
+    .import-box:hover {
+        background: #ffffff;
+        border-color: #86b7fe;
+    }
+
+    /* =====================================================
+       BADGES
+    ===================================================== */
+
     .stock-count {
         font-size: 1.3rem;
         font-weight: 700;
     }
+
+    .badge {
+        font-weight: 600;
+    }
+
+    /* =====================================================
+       BOTÕES
+    ===================================================== */
+
+    .btn {
+        border-radius: 8px;
+    }
+
+    /* =====================================================
+       RESPONSIVIDADE
+    ===================================================== */
 
     @media (max-width: 991px) {
 
@@ -117,6 +186,7 @@
             position: relative;
             width: 100%;
             min-height: auto;
+            max-height: none;
         }
 
         .main-content {
@@ -125,239 +195,545 @@
         }
 
     }
-</style>
 
+    @media (max-width: 576px) {
+
+        .main-content {
+            padding: 15px;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px;
+        }
+
+        .page-header .btn {
+            width: 100%;
+        }
+
+        .card-body {
+            padding: 18px !important;
+        }
+
+        .table {
+            min-width: 850px;
+        }
+
+    }
+
+</style>
+```
 
 </head>
 
 <body>
 
-
-<!-- ========================================================= -->
-<!-- MENU LATERAL -->
-<!-- ========================================================= -->
+<!-- =========================================================
+     MENU LATERAL
+========================================================= -->
 
 <div class="sidebar">
 
-    <div class="logo text-center mb-4">
 
-        <h5 class="fw-bold text-white">
-            <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
-            Valenet
-        </h5>
+<div class="logo text-center mb-4">
 
-        <small class="text-muted">
-            Almoxarifado & Logística
-        </small>
+    <h5 class="fw-bold text-white">
+
+        <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
+
+        Valenet
+
+    </h5>
+
+    <small class="text-muted">
+
+        Almoxarifado & Logística
+
+    </small>
+
+</div>
+
+
+<hr class="border-secondary">
+
+
+<!-- INÍCIO -->
+
+<a href="{{ url_for('index') }}">
+
+    <i class="fa-solid fa-house me-2"></i>
+
+    Início / Painel
+
+</a>
+
+
+<!-- REQUISIÇÕES -->
+
+<a href="{{ url_for('modulo', nome='Requisições') }}">
+
+    <i class="fa-solid fa-clipboard-list me-2"></i>
+
+    Requisições / Separação
+
+</a>
+
+
+<!-- INVENTÁRIO -->
+
+<a href="{{ url_for('modulo', nome='Inventário') }}">
+
+    <i class="fa-solid fa-warehouse me-2"></i>
+
+    Inventário
+
+</a>
+
+
+<!-- EXPEDIÇÃO -->
+
+<a href="{{ url_for('modulo', nome='Expedição') }}">
+
+    <i class="fa-solid fa-truck-fast me-2"></i>
+
+    Expedição
+
+</a>
+
+
+<!-- RECEBIMENTO -->
+
+<a href="{{ url_for('modulo', nome='Recebimento') }}">
+
+    <i class="fa-solid fa-box-open me-2"></i>
+
+    Recebimento
+
+</a>
+
+
+<!-- ESTOQUE -->
+
+<a
+    href="{{ url_for('modulo', nome='Estoque') }}"
+    class="active"
+>
+
+    <i class="fa-solid fa-boxes-stacked me-2"></i>
+
+    Estoque
+
+</a>
+
+
+<!-- CADASTROS -->
+
+<a href="{{ url_for('modulo', nome='Cadastros') }}">
+
+    <i class="fa-solid fa-address-book me-2"></i>
+
+    Cadastros
+
+</a>
+
+
+<!-- MELHORIAS -->
+
+<a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}">
+
+    <i class="fa-solid fa-chart-line me-2"></i>
+
+    Melhorias / PDCA
+
+</a>
+
+
+<!-- INDICADORES -->
+
+<a href="{{ url_for('modulo', nome='Indicadores') }}">
+
+    <i class="fa-solid fa-chart-pie me-2"></i>
+
+    Indicadores
+
+</a>
+
+
+<!-- RELATÓRIOS -->
+
+<a href="{{ url_for('modulo', nome='Relatórios') }}">
+
+    <i class="fa-solid fa-file-lines me-2"></i>
+
+    Relatórios
+
+</a>
+
+
+<!-- CONFIGURAÇÕES -->
+
+<a href="{{ url_for('modulo', nome='Configurações') }}">
+
+    <i class="fa-solid fa-gear me-2"></i>
+
+    Configurações
+
+</a>
+
+
+<hr class="border-secondary mt-4">
+
+
+<!-- SAIR -->
+
+<a
+    href="{{ url_for('logout') }}"
+    class="text-danger"
+>
+
+    <i class="fa-solid fa-right-from-bracket me-2"></i>
+
+    Sair
+
+</a>
+```
+
+</div>
+
+<!-- =========================================================
+     CONTEÚDO PRINCIPAL
+========================================================= -->
+
+<div class="main-content">
+
+
+<!-- =====================================================
+     CABEÇALHO
+===================================================== -->
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h3 class="fw-bold m-0">
+
+            <i class="fa-solid fa-warehouse text-primary me-2"></i>
+
+            Gestão de Estoque
+
+        </h3>
+
+        <p class="text-muted small m-0 mt-1">
+
+            Cadastre materiais, endereços e importe dados
+            através de planilhas.
+
+        </p>
 
     </div>
 
-    <hr class="border-secondary">
-
-
-    <a href="{{ url_for('index') }}">
-        <i class="fa-solid fa-house me-2"></i>
-        Início / Painel
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Requisições') }}">
-        <i class="fa-solid fa-clipboard-list me-2"></i>
-        Requisições / Separação
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Inventário') }}">
-        <i class="fa-solid fa-warehouse me-2"></i>
-        Inventário
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Expedição') }}">
-        <i class="fa-solid fa-truck-fast me-2"></i>
-        Expedição
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Recebimento') }}">
-        <i class="fa-solid fa-box-open me-2"></i>
-        Recebimento
-    </a>
-
 
     <a
-        href="{{ url_for('modulo', nome='Estoque') }}"
-        class="active"
+        href="{{ url_for('index') }}"
+        class="btn btn-outline-secondary btn-sm"
     >
-        <i class="fa-solid fa-boxes-stacked me-2"></i>
-        Estoque
-    </a>
 
+        <i class="fa-solid fa-arrow-left me-1"></i>
 
-    <a href="{{ url_for('modulo', nome='Cadastros') }}">
-        <i class="fa-solid fa-address-book me-2"></i>
-        Cadastros
-    </a>
+        Voltar ao Painel
 
-
-    <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}">
-        <i class="fa-solid fa-chart-line me-2"></i>
-        Melhorias / PDCA
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Indicadores') }}">
-        <i class="fa-solid fa-chart-pie me-2"></i>
-        Indicadores
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Relatórios') }}">
-        <i class="fa-solid fa-file-lines me-2"></i>
-        Relatórios
-    </a>
-
-
-    <a href="{{ url_for('modulo', nome='Configurações') }}">
-        <i class="fa-solid fa-gear me-2"></i>
-        Configurações
-    </a>
-
-
-    <hr class="border-secondary mt-4">
-
-
-    <a
-        href="{{ url_for('logout') }}"
-        class="text-danger"
-    >
-        <i class="fa-solid fa-right-from-bracket me-2"></i>
-        Sair
     </a>
 
 </div>
 
 
-<!-- ========================================================= -->
-<!-- CONTEÚDO PRINCIPAL -->
-<!-- ========================================================= -->
 
-<div class="main-content">
+<!-- =====================================================
+     MENSAGENS FLASH
+===================================================== -->
+
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+
+    {% if mensagens %}
+
+        {% for categoria, mensagem in mensagens %}
+
+            <div
+                class="alert alert-{{
+                    categoria
+                    if categoria in ['success', 'danger', 'warning', 'info']
+                    else 'info'
+                }} alert-dismissible fade show"
+                role="alert"
+            >
+
+                {% if categoria == "success" %}
+
+                    <i class="fa-solid fa-circle-check me-2"></i>
+
+                {% elif categoria == "danger" %}
+
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+
+                {% elif categoria == "warning" %}
+
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
+                {% else %}
+
+                    <i class="fa-solid fa-circle-info me-2"></i>
+
+                {% endif %}
+
+                {{ mensagem }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Fechar"
+                ></button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
 
 
-    <!-- CABEÇALHO -->
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<!-- =====================================================
+     INFORMAÇÃO
+===================================================== -->
 
-        <div>
+<div class="info-box mb-4">
 
-            <h3 class="fw-bold m-0">
+    <div class="d-flex align-items-start">
 
-                <i class="fa-solid fa-warehouse text-primary me-2"></i>
+        <i class="fa-solid fa-circle-info me-2 mt-1"></i>
 
-                Gestão de Estoque
+        <div class="small">
 
-            </h3>
+            <strong>Endereçamento:</strong>
 
-            <p class="text-muted small m-0">
+            utilize esta área para controlar onde cada
+            material está armazenado no Almoxarifado.
 
-                Cadastre materiais, endereços e importe dados
-                através de planilhas.
+            <br>
 
-            </p>
+            <strong>Importação:</strong>
+
+            você também pode cadastrar vários materiais
+            utilizando uma planilha Excel ou CSV.
 
         </div>
 
-
-        <a
-            href="{{ url_for('index') }}"
-            class="btn btn-outline-secondary btn-sm"
-        >
-
-            <i class="fa-solid fa-arrow-left me-1"></i>
-
-            Voltar ao Painel
-
-        </a>
-
     </div>
 
+</div>
 
 
-    <!-- ===================================================== -->
-    <!-- MENSAGENS FLASH -->
-    <!-- ===================================================== -->
 
-    {% with mensagens = get_flashed_messages(with_categories=true) %}
+<!-- =====================================================
+     CARDS PRINCIPAIS
+===================================================== -->
 
-        {% if mensagens %}
+<div class="row g-4 mb-4">
 
-            {% for categoria, mensagem in mensagens %}
 
-                <div
-                    class="alert alert-{{ categoria if categoria in ['success', 'danger', 'warning', 'info'] else 'info' }} alert-dismissible fade show"
-                    role="alert"
+    <!-- =================================================
+         CADASTRO MANUAL
+    ================================================= -->
+
+    <div class="col-lg-7">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-bold text-dark mb-1">
+
+                    <i class="fa-solid fa-plus-circle text-primary me-2"></i>
+
+                    Novo Item / Endereço
+
+                </h5>
+
+                <p class="text-muted small mb-4">
+
+                    Cadastre manualmente um material e sua localização.
+
+                </p>
+
+
+                <form
+                    method="POST"
+                    action="{{ url_for('modulo', nome='Estoque') }}"
                 >
 
-                    {% if categoria == 'success' %}
+                    <input
+                        type="hidden"
+                        name="acao_estoque"
+                        value="cadastrar_manual"
+                    >
 
-                        <i class="fa-solid fa-circle-check me-2"></i>
 
-                    {% elif categoria == 'danger' %}
+                    <!-- RUA -->
 
-                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    <div class="row g-3 mb-3">
 
-                    {% elif categoria == 'warning' %}
+                        <div class="col-md-6">
 
-                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                            <label
+                                for="estoqueRua"
+                                class="form-label small fw-semibold"
+                            >
 
-                    {% else %}
+                                Rua / Corredor
 
-                        <i class="fa-solid fa-circle-info me-2"></i>
+                            </label>
 
-                    {% endif %}
+                            <input
+                                type="text"
+                                id="estoqueRua"
+                                name="rua"
+                                class="form-control"
+                                placeholder="Ex.: Rua A"
+                                maxlength="50"
+                                required
+                            >
 
-                    {{ mensagem }}
+                        </div>
+
+
+                        <!-- PRATELEIRA -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="estoquePrateleira"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Prateleira / Posição
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="estoquePrateleira"
+                                name="prateleira"
+                                class="form-control"
+                                placeholder="Ex.: P-03"
+                                maxlength="50"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CÓDIGO -->
+
+                    <div class="row g-3 mb-3">
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="estoqueCodigo"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Código do Material
+
+                            </label>
+
+                            <input
+                                type="text"
+                                id="estoqueCodigo"
+                                name="codigo_material"
+                                class="form-control"
+                                placeholder="Ex.: CAB-DROP"
+                                maxlength="100"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- QUANTIDADE -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="estoqueQuantidade"
+                                class="form-label small fw-semibold"
+                            >
+
+                                Quantidade
+
+                            </label>
+
+                            <input
+                                type="number"
+                                id="estoqueQuantidade"
+                                name="quantidade"
+                                class="form-control"
+                                placeholder="Ex.: 50"
+                                min="0"
+                                step="1"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="mb-4">
+
+                        <label
+                            for="estoqueDescricao"
+                            class="form-label small fw-semibold"
+                        >
+
+                            Descrição do Material
+
+                        </label>
+
+                        <input
+                            type="text"
+                            id="estoqueDescricao"
+                            name="descricao"
+                            class="form-control"
+                            placeholder="Ex.: Cabo Óptico Drop Compacto"
+                            maxlength="255"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- SALVAR -->
 
                     <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert"
-                    ></button>
+                        type="submit"
+                        class="btn btn-primary w-100 fw-bold"
+                    >
 
-                </div>
+                        <i class="fa-solid fa-floppy-disk me-1"></i>
 
-            {% endfor %}
+                        Salvar Endereço e Material
 
-        {% endif %}
+                    </button>
 
-    {% endwith %}
-
-
-
-    <!-- ===================================================== -->
-    <!-- INFORMAÇÃO -->
-    <!-- ===================================================== -->
-
-    <div class="info-box mb-4">
-
-        <div class="d-flex align-items-start">
-
-            <i class="fa-solid fa-circle-info me-2 mt-1"></i>
-
-            <div class="small">
-
-                <strong>Endereçamento:</strong>
-
-                utilize esta área para controlar onde cada
-                material está armazenado no Almoxarifado.
-
-                <br>
-
-                <strong>Importação:</strong>
-
-                você também pode cadastrar vários materiais
-                utilizando uma planilha Excel ou CSV.
+                </form>
 
             </div>
 
@@ -367,169 +743,84 @@
 
 
 
-    <!-- ===================================================== -->
-    <!-- CARDS -->
-    <!-- ===================================================== -->
+    <!-- =================================================
+         IMPORTAÇÃO
+    ================================================= -->
 
-    <div class="row g-4 mb-4">
+    <div class="col-lg-5">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-bold text-dark mb-1">
+
+                    <i class="fa-solid fa-file-excel text-success me-2"></i>
+
+                    Importar Planilha
+
+                </h5>
+
+                <p class="text-muted small mb-3">
+
+                    Cadastre vários materiais de uma só vez.
+
+                </p>
 
 
-        <!-- ================================================= -->
-        <!-- CADASTRO MANUAL -->
-        <!-- ================================================= -->
+                <div class="import-box mb-3">
 
-        <div class="col-lg-7">
+                    <div class="text-center mb-3">
 
-            <div class="card border-0 shadow-sm h-100">
+                        <i
+                            class="fa-solid fa-file-arrow-up fa-2x text-success mb-2"
+                        ></i>
 
-                <div class="card-body p-4">
+                        <div class="fw-semibold">
 
-                    <h5 class="fw-bold text-dark mb-1">
+                            Arquivo Excel ou CSV
 
-                        <i class="fa-solid fa-plus-circle text-primary me-2"></i>
+                        </div>
 
-                        Novo Item / Endereço
+                        <small class="text-muted">
 
-                    </h5>
+                            .xlsx, .xls ou .csv
 
-                    <p class="text-muted small mb-4">
+                        </small>
 
-                        Cadastre manualmente um material e sua localização.
-
-                    </p>
+                    </div>
 
 
                     <form
                         method="POST"
                         action="{{ url_for('modulo', nome='Estoque') }}"
+                        enctype="multipart/form-data"
                     >
 
                         <input
                             type="hidden"
                             name="acao_estoque"
-                            value="cadastrar_manual"
+                            value="importar_excel"
                         >
 
 
-                        <!-- RUA / PRATELEIRA -->
-
-                        <div class="row g-3 mb-3">
-
-                            <div class="col-md-6">
-
-                                <label
-                                    for="rua"
-                                    class="form-label small fw-semibold"
-                                >
-                                    Rua / Corredor
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="rua"
-                                    name="rua"
-                                    class="form-control"
-                                    placeholder="Ex.: Rua A"
-                                    maxlength="50"
-                                    required
-                                >
-
-                            </div>
-
-
-                            <div class="col-md-6">
-
-                                <label
-                                    for="prateleira"
-                                    class="form-label small fw-semibold"
-                                >
-                                    Prateleira / Posição
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="prateleira"
-                                    name="prateleira"
-                                    class="form-control"
-                                    placeholder="Ex.: P-03"
-                                    maxlength="50"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- CÓDIGO / QUANTIDADE -->
-
-                        <div class="row g-3 mb-3">
-
-                            <div class="col-md-6">
-
-                                <label
-                                    for="codigo_material"
-                                    class="form-label small fw-semibold"
-                                >
-                                    Código do Material
-                                </label>
-
-                                <input
-                                    type="text"
-                                    id="codigo_material"
-                                    name="codigo_material"
-                                    class="form-control"
-                                    placeholder="Ex.: CAB-DROP"
-                                    maxlength="100"
-                                    required
-                                >
-
-                            </div>
-
-
-                            <div class="col-md-6">
-
-                                <label
-                                    for="quantidade"
-                                    class="form-label small fw-semibold"
-                                >
-                                    Quantidade
-                                </label>
-
-                                <input
-                                    type="number"
-                                    id="quantidade"
-                                    name="quantidade"
-                                    class="form-control"
-                                    placeholder="Ex.: 50"
-                                    min="0"
-                                    step="1"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- DESCRIÇÃO -->
-
-                        <div class="mb-4">
+                        <div class="mb-3">
 
                             <label
-                                for="descricao"
+                                for="arquivoExcel"
                                 class="form-label small fw-semibold"
                             >
-                                Descrição do Material
+
+                                Selecionar arquivo
+
                             </label>
 
                             <input
-                                type="text"
-                                id="descricao"
-                                name="descricao"
+                                type="file"
+                                id="arquivoExcel"
+                                name="arquivo_excel"
                                 class="form-control"
-                                placeholder="Ex.: Cabo Óptico Drop Compacto"
-                                maxlength="255"
+                                accept=".xlsx,.xls,.csv"
                                 required
                             >
 
@@ -538,12 +829,12 @@
 
                         <button
                             type="submit"
-                            class="btn btn-primary w-100 fw-bold"
+                            class="btn btn-success w-100 fw-bold"
                         >
 
-                            <i class="fa-solid fa-floppy-disk me-1"></i>
+                            <i class="fa-solid fa-upload me-1"></i>
 
-                            Salvar Endereço e Material
+                            Importar Dados
 
                         </button>
 
@@ -551,325 +842,45 @@
 
                 </div>
 
-            </div>
 
-        </div>
+                <!-- COLUNAS ESPERADAS -->
 
+                <div class="small">
 
+                    <div class="fw-bold mb-2">
 
-        <!-- ================================================= -->
-        <!-- IMPORTAÇÃO -->
-        <!-- ================================================= -->
-
-        <div class="col-lg-5">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <h5 class="fw-bold text-dark mb-1">
-
-                        <i class="fa-solid fa-file-excel text-success me-2"></i>
-
-                        Importar Planilha
-
-                    </h5>
-
-                    <p class="text-muted small mb-3">
-
-                        Cadastre vários materiais de uma só vez.
-
-                    </p>
-
-
-                    <div class="import-box mb-3">
-
-                        <div class="text-center mb-3">
-
-                            <i class="fa-solid fa-file-arrow-up fa-2x text-success mb-2"></i>
-
-                            <div class="fw-semibold">
-                                Arquivo Excel ou CSV
-                            </div>
-
-                            <small class="text-muted">
-                                .xlsx, .xls ou .csv
-                            </small>
-
-                        </div>
-
-
-                        <form
-                            method="POST"
-                            action="{{ url_for('modulo', nome='Estoque') }}"
-                            enctype="multipart/form-data"
-                        >
-
-                            <input
-                                type="hidden"
-                                name="acao_estoque"
-                                value="importar_excel"
-                            >
-
-
-                            <div class="mb-3">
-
-                                <label
-                                    for="arquivo_excel"
-                                    class="form-label small fw-semibold"
-                                >
-                                    Selecionar arquivo
-                                </label>
-
-                                <input
-                                    type="file"
-                                    id="arquivo_excel"
-                                    name="arquivo_excel"
-                                    class="form-control"
-                                    accept=".xlsx,.xls,.csv"
-                                    required
-                                >
-
-                            </div>
-
-
-                            <button
-                                type="submit"
-                                class="btn btn-success w-100 fw-bold"
-                            >
-
-                                <i class="fa-solid fa-upload me-1"></i>
-
-                                Importar Dados
-
-                            </button>
-
-                        </form>
+                        Colunas esperadas:
 
                     </div>
 
 
-                    <!-- COLUNAS -->
+                    <div class="d-flex flex-wrap gap-1">
 
-                    <div class="small">
+                        <span class="badge bg-secondary">
+                            Rua
+                        </span>
 
-                        <div class="fw-bold mb-2">
-                            Colunas esperadas:
-                        </div>
+                        <span class="badge bg-secondary">
+                            Prateleira
+                        </span>
 
-                        <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-secondary">
+                            Código
+                        </span>
 
-                            <span class="badge bg-secondary">
-                                Rua
-                            </span>
+                        <span class="badge bg-secondary">
+                            Descrição
+                        </span>
 
-                            <span class="badge bg-secondary">
-                                Prateleira
-                            </span>
-
-                            <span class="badge bg-secondary">
-                                Código
-                            </span>
-
-                            <span class="badge bg-secondary">
-                                Descrição
-                            </span>
-
-                            <span class="badge bg-secondary">
-                                Quantidade
-                            </span>
-
-                        </div>
+                        <span class="badge bg-secondary">
+                            Quantidade
+                        </span>
 
                     </div>
 
                 </div>
 
             </div>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- ===================================================== -->
-    <!-- ESTOQUE CADASTRADO -->
-    <!-- ===================================================== -->
-
-    <div class="card border-0 shadow-sm">
-
-        <div class="card-body p-4">
-
-
-            <!-- CABEÇALHO -->
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-
-                <div>
-
-                    <h5 class="fw-bold text-dark mb-1">
-
-                        <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
-
-                        Itens Cadastrados no Estoque
-
-                    </h5>
-
-                    <small class="text-muted">
-
-                        Materiais e seus respectivos endereços.
-
-                    </small>
-
-                </div>
-
-
-                {% if estoque_itens %}
-
-                    <span class="badge bg-primary rounded-pill">
-
-                        {{ estoque_itens|length }} item{% if estoque_itens|length != 1 %}s{% endif %}
-
-                    </span>
-
-                {% endif %}
-
-            </div>
-
-
-
-            <!-- TABELA -->
-
-            {% if estoque_itens %}
-
-                <div class="table-responsive">
-
-                    <table class="table table-hover align-middle mb-0">
-
-                        <thead class="table-light">
-
-                            <tr>
-
-                                <th>Rua</th>
-
-                                <th>Prateleira</th>
-
-                                <th>Código</th>
-
-                                <th>Descrição</th>
-
-                                <th class="text-center">
-                                    Quantidade
-                                </th>
-
-                                <th class="text-center">
-                                    Ação
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            {% for item in estoque_itens %}
-
-                            <tr>
-
-                                <td>
-
-                                    <span class="badge bg-secondary">
-
-                                        {{ item.rua }}
-
-                                    </span>
-
-                                </td>
-
-
-                                <td class="fw-semibold">
-
-                                    {{ item.prateleira }}
-
-                                </td>
-
-
-                                <td>
-
-                                    <code>
-                                        {{ item.codigo_material }}
-                                    </code>
-
-                                </td>
-
-
-                                <td>
-
-                                    {{ item.descricao }}
-
-                                </td>
-
-
-                                <td class="text-center">
-
-                                    <span class="badge bg-primary">
-
-                                        {{ item.quantidade }}
-
-                                    </span>
-
-                                </td>
-
-
-                                <td class="text-center">
-
-                                    <a
-                                        href="{{ url_for('deletar_estoque', id=item.id) }}"
-                                        class="btn btn-sm btn-outline-danger"
-                                        title="Excluir item"
-                                        onclick="return confirmarExclusao('{{ item.descricao|e }}');"
-                                    >
-
-                                        <i class="fa-solid fa-trash"></i>
-
-                                    </a>
-
-                                </td>
-
-                            </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <!-- ESTOQUE VAZIO -->
-
-                <div class="empty-state">
-
-                    <i class="fa-solid fa-box-open fa-3x mb-3"></i>
-
-                    <h6 class="fw-bold">
-                        Nenhum item cadastrado
-                    </h6>
-
-                    <p class="small mb-0">
-
-                        Cadastre o primeiro material manualmente
-                        ou importe uma planilha.
-
-                    </p>
-
-                </div>
-
-            {% endif %}
 
         </div>
 
@@ -879,29 +890,326 @@
 
 
 
-<!-- ========================================================= -->
-<!-- JAVASCRIPT -->
-<!-- ========================================================= -->
+<!-- =====================================================
+     ESTOQUE CADASTRADO
+===================================================== -->
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-body p-4">
+
+
+        <!-- CABEÇALHO -->
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+            <div>
+
+                <h5 class="fw-bold text-dark mb-1">
+
+                    <i class="fa-solid fa-boxes-stacked text-primary me-2"></i>
+
+                    Itens Cadastrados no Estoque
+
+                </h5>
+
+                <small class="text-muted">
+
+                    Materiais e seus respectivos endereços.
+
+                </small>
+
+            </div>
+
+
+            {% if estoque_itens %}
+
+                <span class="badge bg-primary rounded-pill">
+
+                    {{ estoque_itens|length }}
+
+                    item{% if estoque_itens|length != 1 %}s{% endif %}
+
+                </span>
+
+            {% else %}
+
+                <span class="badge bg-secondary rounded-pill">
+
+                    0 itens
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+
+
+        <!-- =================================================
+             TABELA
+        ================================================= -->
+
+        {% if estoque_itens %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>Rua</th>
+
+                            <th>Prateleira</th>
+
+                            <th>Código</th>
+
+                            <th>Descrição</th>
+
+                            <th class="text-center">
+                                Quantidade
+                            </th>
+
+                            <th class="text-center">
+                                Ações
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for item in estoque_itens %}
+
+                        <tr>
+
+
+                            <!-- RUA -->
+
+                            <td>
+
+                                <span class="badge bg-secondary">
+
+                                    {{ item.rua or "-" }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- PRATELEIRA -->
+
+                            <td class="fw-semibold">
+
+                                {{ item.prateleira or "-" }}
+
+                            </td>
+
+
+                            <!-- CÓDIGO -->
+
+                            <td>
+
+                                <code>
+
+                                    {{ item.codigo_material or "-" }}
+
+                                </code>
+
+                            </td>
+
+
+                            <!-- DESCRIÇÃO -->
+
+                            <td>
+
+                                {{ item.descricao or "-" }}
+
+                            </td>
+
+
+                            <!-- QUANTIDADE -->
+
+                            <td class="text-center">
+
+                                <span class="badge bg-primary">
+
+                                    {{ item.quantidade or 0 }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- AÇÕES -->
+
+                            <td class="text-center">
+
+                                <div class="d-flex justify-content-center gap-1">
+
+                                    <!--
+                                        Edição será habilitada
+                                        quando a rota correspondente
+                                        existir no app.py.
+                                    -->
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled
+                                        title="Edição será disponibilizada"
+                                    >
+
+                                        <i class="fa-solid fa-pen"></i>
+
+                                    </button>
+
+
+                                    <!-- EXCLUSÃO -->
+
+                                    {% if item.id %}
+
+                                        <a
+                                            href="{{ url_for('deletar_estoque', id=item.id) }}"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Excluir item"
+                                            onclick="return confirmarExclusao('{{ item.descricao|e }}');"
+                                        >
+
+                                            <i class="fa-solid fa-trash"></i>
+
+                                        </a>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- AVISO -->
+
+            <div class="small text-muted mt-3">
+
+                <i class="fa-solid fa-circle-info me-1"></i>
+
+                A exclusão de um item remove o registro do estoque.
+
+                Confira o material antes de confirmar.
+
+            </div>
+
+
+        {% else %}
+
+            <!-- =================================================
+                 ESTOQUE VAZIO
+            ================================================= -->
+
+            <div class="empty-state">
+
+                <i class="fa-solid fa-box-open fa-3x mb-3"></i>
+
+                <h6 class="fw-bold">
+
+                    Nenhum item cadastrado
+
+                </h6>
+
+                <p class="small mb-0">
+
+                    Cadastre o primeiro material manualmente
+                    ou importe uma planilha.
+
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+</div>
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 
 <script>
 
     function confirmarExclusao(descricao) {
 
+        const nome = descricao || "este item";
+
         return confirm(
-            "Deseja realmente excluir o item:\n\n" +
-            descricao +
-            "\n\nEssa ação não poderá ser desfeita."
+            "ATENÇÃO!\n\n" +
+            "Deseja realmente excluir:\n\n" +
+            nome +
+            "\n\n" +
+            "Essa ação não poderá ser desfeita."
         );
 
     }
 
+
+    /*
+     * Feedback visual durante importação.
+     */
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const formularios = document.querySelectorAll(
+            'form[enctype="multipart/form-data"]'
+        );
+
+        formularios.forEach(function (formulario) {
+
+            formulario.addEventListener("submit", function () {
+
+                const botao = formulario.querySelector(
+                    'button[type="submit"]'
+                );
+
+                if (botao) {
+
+                    botao.disabled = true;
+
+                    botao.innerHTML =
+                        '<i class="fa-solid fa-spinner fa-spin me-1"></i>' +
+                        ' Importando...';
+
+                }
+
+            });
+
+        });
+
+    });
+
 </script>
 
+<!-- Bootstrap JS -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
 </script>
-
 
 </body>
 

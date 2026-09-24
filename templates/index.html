@@ -4,7 +4,6 @@
 
 <head>
 
-```
 <meta charset="UTF-8">
 
 <meta
@@ -30,7 +29,7 @@
 
     body {
         background-color: #f4f6f9;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: "Segoe UI", Arial, sans-serif;
         color: #333;
         min-height: 100vh;
     }
@@ -49,6 +48,7 @@
         left: 0;
         padding-top: 20px;
         z-index: 1000;
+        overflow-y: auto;
     }
 
     .sidebar a {
@@ -58,7 +58,7 @@
         padding: 10px 20px;
         font-weight: 500;
         font-size: 14px;
-        transition: 0.2s;
+        transition: 0.2s ease;
     }
 
     .sidebar a:hover,
@@ -80,6 +80,7 @@
     .main-content {
         margin-left: 250px;
         padding: 30px;
+        min-height: 100vh;
     }
 
     /* =====================================================
@@ -92,7 +93,7 @@
         background: #fff;
         border-left-width: 5px;
         height: 100%;
-        transition: 0.2s;
+        transition: 0.2s ease;
     }
 
     .card-stat:hover {
@@ -251,6 +252,16 @@
             padding: 15px;
         }
 
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        .search-area {
+            width: 100%;
+            margin-top: 15px;
+        }
+
     }
 
 </style>
@@ -266,7 +277,7 @@
 
 <div class="sidebar d-flex flex-column justify-content-between pb-3">
 
-```
+
 <div>
 
     <!-- LOGO -->
@@ -292,7 +303,9 @@
 
     </div>
 
+
     <hr class="border-secondary my-2">
+
 
     <!-- MENU -->
 
@@ -307,6 +320,7 @@
 
     </a>
 
+
     <a
         href="{{ url_for('modulo', nome='Requisições') }}"
     >
@@ -316,6 +330,7 @@
         Requisições
 
     </a>
+
 
     <a
         href="{{ url_for('modulo', nome='Inventário') }}"
@@ -327,6 +342,7 @@
 
     </a>
 
+
     <a
         href="{{ url_for('modulo', nome='Expedição') }}"
     >
@@ -336,6 +352,7 @@
         Expedição
 
     </a>
+
 
     <a
         href="{{ url_for('modulo', nome='Recebimento') }}"
@@ -347,6 +364,7 @@
 
     </a>
 
+
     <a
         href="{{ url_for('modulo', nome='Estoque') }}"
     >
@@ -356,6 +374,7 @@
         Estoque
 
     </a>
+
 
     <a
         href="{{ url_for('modulo', nome='Cadastros') }}"
@@ -367,6 +386,7 @@
 
     </a>
 
+
     <a
         href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
     >
@@ -376,6 +396,7 @@
         Melhorias / PDCA
 
     </a>
+
 
     <a
         href="{{ url_for('modulo', nome='Indicadores') }}"
@@ -387,6 +408,7 @@
 
     </a>
 
+
     <a
         href="{{ url_for('modulo', nome='Relatórios') }}"
     >
@@ -396,6 +418,7 @@
         Relatórios
 
     </a>
+
 
     <a
         href="{{ url_for('modulo', nome='Configurações') }}"
@@ -408,6 +431,7 @@
     </a>
 
 </div>
+
 
 <!-- USUÁRIO -->
 
@@ -425,6 +449,7 @@
 
         </span>
 
+
         <a
             href="{{ url_for('logout') }}"
             class="text-danger small"
@@ -436,6 +461,7 @@
         </a>
 
     </div>
+
 
     <small
         class="text-success"
@@ -462,12 +488,12 @@
 
 <div class="main-content">
 
-```
+
 <!-- ========================================================
      CABEÇALHO
 ======================================================== -->
 
-<div class="row align-items-center mb-4">
+<div class="page-header row align-items-center mb-4">
 
     <div class="col-md-7">
 
@@ -485,7 +511,8 @@
 
     </div>
 
-    <div class="col-md-5 mt-3 mt-md-0">
+
+    <div class="col-md-5 search-area">
 
         <form
             method="GET"
@@ -500,10 +527,11 @@
 
                 </span>
 
+
                 <input
                     type="text"
                     name="q"
-                    value="{{ busca }}"
+                    value="{{ busca or '' }}"
                     class="form-control form-control-sm"
                     placeholder="Buscar requisição, atividade ou responsável..."
                 >
@@ -517,6 +545,7 @@
 </div>
 
 
+
 <!-- ========================================================
      MENSAGENS
 ======================================================== -->
@@ -528,7 +557,11 @@
         {% for categoria, mensagem in mensagens %}
 
             <div
-                class="alert alert-{{ categoria if categoria in ['success', 'danger', 'warning', 'info'] else 'info' }} alert-dismissible fade show"
+                class="alert alert-{{
+                    categoria
+                    if categoria in ['success', 'danger', 'warning', 'info']
+                    else 'info'
+                }} alert-dismissible fade show"
                 role="alert"
             >
 
@@ -552,10 +585,12 @@
 
                 {{ mensagem }}
 
+
                 <button
                     type="button"
                     class="btn-close"
                     data-bs-dismiss="alert"
+                    aria-label="Fechar"
                 ></button>
 
             </div>
@@ -567,151 +602,207 @@
 {% endwith %}
 
 
+
 <!-- ========================================================
      CARDS SUPERIORES
 ======================================================== -->
 
 <div class="row g-3 mb-4">
 
+
     <!-- REQUISIÇÕES -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
-        <div class="card card-stat card-req p-3">
+        <a
+            href="{{ url_for('modulo', nome='Requisições') }}"
+            class="card-link"
+        >
 
-            <span class="text-muted small">
-                Requisições
-            </span>
+            <div class="card card-stat card-req p-3">
 
-            <h3 class="fw-bold mt-1 mb-0 text-primary">
+                <span class="text-muted small">
 
-                {{ total_req }}
+                    Requisições
 
-            </h3>
+                </span>
 
-            <small
-                class="text-muted"
-                style="font-size: 11px;"
-            >
 
-                Pendentes
+                <h3 class="fw-bold mt-1 mb-0 text-primary">
 
-            </small>
+                    {{ total_req or 0 }}
 
-        </div>
+                </h3>
+
+
+                <small
+                    class="text-muted"
+                    style="font-size: 11px;"
+                >
+
+                    Pendentes
+
+                </small>
+
+            </div>
+
+        </a>
 
     </div>
+
 
 
     <!-- INVENTÁRIO -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
-        <div class="card card-stat card-inv p-3">
+        <a
+            href="{{ url_for('modulo', nome='Inventário') }}"
+            class="card-link"
+        >
 
-            <span class="text-muted small">
-                Inventários
-            </span>
+            <div class="card card-stat card-inv p-3">
 
-            <h3 class="fw-bold mt-1 mb-0 text-warning">
+                <span class="text-muted small">
 
-                {{ inv_conc }}
+                    Inventários
 
-                <span class="text-muted fs-6">
-                    / {{ inv_total }}
                 </span>
 
-            </h3>
 
-            <small
-                class="text-muted"
-                style="font-size: 11px;"
-            >
+                <h3 class="fw-bold mt-1 mb-0 text-warning">
 
-                Concluídos
+                    {{ inv_conc or 0 }}
 
-            </small>
+                    <span class="text-muted fs-6">
 
-        </div>
+                        / {{ inv_total or 0 }}
+
+                    </span>
+
+                </h3>
+
+
+                <small
+                    class="text-muted"
+                    style="font-size: 11px;"
+                >
+
+                    Concluídos
+
+                </small>
+
+            </div>
+
+        </a>
 
     </div>
+
 
 
     <!-- EXPEDIÇÕES -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
-        <div class="card card-stat card-exp p-3">
+        <a
+            href="{{ url_for('modulo', nome='Expedição') }}"
+            class="card-link"
+        >
 
-            <span class="text-muted small">
-                Expedições
-            </span>
+            <div class="card card-stat card-exp p-3">
 
-            <h3 class="fw-bold mt-1 mb-0 text-success">
+                <span class="text-muted small">
 
-                {{ exp_pend }}
+                    Expedições
 
-            </h3>
+                </span>
 
-            <small
-                class="text-muted"
-                style="font-size: 11px;"
-            >
 
-                Em andamento
+                <h3 class="fw-bold mt-1 mb-0 text-success">
 
-            </small>
+                    {{ exp_pend or 0 }}
 
-        </div>
+                </h3>
+
+
+                <small
+                    class="text-muted"
+                    style="font-size: 11px;"
+                >
+
+                    Em andamento
+
+                </small>
+
+            </div>
+
+        </a>
 
     </div>
+
 
 
     <!-- RECEBIMENTOS -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
-        <div class="card card-stat card-rec p-3">
+        <a
+            href="{{ url_for('modulo', nome='Recebimento') }}"
+            class="card-link"
+        >
 
-            <span class="text-muted small">
-                Recebimentos
-            </span>
+            <div class="card card-stat card-rec p-3">
 
-            <h3 class="fw-bold mt-1 mb-0 text-info">
+                <span class="text-muted small">
 
-                {{ rec_pend }}
+                    Recebimentos
 
-            </h3>
+                </span>
 
-            <small
-                class="text-muted"
-                style="font-size: 11px;"
-            >
 
-                Aguardando
+                <h3 class="fw-bold mt-1 mb-0 text-info">
 
-            </small>
+                    {{ rec_pend or 0 }}
 
-        </div>
+                </h3>
+
+
+                <small
+                    class="text-muted"
+                    style="font-size: 11px;"
+                >
+
+                    Aguardando
+
+                </small>
+
+            </div>
+
+        </a>
 
     </div>
 
 
+
     <!-- OCORRÊNCIAS -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
         <div class="card card-stat card-oco p-3">
 
             <span class="text-muted small">
+
                 Ocorrências
+
             </span>
+
 
             <h3 class="fw-bold mt-1 mb-0 text-danger">
 
-                {{ total_oco }}
+                {{ total_oco or 0 }}
 
             </h3>
+
 
             <small
                 class="text-muted"
@@ -727,11 +818,10 @@
     </div>
 
 
-    <!-- ====================================================
-         ATRASADOS
-    ===================================================== -->
 
-    <div class="col-xl col-md-4 col-sm-6">
+    <!-- ATRASADOS -->
+
+    <div class="col-xl-2 col-lg-4 col-md-4 col-sm-6">
 
         <a
             href="{{ url_for('atrasados') }}"
@@ -745,14 +835,18 @@
                     <div>
 
                         <span class="text-muted small">
+
                             Atrasados
+
                         </span>
+
 
                         <h3 class="fw-bold mt-1 mb-0 text-danger">
 
-                            {{ total_atrasados }}
+                            {{ total_atrasados or 0 }}
 
                         </h3>
+
 
                         <small
                             class="text-muted"
@@ -765,11 +859,10 @@
 
                     </div>
 
-                    <div>
 
-                        <i class="fa-solid fa-clock-rotate-left text-danger fs-4"></i>
-
-                    </div>
+                    <i
+                        class="fa-solid fa-clock-rotate-left text-danger fs-5"
+                    ></i>
 
                 </div>
 
@@ -780,6 +873,7 @@
     </div>
 
 </div>
+
 
 
 <!-- ========================================================
@@ -825,9 +919,11 @@
                     action="{{ url_for('index') }}"
                 >
 
-                    <!-- REQUISIÇÃO -->
+
+                    <!-- REQUISIÇÃO / PRIORIDADE / CATEGORIA -->
 
                     <div class="row g-3 mb-3">
+
 
                         <div class="col-md-4">
 
@@ -840,18 +936,18 @@
 
                             </label>
 
+
                             <input
                                 type="text"
                                 id="num_requisicao"
                                 name="num_requisicao"
                                 class="form-control"
-                                placeholder="Ex.: 123456"
+                                placeholder="Ex.: YAC55"
+                                maxlength="100"
                             >
 
                         </div>
 
-
-                        <!-- PRIORIDADE -->
 
                         <div class="col-md-4">
 
@@ -864,6 +960,7 @@
 
                             </label>
 
+
                             <select
                                 id="prioridade"
                                 name="prioridade"
@@ -872,26 +969,32 @@
                             >
 
                                 <option value="Baixa">
+
                                     Baixa
+
                                 </option>
+
 
                                 <option
                                     value="Média"
                                     selected
                                 >
+
                                     Média
+
                                 </option>
 
+
                                 <option value="Alta">
+
                                     Alta
+
                                 </option>
 
                             </select>
 
                         </div>
 
-
-                        <!-- CATEGORIA -->
 
                         <div class="col-md-4">
 
@@ -904,6 +1007,7 @@
 
                             </label>
 
+
                             <select
                                 id="categoria"
                                 name="categoria"
@@ -912,19 +1016,30 @@
                             >
 
                                 <option value="Separação">
+
                                     Separação
+
                                 </option>
+
 
                                 <option value="Inventário">
+
                                     Inventário
+
                                 </option>
+
 
                                 <option value="Expedição">
+
                                     Expedição
+
                                 </option>
 
+
                                 <option value="Recebimento">
+
                                     Recebimento
+
                                 </option>
 
                             </select>
@@ -932,6 +1047,7 @@
                         </div>
 
                     </div>
+
 
 
                     <!-- ATIVIDADE -->
@@ -947,6 +1063,7 @@
 
                         </label>
 
+
                         <input
                             type="text"
                             id="atividade"
@@ -960,9 +1077,11 @@
                     </div>
 
 
+
                     <!-- RESPONSÁVEL + PRAZO -->
 
                     <div class="row g-3 mb-3">
+
 
                         <div class="col-md-6">
 
@@ -975,6 +1094,7 @@
 
                             </label>
 
+
                             <select
                                 id="responsavel"
                                 name="responsavel"
@@ -982,20 +1102,35 @@
                                 required
                             >
 
-                                {% for u in usuarios %}
+                                {% if usuarios %}
+
+                                    {% for u in usuarios %}
+
+                                        <option
+                                            value="{{ u.nome }}"
+                                            {% if u.nome == usuario_atual %}
+                                                selected
+                                            {% endif %}
+                                        >
+
+                                            {{ u.nome }}
+
+                                        </option>
+
+                                    {% endfor %}
+
+                                {% else %}
 
                                     <option
-                                        value="{{ u.nome }}"
-                                        {% if u.nome == usuario_atual %}
-                                            selected
-                                        {% endif %}
+                                        value="{{ usuario_atual }}"
+                                        selected
                                     >
 
-                                        {{ u.nome }}
+                                        {{ usuario_atual }}
 
                                     </option>
 
-                                {% endfor %}
+                                {% endif %}
 
                             </select>
 
@@ -1013,6 +1148,7 @@
 
                             </label>
 
+
                             <input
                                 type="date"
                                 id="prazo"
@@ -1024,6 +1160,7 @@
                         </div>
 
                     </div>
+
 
 
                     <!-- DESCRIÇÃO -->
@@ -1039,6 +1176,7 @@
 
                         </label>
 
+
                         <textarea
                             id="descricao"
                             name="descricao"
@@ -1049,6 +1187,7 @@
                         ></textarea>
 
                     </div>
+
 
 
                     <!-- BOTÃO -->
@@ -1073,6 +1212,7 @@
     </div>
 
 
+
     <!-- ====================================================
          INDICADORES
     ===================================================== -->
@@ -1091,6 +1231,7 @@
 
                 </h5>
 
+
                 <small class="text-muted">
 
                     Acompanhamento operacional
@@ -1107,12 +1248,15 @@
 
                         <div class="circle-badge">
 
-                            {{ perc_atendidas }}%
+                            {{ perc_atendidas or 0 }}%
 
                         </div>
 
+
                         <small class="text-muted">
+
                             Atendidas
+
                         </small>
 
                     </div>
@@ -1124,12 +1268,15 @@
 
                         <div class="circle-badge">
 
-                            {{ perc_inventario }}%
+                            {{ perc_inventario or 0 }}%
 
                         </div>
 
+
                         <small class="text-muted">
+
                             Inventário
+
                         </small>
 
                     </div>
@@ -1141,12 +1288,15 @@
 
                         <div class="circle-badge">
 
-                            {{ perc_expedicao }}%
+                            {{ perc_expedicao or 0 }}%
 
                         </div>
 
+
                         <small class="text-muted">
+
                             Expedição
+
                         </small>
 
                     </div>
@@ -1159,14 +1309,20 @@
 
                 <div class="small text-muted">
 
+
                     <div class="d-flex justify-content-between mb-2">
 
                         <span>
+
                             Atividades concluídas
+
                         </span>
 
+
                         <strong>
-                            {{ atividades_concluidas }}
+
+                            {{ atividades_concluidas or 0 }}
+
                         </strong>
 
                     </div>
@@ -1175,11 +1331,16 @@
                     <div class="d-flex justify-content-between">
 
                         <span>
+
                             Atividades pendentes
+
                         </span>
 
+
                         <strong>
-                            {{ total_atividades }}
+
+                            {{ total_atividades or 0 }}
+
                         </strong>
 
                     </div>
@@ -1193,6 +1354,7 @@
     </div>
 
 </div>
+
 
 
 <!-- ========================================================
@@ -1210,6 +1372,7 @@
 
             <div class="card-body p-4">
 
+
                 <div class="d-flex justify-content-between align-items-center mb-3">
 
                     <div>
@@ -1222,6 +1385,7 @@
 
                         </h5>
 
+
                         <small class="text-muted">
 
                             Atividades pendentes do Almoxarifado
@@ -1230,24 +1394,33 @@
 
                     </div>
 
+
                     <span class="badge bg-primary">
 
-                        {{ atividades|length }}
+                        {{ atividades|length if atividades else 0 }}
 
                     </span>
 
                 </div>
 
 
+
                 {% if atividades %}
+
 
                     {% for item in atividades %}
 
+
                         <div class="activity-item">
+
 
                             <div class="d-flex justify-content-between align-items-start">
 
+
                                 <div class="pe-3">
+
+
+                                    <!-- TÍTULO -->
 
                                     <div class="activity-title">
 
@@ -1255,6 +1428,9 @@
 
                                     </div>
 
+
+
+                                    <!-- DESCRIÇÃO -->
 
                                     {% if item.descricao %}
 
@@ -1267,7 +1443,11 @@
                                     {% endif %}
 
 
+
+                                    <!-- INFORMAÇÕES -->
+
                                     <div class="mt-2 small text-muted">
+
 
                                         {% if item.num_requisicao %}
 
@@ -1282,47 +1462,68 @@
                                         {% endif %}
 
 
-                                        <span class="me-3">
+                                        {% if item.responsavel %}
 
-                                            <i class="fa-solid fa-user me-1"></i>
+                                            <span class="me-3">
 
-                                            {{ item.responsavel }}
+                                                <i class="fa-solid fa-user me-1"></i>
 
-                                        </span>
+                                                {{ item.responsavel }}
+
+                                            </span>
+
+                                        {% endif %}
 
 
-                                        <span>
+                                        {% if item.categoria %}
 
-                                            <i class="fa-solid fa-layer-group me-1"></i>
+                                            <span>
 
-                                            {{ item.categoria }}
+                                                <i class="fa-solid fa-layer-group me-1"></i>
 
-                                        </span>
+                                                {{ item.categoria }}
+
+                                            </span>
+
+                                        {% endif %}
 
                                     </div>
 
 
+
+                                    <!-- PRIORIDADE -->
+
                                     <div class="mt-2">
 
-                                        {% if item.prioridade == 'Alta' %}
+
+                                        {% if item.prioridade == "Alta" %}
 
                                             <span class="badge bg-danger badge-prioridade">
+
                                                 Alta
+
                                             </span>
 
-                                        {% elif item.prioridade == 'Média' %}
+
+                                        {% elif item.prioridade == "Média" %}
 
                                             <span class="badge bg-warning text-dark badge-prioridade">
+
                                                 Média
+
                                             </span>
+
 
                                         {% else %}
 
                                             <span class="badge bg-secondary badge-prioridade">
+
                                                 Baixa
+
                                             </span>
 
                                         {% endif %}
+
 
 
                                         {% if item.prazo %}
@@ -1342,20 +1543,26 @@
                                 </div>
 
 
-                                <!-- CONCLUIR -->
+
+                                <!-- AÇÕES -->
 
                                 <div class="text-end">
 
-                                    <a
-                                        href="{{ url_for('concluir', id=item.id) }}"
-                                        class="btn btn-sm btn-outline-success"
-                                        title="Concluir atividade"
-                                        onclick="return confirmarConclusao();"
-                                    >
 
-                                        <i class="fa-solid fa-check"></i>
+                                    {% if item.id %}
 
-                                    </a>
+                                        <a
+                                            href="{{ url_for('concluir', id=item.id) }}"
+                                            class="btn btn-sm btn-outline-success"
+                                            title="Concluir atividade"
+                                            onclick="return confirmarConclusao();"
+                                        >
+
+                                            <i class="fa-solid fa-check"></i>
+
+                                        </a>
+
+                                    {% endif %}
 
                                 </div>
 
@@ -1363,20 +1570,27 @@
 
                         </div>
 
+
                     {% endfor %}
 
 
                 {% else %}
 
+
                     <div class="text-center py-5 text-muted">
 
-                        <i class="fa-solid fa-circle-check fa-3x mb-3 text-success"></i>
+
+                        <i
+                            class="fa-solid fa-circle-check fa-3x mb-3 text-success"
+                        ></i>
+
 
                         <h6 class="fw-bold">
 
                             Tudo em dia!
 
                         </h6>
+
 
                         <p class="small mb-0">
 
@@ -1386,6 +1600,7 @@
 
                     </div>
 
+
                 {% endif %}
 
             </div>
@@ -1393,6 +1608,7 @@
         </div>
 
     </div>
+
 
 
     <!-- =====================================================
@@ -1405,6 +1621,7 @@
 
             <div class="card-body p-4">
 
+
                 <h5 class="fw-bold mb-1">
 
                     <i class="fa-solid fa-comments text-primary me-2"></i>
@@ -1413,6 +1630,7 @@
 
                 </h5>
 
+
                 <small class="text-muted">
 
                     Comunicação rápida entre a equipe
@@ -1420,13 +1638,18 @@
                 </small>
 
 
+
                 <div class="chat-box mt-3 mb-3">
+
 
                     {% if chat %}
 
+
                         {% for msg in chat %}
 
+
                             <div class="chat-message">
+
 
                                 <div class="chat-user">
 
@@ -1436,11 +1659,13 @@
 
                                 </div>
 
+
                                 <div class="chat-text">
 
                                     {{ msg.mensagem }}
 
                                 </div>
+
 
                                 {% if msg.criado_em %}
 
@@ -1452,15 +1677,22 @@
 
                                 {% endif %}
 
+
                             </div>
+
 
                         {% endfor %}
 
+
                     {% else %}
+
 
                         <div class="text-center text-muted py-4">
 
-                            <i class="fa-regular fa-comments fa-2x mb-2"></i>
+                            <i
+                                class="fa-regular fa-comments fa-2x mb-2"
+                            ></i>
+
 
                             <div class="small">
 
@@ -1470,9 +1702,11 @@
 
                         </div>
 
+
                     {% endif %}
 
                 </div>
+
 
 
                 <!-- ENVIAR CHAT -->
@@ -1488,7 +1722,9 @@
                         value="enviar"
                     >
 
+
                     <div class="input-group">
+
 
                         <input
                             type="text"
@@ -1498,6 +1734,7 @@
                             maxlength="500"
                             required
                         >
+
 
                         <button
                             type="submit"
@@ -1520,7 +1757,6 @@
     </div>
 
 </div>
-```
 
 </div>
 
@@ -1529,6 +1765,10 @@
 ============================================================ -->
 
 <script>
+
+    /* =========================================================
+       CONFIRMAÇÃO DE CONCLUSÃO
+    ========================================================= */
 
     function confirmarConclusao() {
 
@@ -1539,10 +1779,9 @@
     }
 
 
-    /*
-     * Se a categoria for Separação, o número da requisição
-     * passa a ser obrigatório.
-     */
+    /* =========================================================
+       VALIDAÇÃO DA REQUISIÇÃO
+    ========================================================= */
 
     document.addEventListener(
         "DOMContentLoaded",
@@ -1574,7 +1813,7 @@
                     requisicao.required = false;
 
                     requisicao.placeholder =
-                        "Ex.: 123456";
+                        "Ex.: YAC55";
 
                 }
 
@@ -1596,6 +1835,8 @@
     );
 
 </script>
+
+<!-- Bootstrap JS -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">

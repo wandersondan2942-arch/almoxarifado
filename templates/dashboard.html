@@ -1,0 +1,953 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Início - Almoxarifado Valenet</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f7fa;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: #212529;
+            color: white;
+            padding-top: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar .logo {
+            text-align: center;
+            padding: 10px 15px 25px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #ddd;
+            text-decoration: none;
+            padding: 12px 20px;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #343a40;
+            color: white;
+        }
+
+        .sidebar i {
+            width: 25px;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding: 25px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-indicador {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            transition: 0.2s;
+        }
+
+        .card-indicador:hover {
+            transform: translateY(-2px);
+        }
+
+        .numero {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .secao {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            margin-top: 25px;
+        }
+
+        .atividade-item {
+            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+        }
+
+        .atividade-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge-prioridade {
+            font-size: 11px;
+        }
+
+        .chat-box {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .progress {
+            height: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+
+    <div class="logo">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        Almoxarifado
+    </div>
+
+    <a href="{{ url_for('index') }}" class="active">
+        <i class="fa-solid fa-house"></i>
+        Início
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Requisições') }}">
+        <i class="fa-solid fa-list-check"></i>
+        Requisições
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Inventário') }}">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        Inventário
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Expedição') }}">
+        <i class="fa-solid fa-truck-fast"></i>
+        Expedição
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Recebimento') }}">
+        <i class="fa-solid fa-truck-ramp-box"></i>
+        Recebimento
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Estoque') }}">
+        <i class="fa-solid fa-warehouse"></i>
+        Estoque
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        Melhorias / PDCA
+    </a>
+
+    <a href="{{ url_for('indicadores') }}">
+        <i class="fa-solid fa-chart-line"></i>
+        Indicadores
+    </a>
+
+    <a href="{{ url_for('relatorios') }}">
+        <i class="fa-solid fa-file-lines"></i>
+        Relatórios
+    </a>
+
+    <a href="{{ url_for('modulo', nome='Configurações') }}">
+        <i class="fa-solid fa-gear"></i>
+        Configurações
+    </a>
+
+    <hr>
+
+    <a href="{{ url_for('logout') }}">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Sair
+    </a>
+
+</div>
+
+
+<!-- CONTEÚDO -->
+<div class="main">
+
+    <!-- TOPO -->
+    <div class="topbar">
+
+        <div>
+            <h2>
+                <i class="fa-solid fa-house"></i>
+                Painel do Almoxarifado
+            </h2>
+
+            <small class="text-muted">
+                Bem-vindo, {{ usuario_atual or 'Usuário' }}
+            </small>
+        </div>
+
+        <div>
+            <span class="badge bg-success">
+                <i class="fa-solid fa-circle"></i>
+                Sistema online
+            </span>
+        </div>
+
+    </div>
+
+
+    <!-- BUSCA -->
+    <form method="GET" action="{{ url_for('index') }}" class="mb-4">
+
+        <div class="input-group">
+
+            <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="Pesquisar atividades ou requisições..."
+                value="{{ busca or '' }}"
+            >
+
+            <button class="btn btn-dark" type="submit">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                Pesquisar
+            </button>
+
+        </div>
+
+    </form>
+
+
+    <!-- CARDS -->
+    <div class="row g-3">
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Requisições
+                    </small>
+
+                    <div class="numero">
+                        {{ total_req|default(0) }}
+                    </div>
+
+                    <a href="{{ url_for('modulo', nome='Requisições') }}"
+                       class="small text-decoration-none">
+                        Ver requisições
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Inventários
+                    </small>
+
+                    <div class="numero">
+                        {{ inv_conc|default(0) }}/{{ inv_total|default(0) }}
+                    </div>
+
+                    <a href="{{ url_for('modulo', nome='Inventário') }}"
+                       class="small text-decoration-none">
+                        Ver inventário
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Expedições
+                    </small>
+
+                    <div class="numero">
+                        {{ exp_pend|default(0) }}
+                    </div>
+
+                    <a href="{{ url_for('modulo', nome='Expedição') }}"
+                       class="small text-decoration-none">
+                        Ver expedições
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Recebimentos
+                    </small>
+
+                    <div class="numero">
+                        {{ rec_pend|default(0) }}
+                    </div>
+
+                    <a href="{{ url_for('modulo', nome='Recebimento') }}"
+                       class="small text-decoration-none">
+                        Ver recebimentos
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-muted">
+                        Ocorrências
+                    </small>
+
+                    <div class="numero">
+                        {{ total_oco|default(0) }}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6 col-xl-2">
+            <div class="card card-indicador">
+                <div class="card-body">
+
+                    <small class="text-danger">
+                        Atrasados
+                    </small>
+
+                    <div class="numero text-danger">
+                        {{ total_atrasados|default(0) }}
+                    </div>
+
+                    <a href="{{ url_for('atrasados') }}"
+                       class="small text-danger text-decoration-none">
+                        Ver atrasados
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- SEGUNDA LINHA -->
+    <div class="row">
+
+        <!-- INDICADORES -->
+        <div class="col-lg-7">
+
+            <div class="secao">
+
+                <h5>
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Indicadores do Dia
+                </h5>
+
+                <hr>
+
+                <div class="mb-3">
+
+                    <div class="d-flex justify-content-between">
+                        <span>Atendidas</span>
+                        <strong>{{ perc_atendidas|default(0) }}%</strong>
+                    </div>
+
+                    <div class="progress">
+                        <div
+                            class="progress-bar bg-success"
+                            style="width: {{ perc_atendidas|default(0) }}%">
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <div class="d-flex justify-content-between">
+                        <span>Inventário</span>
+                        <strong>{{ perc_inventario|default(0) }}%</strong>
+                    </div>
+
+                    <div class="progress">
+                        <div
+                            class="progress-bar bg-info"
+                            style="width: {{ perc_inventario|default(0) }}%">
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="mb-3">
+
+                    <div class="d-flex justify-content-between">
+                        <span>Expedição</span>
+                        <strong>{{ perc_expedicao|default(0) }}%</strong>
+                    </div>
+
+                    <div class="progress">
+                        <div
+                            class="progress-bar bg-warning"
+                            style="width: {{ perc_expedicao|default(0) }}%">
+                        </div>
+                    </div>
+
+                </div>
+
+                <a href="{{ url_for('indicadores') }}"
+                   class="btn btn-outline-dark btn-sm">
+                    Ver indicadores completos
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- NOVA ATIVIDADE -->
+        <div class="col-lg-5">
+
+            <div class="secao">
+
+                <h5>
+                    <i class="fa-solid fa-plus"></i>
+                    Nova Atividade
+                </h5>
+
+                <hr>
+
+                <form method="POST" action="{{ url_for('index') }}">
+
+                    <div class="mb-2">
+
+                        <label class="form-label">
+                            Nº Requisição
+                        </label>
+
+                        <input
+                            type="text"
+                            name="num_requisicao"
+                            id="num_requisicao"
+                            class="form-control"
+                            placeholder="Ex.: YAC55"
+                        >
+
+                    </div>
+
+
+                    <div class="mb-2">
+
+                        <label class="form-label">
+                            Atividade
+                        </label>
+
+                        <input
+                            type="text"
+                            name="atividade"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-2">
+
+                            <label class="form-label">
+                                Categoria
+                            </label>
+
+                            <select
+                                name="categoria"
+                                id="categoria"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Separação">
+                                    Separação
+                                </option>
+
+                                <option value="Inventário">
+                                    Inventário
+                                </option>
+
+                                <option value="Expedição">
+                                    Expedição
+                                </option>
+
+                                <option value="Recebimento">
+                                    Recebimento
+                                </option>
+
+                                <option value="Logística Reversa">
+                                    Logística Reversa
+                                </option>
+
+                                <option value="Estoque">
+                                    Estoque
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-md-6 mb-2">
+
+                            <label class="form-label">
+                                Prioridade
+                            </label>
+
+                            <select
+                                name="prioridade"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="Baixa">
+                                    Baixa
+                                </option>
+
+                                <option value="Média">
+                                    Média
+                                </option>
+
+                                <option value="Alta">
+                                    Alta
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="mb-2">
+
+                        <label class="form-label">
+                            Responsável
+                        </label>
+
+                        <select
+                            name="responsavel"
+                            class="form-select"
+                            required
+                        >
+
+                            {% for usuario in usuarios %}
+
+                                <option value="{{ usuario.nome }}">
+                                    {{ usuario.nome }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="mb-2">
+
+                        <label class="form-label">
+                            Prazo
+                        </label>
+
+                        <input
+                            type="datetime-local"
+                            name="prazo"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label">
+                            Descrição
+                        </label>
+
+                        <textarea
+                            name="descricao"
+                            class="form-control"
+                            rows="2"
+                        ></textarea>
+
+                    </div>
+
+
+                    <button class="btn btn-dark w-100">
+
+                        <i class="fa-solid fa-plus"></i>
+                        Criar atividade
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ATIVIDADES -->
+    <div class="secao">
+
+        <div class="d-flex justify-content-between align-items-center">
+
+            <h5 class="mb-0">
+
+                <i class="fa-solid fa-list-check"></i>
+                Atividades
+
+            </h5>
+
+            <a href="{{ url_for('modulo', nome='Requisições') }}"
+               class="btn btn-sm btn-outline-dark">
+
+                Ver todas
+
+            </a>
+
+        </div>
+
+        <hr>
+
+
+        {% if atividades %}
+
+            {% for item in atividades %}
+
+                <div class="atividade-item">
+
+                    <div class="d-flex justify-content-between">
+
+                        <div>
+
+                            <strong>
+                                {{ item.atividade }}
+                            </strong>
+
+                            {% if item.num_requisicao %}
+
+                                <span class="badge bg-secondary ms-2">
+                                    {{ item.num_requisicao }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div>
+
+                            {% if item.status == 'Concluído' or item.status == 'Concluido' %}
+
+                                <span class="badge bg-success">
+                                    Concluído
+                                </span>
+
+                            {% elif item.status == 'Em andamento' %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Em andamento
+                                </span>
+
+                            {% elif item.status == 'Arquivado' or item.status == 'Arquivada' %}
+
+                                <span class="badge bg-secondary">
+                                    Arquivado
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-primary">
+                                    {{ item.status or 'Pendente' }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="small text-muted mt-1">
+
+                        <i class="fa-solid fa-user"></i>
+                        {{ item.responsavel or '-' }}
+
+                        &nbsp; | &nbsp;
+
+                        <i class="fa-solid fa-tag"></i>
+                        {{ item.categoria or '-' }}
+
+                        {% if item.prazo %}
+
+                            &nbsp; | &nbsp;
+
+                            <i class="fa-solid fa-calendar"></i>
+                            {{ item.prazo }}
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if item.descricao %}
+
+                        <div class="small mt-1">
+                            {{ item.descricao }}
+                        </div>
+
+                    {% endif %}
+
+
+                    {% if item.status != 'Concluído'
+                       and item.status != 'Concluido'
+                       and item.status != 'Arquivado'
+                       and item.status != 'Arquivada' %}
+
+                        <div class="mt-2">
+
+                            <a
+                                href="{{ url_for('editar', id=item.id) }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+
+                                <i class="fa-solid fa-pen"></i>
+                                Editar
+
+                            </a>
+
+
+                            <a
+                                href="{{ url_for('concluir', id=item.id) }}"
+                                class="btn btn-sm btn-outline-success"
+                            >
+
+                                <i class="fa-solid fa-check"></i>
+                                Concluir
+
+                            </a>
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="text-center text-muted py-4">
+
+                <i class="fa-solid fa-inbox fa-2x mb-2"></i>
+
+                <p class="mb-0">
+                    Nenhuma atividade encontrada.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- CHAT -->
+    <div class="secao">
+
+        <h5>
+            <i class="fa-solid fa-comments"></i>
+            Chat da Equipe
+        </h5>
+
+        <hr>
+
+        <div class="chat-box">
+
+            {% if chat %}
+
+                {% for mensagem in chat %}
+
+                    <div class="chat-item">
+
+                        <strong>
+                            {{ mensagem.usuario or 'Usuário' }}
+                        </strong>
+
+                        <small class="text-muted">
+                            {{ mensagem.criado_em or '' }}
+                        </small>
+
+                        <div>
+                            {{ mensagem.mensagem }}
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            {% else %}
+
+                <p class="text-muted">
+                    Nenhuma mensagem ainda.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+
+        <form
+            method="POST"
+            action="{{ url_for('index') }}"
+            class="mt-3"
+        >
+
+            <input
+                type="hidden"
+                name="acao_chat"
+                value="enviar"
+            >
+
+            <div class="input-group">
+
+                <input
+                    type="text"
+                    name="mensagem"
+                    class="form-control"
+                    placeholder="Digite uma mensagem..."
+                    required
+                >
+
+                <button class="btn btn-dark">
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const categoria = document.getElementById("categoria");
+    const requisicao = document.getElementById("num_requisicao");
+
+    function validarRequisicao() {
+
+        if (!categoria || !requisicao) {
+            return;
+        }
+
+        if (categoria.value === "Separação") {
+
+            requisicao.required = true;
+
+            requisicao.placeholder =
+                "Obrigatório para Separação — Ex.: YAC55";
+
+        } else {
+
+            requisicao.required = false;
+
+            requisicao.placeholder =
+                "Opcional";
+
+        }
+    }
+
+    if (categoria) {
+
+        categoria.addEventListener(
+            "change",
+            validarRequisicao
+        );
+
+        validarRequisicao();
+
+    }
+
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
+```

@@ -2625,10 +2625,9 @@ if __name__ == "__main__":
         port=port,
         debug=False,
     )
-'''
 
-path = Path("/mnt/data/app.py")
-path.write_text(code, encoding="utf-8")
 
-print(f"Arquivo criado: {path}")
-print(f"Linhas: {len(code.splitlines())}")
+
+
+
+pa

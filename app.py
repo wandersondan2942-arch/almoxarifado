@@ -231,6 +231,7 @@ def converter_para_brasil(valor):
             "%Y-%m-%d %H:%M:%S",
             "%Y-%m-%d %H:%M",
             "%Y-%m-%dT%H:%M",
+            "%Y-%m-%dT%H:%M:%S",
             "%d/%m/%Y %H:%M:%S",
             "%d/%m/%Y %H:%M",
         ]
@@ -369,6 +370,7 @@ def prazo_em_datetime(valor):
 
         formatos = [
             "%Y-%m-%dT%H:%M",
+            "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%d %H:%M:%S",
             "%Y-%m-%d %H:%M",
             "%d/%m/%Y %H:%M:%S",
@@ -416,26 +418,105 @@ def prazo_em_datetime(valor):
     )
 
 
-def prazo_atrasado(valor):
+def prazo_atrasado(valor, referencia=None):
 
     dt = prazo_em_datetime(valor)
 
     if not dt:
         return False
 
+    if referencia:
+
+        dt_referencia = prazo_em_datetime(
+            referencia
+        )
+
+        if dt_referencia:
+            return dt_referencia > dt
+
     return dt < agora_brasil()
 
 
-def texto_atraso(valor):
+def registro_foi_atrasado(atividade):
+
+    if not atividade:
+        return False
+
+    prazo = atividade.get("prazo")
+
+    if not prazo:
+        return False
+
+    status = (
+        atividade.get("status")
+        or ""
+    )
+
+    status_normalizado = (
+        str(status)
+        .strip()
+        .lower()
+    )
+
+    concluido_em = atividade.get(
+        "concluido_em"
+    )
+
+    # Se já foi concluído/arquivado,
+    # comparamos o prazo com a data de conclusão.
+    if status_normalizado in {
+        "concluído",
+        "concluido",
+        "arquivado",
+        "arquivada",
+    }:
+
+        if concluido_em:
+
+            prazo_dt = prazo_em_datetime(
+                prazo
+            )
+
+            conclusao_dt = prazo_em_datetime(
+                concluido_em
+            )
+
+            if prazo_dt and conclusao_dt:
+
+                return conclusao_dt > prazo_dt
+
+    # Se ainda está aberta,
+    # comparamos com o momento atual.
+    return prazo_atrasado(prazo)
+
+
+def texto_atraso(valor, referencia=None):
 
     dt = prazo_em_datetime(valor)
 
     if not dt:
         return ""
 
-    diferenca = (
-        agora_brasil() - dt
-    )
+    if referencia:
+
+        referencia_dt = prazo_em_datetime(
+            referencia
+        )
+
+        if referencia_dt:
+            diferenca = (
+                referencia_dt - dt
+            )
+        else:
+            diferenca = (
+                agora_brasil() - dt
+            )
+
+    else:
+
+        diferenca = (
+            agora_brasil() - dt
+        )
 
     minutos = int(
         diferenca.total_seconds()
@@ -513,9 +594,16 @@ def preparar_atividade(atividade):
         )
     )
 
+    atividade["foi_atrasada"] = (
+        registro_foi_atrasado(
+            atividade
+        )
+    )
+
     atividade["texto_atraso"] = (
         texto_atraso(
-            atividade.get("prazo")
+            atividade.get("prazo"),
+            atividade.get("concluido_em")
         )
     )
 
@@ -542,6 +630,11 @@ def preparar_atividade(atividade):
     atividade["responsavel"] = (
         atividade.get("responsavel")
         or ""
+    )
+
+    atividade["prioridade"] = (
+        atividade.get("prioridade")
+        or "Baixa"
     )
 
     return atividade
@@ -601,7 +694,9 @@ def requisicao_duplicada(
             WHERE UPPER(TRIM(num_requisicao)) = %s
               AND status NOT IN (
                   'Concluído',
-                  'Arquivado'
+                  'Concluido',
+                  'Arquivado',
+                  'Arquivada'
               )
               AND id <> %s
             LIMIT 1
@@ -621,7 +716,9 @@ def requisicao_duplicada(
             WHERE UPPER(TRIM(num_requisicao)) = %s
               AND status NOT IN (
                   'Concluído',
-                  'Arquivado'
+                  'Concluido',
+                  'Arquivado',
+                  'Arquivada'
               )
             LIMIT 1
             """,
@@ -757,27 +854,60 @@ def init_db():
                     """
                 )
 
+        # ----------------------------------------------------
+        # MIGRAÇÃO MELHORIAS
+        # ----------------------------------------------------
+
+        cursor.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = 'melhorias'
+            """
+        )
+
+        colunas_melhorias = {
+            linha["column_name"]
+            for linha in cursor.fetchall()
+        }
+
+        novas_colunas_melhorias = {
+            "etapa": "TEXT",
+            "autor": "TEXT",
+        }
+
+        for coluna, tipo in novas_colunas_melhorias.items():
+
+            if coluna not in colunas_melhorias:
+
+                cursor.execute(
+                    f"""
+                    ALTER TABLE melhorias
+                    ADD COLUMN {coluna} {tipo}
+                    """
+                )
+
         db.commit()
 
         # ----------------------------------------------------
         # ÍNDICE DE REQUISIÇÃO
+        #
+        # Não criamos mais um índice único global que possa
+        # travar dados antigos duplicados.
+        #
+        # A proteção contra duplicidade é feita pela função
+        # requisicao_duplicada().
         # ----------------------------------------------------
 
         try:
 
             cursor.execute(
                 """
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                idx_atividades_req_ativa
+                CREATE INDEX IF NOT EXISTS
+                idx_atividades_req_busca
                 ON atividades (
-                    UPPER(TRIM(num_requisicao))
+                    num_requisicao
                 )
-                WHERE num_requisicao IS NOT NULL
-                  AND TRIM(num_requisicao) <> ''
-                  AND status NOT IN (
-                      'Concluído',
-                      'Arquivado'
-                  )
                 """
             )
 
@@ -788,8 +918,7 @@ def init_db():
             db.rollback()
 
             print(
-                "AVISO: não foi possível criar "
-                "o índice de requisições:",
+                "AVISO: índice de requisição não criado:",
                 erro
             )
 
@@ -867,6 +996,10 @@ def init_db():
             """
         )
 
+        # ----------------------------------------------------
+        # MIGRAÇÃO ATIVIDADES
+        # ----------------------------------------------------
+
         cursor.execute(
             "PRAGMA table_info(atividades)"
         )
@@ -901,23 +1034,44 @@ def init_db():
                     """
                 )
 
+        # ----------------------------------------------------
+        # MIGRAÇÃO MELHORIAS
+        # ----------------------------------------------------
+
+        cursor.execute(
+            "PRAGMA table_info(melhorias)"
+        )
+
+        colunas_melhorias = {
+            linha["name"]
+            for linha in cursor.fetchall()
+        }
+
+        for coluna, tipo in {
+            "etapa": "TEXT",
+            "autor": "TEXT",
+        }.items():
+
+            if coluna not in colunas_melhorias:
+
+                cursor.execute(
+                    f"""
+                    ALTER TABLE melhorias
+                    ADD COLUMN {coluna} {tipo}
+                    """
+                )
+
         db.commit()
 
         try:
 
             cursor.execute(
                 """
-                CREATE UNIQUE INDEX IF NOT EXISTS
-                idx_atividades_req_ativa
+                CREATE INDEX IF NOT EXISTS
+                idx_atividades_req_busca
                 ON atividades (
-                    UPPER(TRIM(num_requisicao))
+                    num_requisicao
                 )
-                WHERE num_requisicao IS NOT NULL
-                  AND TRIM(num_requisicao) <> ''
-                  AND status NOT IN (
-                      'Concluído',
-                      'Arquivado'
-                  )
                 """
             )
 
@@ -1001,7 +1155,10 @@ def arquivar_atividades_expiradas():
         """
         UPDATE atividades
         SET status = 'Arquivado'
-        WHERE status = 'Concluído'
+        WHERE status IN (
+            'Concluído',
+            'Concluido'
+        )
           AND concluido_em IS NOT NULL
           AND concluido_em < %s
         """,
@@ -1158,8 +1315,6 @@ def cadastro_usuario():
             url_for("login")
         )
 
-    # IMPORTANTE:
-    # o arquivo correto é cadastro.html
     return render_template(
         "cadastro.html"
     )
@@ -1180,7 +1335,7 @@ def logout():
 
 
 # ============================================================
-# DASHBOARD
+# DASHBOARD / INÍCIO
 # ============================================================
 
 @app.route(
@@ -1325,8 +1480,10 @@ def index():
                 url_for("index")
             )
 
-        # Requisição só é obrigatória para Separação
-        if categoria == "Separação" and not num_requisicao:
+        if (
+            categoria == "Separação"
+            and not num_requisicao
+        ):
 
             flash(
                 "Informe o número da requisição para uma atividade de Separação.",
@@ -1453,7 +1610,9 @@ def index():
             FROM atividades
             WHERE status NOT IN (
                 'Concluído',
-                'Arquivado'
+                'Concluido',
+                'Arquivado',
+                'Arquivada'
             )
             ORDER BY
                 CASE prioridade
@@ -1522,7 +1681,10 @@ def index():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status <> 'Arquivado'
+        WHERE status NOT IN (
+            'Arquivado',
+            'Arquivada'
+        )
         """
     )
 
@@ -1539,7 +1701,10 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = 'Inventário'
-          AND status = 'Concluído'
+          AND status IN (
+              'Concluído',
+              'Concluido'
+          )
         """
     )
 
@@ -1556,7 +1721,10 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = 'Expedição'
-          AND status = 'Concluído'
+          AND status IN (
+              'Concluído',
+              'Concluido'
+          )
         """
     )
 
@@ -1567,7 +1735,9 @@ def index():
         WHERE categoria = 'Expedição'
           AND status NOT IN (
               'Concluído',
-              'Arquivado'
+              'Concluido',
+              'Arquivado',
+              'Arquivada'
           )
         """
     )
@@ -1579,7 +1749,9 @@ def index():
         WHERE categoria = 'Recebimento'
           AND status NOT IN (
               'Concluído',
-              'Arquivado'
+              'Concluido',
+              'Arquivado',
+              'Arquivada'
           )
         """
     )
@@ -1591,7 +1763,9 @@ def index():
         WHERE prioridade = 'Alta'
           AND status NOT IN (
               'Concluído',
-              'Arquivado'
+              'Concluido',
+              'Arquivado',
+              'Arquivada'
           )
         """
     )
@@ -1607,7 +1781,10 @@ def index():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status = 'Concluído'
+        WHERE status IN (
+            'Concluído',
+            'Concluido'
+        )
         """
     )
 
@@ -1615,42 +1792,45 @@ def index():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status = 'Arquivado'
+        WHERE status IN (
+            'Arquivado',
+            'Arquivada'
+        )
         """
     )
 
     # ========================================================
     # ATRASADOS
+    #
+    # Agora o atraso não é um módulo.
+    # Contamos registros atrasados que estão:
+    # - pendentes/em andamento; ou
+    # - concluídos/arquivados depois do prazo.
     # ========================================================
 
     cursor = executar(
         """
-        SELECT prazo
+        SELECT *
         FROM atividades
-        WHERE status NOT IN (
-            'Concluído',
-            'Arquivado'
-        )
-          AND prazo IS NOT NULL
+        WHERE prazo IS NOT NULL
         """
     )
 
-    prazos = cursor.fetchall()
+    registros_prazo = linhas_para_dict(
+        cursor.fetchall()
+    )
 
     fechar_cursor(cursor)
 
-    total_atrasados = 0
+    registros_prazo = preparar_lista_atividades(
+        registros_prazo
+    )
 
-    for linha in prazos:
-
-        if prazo_atrasado(
-            obter_valor(
-                linha,
-                "prazo"
-            )
-        ):
-
-            total_atrasados += 1
+    total_atrasados = sum(
+        1
+        for item in registros_prazo
+        if item.get("foi_atrasada")
+    )
 
     # ========================================================
     # PERCENTUAIS
@@ -1703,17 +1883,13 @@ def index():
         "dashboard.html",
         usuario_atual=usuario_atual,
         atividades=atividades,
-
-        # CORRIGIDO:
         chat=chat,
-
         usuarios=usuarios,
         busca=busca,
 
         total_req=total_req,
         total_atrasados=total_atrasados,
 
-        # nomes esperados pelo dashboard
         inv_conc=inv_conc,
         inv_total=inv_total,
 
@@ -1736,6 +1912,12 @@ def index():
 
 # ============================================================
 # ATRASADOS
+#
+# ROTA DE COMPATIBILIDADE
+#
+# Não existe mais módulo/página atrasados.html.
+# Se algum link antigo acessar /atrasados, ele será enviado
+# para Relatórios já filtrado.
 # ============================================================
 
 @app.route("/atrasados")
@@ -1747,37 +1929,11 @@ def atrasados():
             url_for("login")
         )
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE status NOT IN (
-            'Concluído',
-            'Arquivado'
+    return redirect(
+        url_for(
+            "relatorios",
+            filtro="atrasados"
         )
-          AND prazo IS NOT NULL
-        ORDER BY id DESC
-        """
-    )
-
-    atividades = preparar_lista_atividades(
-        cursor.fetchall()
-    )
-
-    fechar_cursor(cursor)
-
-    atividades = [
-        item
-        for item in atividades
-        if item.get("prazo_atrasado")
-    ]
-
-    return render_template(
-        "atrasados.html",
-        atividades=atividades,
-        usuario_atual=session[
-            "usuario_atual"
-        ]
     )
 
 
@@ -1798,7 +1954,10 @@ def indicadores():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status <> 'Arquivado'
+        WHERE status NOT IN (
+            'Arquivado',
+            'Arquivada'
+        )
         """
     )
 
@@ -1806,7 +1965,10 @@ def indicadores():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status = 'Concluído'
+        WHERE status IN (
+            'Concluído',
+            'Concluido'
+        )
         """
     )
 
@@ -1816,7 +1978,9 @@ def indicadores():
         FROM atividades
         WHERE status NOT IN (
             'Concluído',
-            'Arquivado'
+            'Concluido',
+            'Arquivado',
+            'Arquivada'
         )
         """
     )
@@ -1834,7 +1998,10 @@ def indicadores():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = 'Inventário'
-          AND status = 'Concluído'
+          AND status IN (
+              'Concluído',
+              'Concluido'
+          )
         """
     )
 
@@ -1851,7 +2018,10 @@ def indicadores():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = 'Expedição'
-          AND status = 'Concluído'
+          AND status IN (
+              'Concluído',
+              'Concluido'
+          )
         """
     )
 
@@ -1895,6 +2065,17 @@ def indicadores():
 
 # ============================================================
 # RELATÓRIOS
+#
+# Aqui ficam os registros históricos.
+# Não existe módulo "Atividades".
+#
+# Filtros:
+# - todos
+# - pendentes
+# - andamento
+# - concluidos
+# - arquivados
+# - atrasados
 # ============================================================
 
 @app.route("/relatorios")
@@ -1905,6 +2086,27 @@ def relatorios():
         return redirect(
             url_for("login")
         )
+
+    filtro = (
+        request.args.get(
+            "filtro",
+            "todos"
+        )
+        .strip()
+        .lower()
+    )
+
+    filtros_validos = {
+        "todos",
+        "pendentes",
+        "andamento",
+        "concluidos",
+        "arquivados",
+        "atrasados",
+    }
+
+    if filtro not in filtros_validos:
+        filtro = "todos"
 
     cursor = executar(
         """
@@ -1920,12 +2122,81 @@ def relatorios():
 
     fechar_cursor(cursor)
 
+    # --------------------------------------------------------
+    # FILTROS
+    # --------------------------------------------------------
+
+    if filtro == "pendentes":
+
+        itens = [
+            item
+            for item in itens
+            if str(
+                item.get("status", "")
+            ).lower()
+            in {
+                "pendente"
+            }
+        ]
+
+    elif filtro == "andamento":
+
+        itens = [
+            item
+            for item in itens
+            if str(
+                item.get("status", "")
+            ).lower()
+            in {
+                "em andamento"
+            }
+        ]
+
+    elif filtro == "concluidos":
+
+        itens = [
+            item
+            for item in itens
+            if str(
+                item.get("status", "")
+            ).lower()
+            in {
+                "concluído",
+                "concluido"
+            }
+        ]
+
+    elif filtro == "arquivados":
+
+        itens = [
+            item
+            for item in itens
+            if str(
+                item.get("status", "")
+            ).lower()
+            in {
+                "arquivado",
+                "arquivada"
+            }
+        ]
+
+    elif filtro == "atrasados":
+
+        # Aqui entram também os atrasados que já foram
+        # concluídos e arquivados.
+        itens = [
+            item
+            for item in itens
+            if item.get("foi_atrasada")
+        ]
+
     return render_template(
         "relatorios.html",
         usuario_atual=session[
             "usuario_atual"
         ],
-        itens=itens
+        itens=itens,
+        filtro=filtro
     )
 
 
@@ -1943,11 +2214,28 @@ def modulo(nome):
         )
 
     nome_original = nome.strip()
-    nome_normalizado = nome_original.lower()
+
+    nome_normalizado = (
+        nome_original
+        .lower()
+        .strip()
+    )
 
     mapa = {
 
+        "inicio":
+            "Início",
+
+        "início":
+            "Início",
+
+        "dashboard":
+            "Início",
+
         "configuracoes":
+            "Configurações",
+
+        "configurações":
             "Configurações",
 
         "indicadores":
@@ -1959,10 +2247,16 @@ def modulo(nome):
         "melhorias / pdca":
             "Melhorias / PDCA",
 
+        "melhorias/pdca":
+            "Melhorias / PDCA",
+
         "pdca":
             "Melhorias / PDCA",
 
         "relatorios":
+            "Relatórios",
+
+        "relatórios":
             "Relatórios",
 
         "cadastros":
@@ -1974,20 +2268,45 @@ def modulo(nome):
         "requisicoes":
             "Requisições",
 
+        "requisições":
+            "Requisições",
+
         "inventario":
+            "Inventário",
+
+        "inventário":
             "Inventário",
 
         "expedicao":
             "Expedição",
 
+        "expedição":
+            "Expedição",
+
         "recebimento":
             "Recebimento",
+
+        "logistica reversa":
+            "Logística Reversa",
+
+        "logística reversa":
+            "Logística Reversa",
     }
 
     titulo = mapa.get(
         nome_normalizado,
         nome_original.title()
     )
+
+    # --------------------------------------------------------
+    # INÍCIO
+    # --------------------------------------------------------
+
+    if titulo == "Início":
+
+        return redirect(
+            url_for("index")
+        )
 
     # --------------------------------------------------------
     # CONFIGURAÇÕES
@@ -2201,7 +2520,9 @@ def relatorio_pdf():
             "Responsável",
             "Prioridade",
             "Status",
-            "Prazo"
+            "Prazo",
+            "Conclusão",
+            "Atrasada"
         ]
     ]
 
@@ -2209,14 +2530,76 @@ def relatorio_pdf():
 
         dados.append(
             [
-                str(item.get("id", "")),
-                str(item.get("num_requisicao", "")),
-                str(item.get("atividade", "")),
-                str(item.get("categoria", "")),
-                str(item.get("responsavel", "")),
-                str(item.get("prioridade", "")),
-                str(item.get("status", "")),
-                str(item.get("prazo_formatado", ""))
+                str(
+                    item.get(
+                        "id",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "num_requisicao",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "atividade",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "categoria",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "responsavel",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "prioridade",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "status",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "prazo_formatado",
+                        ""
+                    )
+                ),
+
+                str(
+                    item.get(
+                        "concluido_formatado",
+                        ""
+                    )
+                ),
+
+                (
+                    "SIM"
+                    if item.get(
+                        "foi_atrasada"
+                    )
+                    else "NÃO"
+                )
             ]
         )
 
@@ -2402,7 +2785,9 @@ def editar(id):
             "Pendente",
             "Em andamento",
             "Concluído",
-            "Arquivado"
+            "Concluido",
+            "Arquivado",
+            "Arquivada"
         }
 
         if prioridade not in prioridades_validas:
@@ -2414,7 +2799,10 @@ def editar(id):
         if status not in status_validos:
             status = "Pendente"
 
-        if categoria == "Separação" and not num_requisicao:
+        if (
+            categoria == "Separação"
+            and not num_requisicao
+        ):
 
             flash(
                 "Informe o número da requisição para Separação.",
@@ -2627,7 +3015,9 @@ def concluir(id):
                   AND categoria = 'Expedição'
                   AND status NOT IN (
                       'Concluído',
-                      'Arquivado'
+                      'Concluido',
+                      'Arquivado',
+                      'Arquivada'
                   )
                 LIMIT 1
                 """,
@@ -2801,9 +3191,12 @@ def deletar_melhoria(id):
             url_for("login")
         )
 
+    # Mantemos a rota antiga para não quebrar o template,
+    # mas agora arquivamos em vez de apagar.
     executar(
         """
-        DELETE FROM melhorias
+        UPDATE melhorias
+        SET status = 'Arquivado'
         WHERE id = %s
         """,
         (id,),
@@ -2811,7 +3204,7 @@ def deletar_melhoria(id):
     )
 
     flash(
-        "Melhoria removida.",
+        "Melhoria arquivada com sucesso.",
         "success"
     )
 

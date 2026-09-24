@@ -1,211 +1,252 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Login - Almoxarifado Valenet</title>
+<title>Login - Almoxarifado Valenet</title>
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    >
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
+    * {
+        box-sizing: border-box;
+    }
 
-        body {
-            background: linear-gradient(135deg, #1a202c, #2d3748);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 20px;
-        }
+    body {
+        background: linear-gradient(135deg, #1a202c, #2d3748);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', sans-serif;
+        padding: 20px;
+    }
 
-        .login-card {
-            width: 100%;
-            max-width: 420px;
-            padding: 35px;
-            border-radius: 18px;
-            background: #ffffff;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
-        }
+    .login-card {
+        width: 100%;
+        max-width: 420px;
+        padding: 35px;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+    }
 
-        .logo-box {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 15px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f0f4ff;
-        }
+    .logo-box {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 15px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f4ff;
+    }
 
-        .logo-box i {
-            font-size: 42px;
-        }
+    .logo-box i {
+        font-size: 42px;
+    }
 
-        .system-title {
-            font-weight: 700;
-            color: #1a202c;
-        }
+    .system-title {
+        font-weight: 700;
+        color: #1a202c;
+    }
 
-        .system-subtitle {
-            color: #718096;
-            font-size: 0.9rem;
-        }
+    .system-subtitle {
+        color: #718096;
+        font-size: 0.9rem;
+    }
 
-        .form-label {
-            color: #2d3748;
-        }
+    .form-label {
+        color: #2d3748;
+    }
 
-        .form-control {
-            border-radius: 10px;
-            padding: 11px 13px;
-        }
+    .form-control {
+        border-radius: 10px;
+        padding: 11px 13px;
+    }
 
-        .form-control:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-        }
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
 
-        .btn-login {
-            border-radius: 10px;
-            padding: 11px;
-            font-weight: 600;
-        }
+    .btn-login {
+        border-radius: 10px;
+        padding: 11px;
+        font-weight: 600;
+    }
 
-        .register-link {
-            color: #0d6efd;
-            font-weight: 600;
-        }
+    .register-link {
+        color: #0d6efd;
+        font-weight: 600;
+    }
 
-        .register-link:hover {
-            text-decoration: underline !important;
-        }
+    .register-link:hover {
+        text-decoration: underline !important;
+    }
 
-        .footer-text {
-            font-size: 0.75rem;
-            color: #a0aec0;
-            margin-top: 20px;
-        }
-    </style>
+    .footer-text {
+        font-size: 0.75rem;
+        color: #a0aec0;
+        margin-top: 20px;
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 45px;
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: #718096;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .toggle-password:hover {
+        color: #0d6efd;
+    }
+</style>
+
+
 </head>
 
 <body>
 
 <div class="login-card">
 
-    <!-- LOGO / CABEÇALHO -->
-    <div class="text-center mb-4">
 
-        <div class="logo-box">
-            <i class="fa-solid fa-boxes-stacked text-primary"></i>
-        </div>
+<!-- CABEÇALHO -->
+<div class="text-center mb-4">
 
-        <h4 class="system-title mb-1">
-            Almoxarifado Valenet
-        </h4>
-
-        <div class="system-subtitle">
-            Acesse o painel operacional
-        </div>
-
+    <div class="logo-box">
+        <i class="fa-solid fa-boxes-stacked text-primary"></i>
     </div>
 
+    <h4 class="system-title mb-1">
+        Almoxarifado Valenet
+    </h4>
 
-    <!-- MENSAGEM DE ERRO -->
-    {% if erro %}
-    <div
-        class="alert alert-danger py-2 small"
-        role="alert"
-    >
-        <i class="fa-solid fa-circle-exclamation me-1"></i>
-        {{ erro }}
+    <div class="system-subtitle">
+        Acesse o painel operacional
     </div>
+
+</div>
+
+
+<!-- ERRO -->
+{% if erro %}
+<div
+    class="alert alert-danger py-2 small"
+    role="alert"
+>
+    <i class="fa-solid fa-circle-exclamation me-1"></i>
+    {{ erro }}
+</div>
+{% endif %}
+
+
+<!-- MENSAGENS FLASH -->
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+
+    {% if mensagens %}
+
+        {% for categoria, mensagem in mensagens %}
+
+            <div
+                class="alert alert-{{ categoria }} py-2 small"
+                role="alert"
+            >
+
+                {% if categoria == 'success' %}
+                    <i class="fa-solid fa-circle-check me-1"></i>
+
+                {% elif categoria == 'danger' %}
+                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+
+                {% elif categoria == 'warning' %}
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+
+                {% else %}
+                    <i class="fa-solid fa-circle-info me-1"></i>
+                {% endif %}
+
+                {{ mensagem }}
+
+            </div>
+
+        {% endfor %}
+
     {% endif %}
 
-
-    <!-- MENSAGENS FLASH -->
-    {% with mensagens = get_flashed_messages(with_categories=true) %}
-
-        {% if mensagens %}
-
-            {% for categoria, mensagem in mensagens %}
-
-                <div
-                    class="alert alert-{{ categoria }} py-2 small"
-                    role="alert"
-                >
-                    {% if categoria == 'success' %}
-                        <i class="fa-solid fa-circle-check me-1"></i>
-                    {% elif categoria == 'danger' %}
-                        <i class="fa-solid fa-circle-exclamation me-1"></i>
-                    {% elif categoria == 'warning' %}
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i>
-                    {% else %}
-                        <i class="fa-solid fa-circle-info me-1"></i>
-                    {% endif %}
-
-                    {{ mensagem }}
-                </div>
-
-            {% endfor %}
-
-        {% endif %}
-
-    {% endwith %}
+{% endwith %}
 
 
-    <!-- FORMULÁRIO -->
-    <form method="POST" autocomplete="on">
+<!-- FORMULÁRIO DE LOGIN -->
 
-        <!-- USUÁRIO -->
-        <div class="mb-3">
+<form method="POST" action="{{ url_for('login') }}" autocomplete="on">
 
-            <label
-                for="nome"
-                class="form-label small fw-bold"
-            >
-                <i class="fa-solid fa-user me-1"></i>
-                Nome de Usuário
-            </label>
+    <!-- USUÁRIO -->
+    <div class="mb-3">
 
-            <input
-                type="text"
-                id="nome"
-                name="nome"
-                class="form-control"
-                required
-                minlength="2"
-                autocomplete="username"
-                placeholder="Ex: Wanderson"
-                autofocus
-            >
+        <label
+            for="usuario"
+            class="form-label small fw-bold"
+        >
+            <i class="fa-solid fa-user me-1"></i>
+            Nome de Usuário
+        </label>
 
-        </div>
+        <!-- IMPORTANTE:
+             name="usuario" deve ser igual ao request.form.get("usuario")
+             usado no app.py -->
+
+        <input
+            type="text"
+            id="usuario"
+            name="usuario"
+            class="form-control"
+            required
+            minlength="2"
+            autocomplete="username"
+            placeholder="Ex: Wanderson Fernandes"
+            value="{{ request.form.get('usuario', '') }}"
+            autofocus
+        >
+
+    </div>
 
 
-        <!-- SENHA -->
-        <div class="mb-3">
+    <!-- SENHA -->
+    <div class="mb-3">
 
-            <label
-                for="senha"
-                class="form-label small fw-bold"
-            >
-                <i class="fa-solid fa-lock me-1"></i>
-                Senha
-            </label>
+        <label
+            for="senha"
+            class="form-label small fw-bold"
+        >
+            <i class="fa-solid fa-lock me-1"></i>
+            Senha
+        </label>
+
+        <div class="password-wrapper">
 
             <input
                 type="password"
@@ -218,47 +259,85 @@
                 placeholder="Digite sua senha"
             >
 
-        </div>
-
-
-        <!-- BOTÃO ENTRAR -->
-        <button
-            type="submit"
-            class="btn btn-primary btn-login w-100 mb-3"
-        >
-            <i class="fa-solid fa-right-to-bracket me-1"></i>
-            Entrar
-        </button>
-
-
-        <!-- CADASTRO -->
-        <div class="text-center">
-
-            <span class="small text-muted">
-                Ainda não possui uma conta?
-            </span>
-
-            <br>
-
-            <a
-                href="{{ url_for('cadastro_usuario') }}"
-                class="small text-decoration-none register-link"
+            <button
+                type="button"
+                class="toggle-password"
+                onclick="alternarSenha()"
+                aria-label="Mostrar ou ocultar senha"
             >
-                Cadastre-se
-            </a>
+                <i
+                    id="iconeSenha"
+                    class="fa-solid fa-eye"
+                ></i>
+            </button>
 
         </div>
 
-    </form>
-
-
-    <!-- RODAPÉ -->
-    <div class="text-center footer-text">
-        Almoxarifado Valenet
     </div>
+
+
+    <!-- BOTÃO ENTRAR -->
+    <button
+        type="submit"
+        class="btn btn-primary btn-login w-100 mb-3"
+    >
+        <i class="fa-solid fa-right-to-bracket me-1"></i>
+        Entrar
+    </button>
+
+
+    <!-- CADASTRO -->
+    <div class="text-center">
+
+        <span class="small text-muted">
+            Ainda não possui uma conta?
+        </span>
+
+        <br>
+
+        <a
+            href="{{ url_for('cadastro_usuario') }}"
+            class="small text-decoration-none register-link"
+        >
+            Cadastre-se
+        </a>
+
+    </div>
+
+</form>
+
+
+<!-- RODAPÉ -->
+<div class="text-center footer-text">
+    Almoxarifado Valenet
+</div>
+
 
 </div>
 
+<script>
+    function alternarSenha() {
+
+        const campo = document.getElementById("senha");
+        const icone = document.getElementById("iconeSenha");
+
+        if (campo.type === "password") {
+
+            campo.type = "text";
+
+            icone.classList.remove("fa-eye");
+            icone.classList.add("fa-eye-slash");
+
+        } else {
+
+            campo.type = "password";
+
+            icone.classList.remove("fa-eye-slash");
+            icone.classList.add("fa-eye");
+
+        }
+    }
+</script>
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">

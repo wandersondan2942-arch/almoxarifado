@@ -114,6 +114,7 @@ def executar(sql, parametros=(), commit=False):
         cursor.close()
 
         if commit:
+
             try:
                 db.rollback()
             except Exception:
@@ -155,10 +156,7 @@ def obter_valor(linha, campo, padrao=None):
         return padrao
 
     if isinstance(linha, dict):
-        return linha.get(
-            campo,
-            padrao
-        )
+        return linha.get(campo, padrao)
 
     try:
         return linha[campo]
@@ -473,7 +471,7 @@ def texto_atraso(valor):
 
 
 # ============================================================
-# PREPARAÇÃO
+# PREPARAÇÃO DOS DADOS
 # ============================================================
 
 def preparar_atividade(atividade):
@@ -531,6 +529,21 @@ def preparar_atividade(atividade):
         or ""
     )
 
+    atividade["status"] = (
+        atividade.get("status")
+        or "Pendente"
+    )
+
+    atividade["categoria"] = (
+        atividade.get("categoria")
+        or ""
+    )
+
+    atividade["responsavel"] = (
+        atividade.get("responsavel")
+        or ""
+    )
+
     return atividade
 
 
@@ -564,7 +577,7 @@ def preparar_chat(lista):
 
 
 # ============================================================
-# VERIFICA REQUISIÇÃO DUPLICADA
+# REQUISIÇÃO DUPLICADA
 # ============================================================
 
 def requisicao_duplicada(
@@ -703,7 +716,7 @@ def init_db():
         )
 
         # ----------------------------------------------------
-        # MIGRAÇÃO DE ATIVIDADES
+        # MIGRAÇÃO ATIVIDADES
         # ----------------------------------------------------
 
         cursor.execute(
@@ -747,12 +760,8 @@ def init_db():
         db.commit()
 
         # ----------------------------------------------------
-        # ÍNDICE
+        # ÍNDICE DE REQUISIÇÃO
         # ----------------------------------------------------
-        #
-        # Se o banco já possuir registros conflitantes,
-        # não deixamos o índice derrubar o aplicativo.
-        #
 
         try:
 
@@ -857,10 +866,6 @@ def init_db():
             )
             """
         )
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO SQLITE
-        # ----------------------------------------------------
 
         cursor.execute(
             "PRAGMA table_info(atividades)"
@@ -978,10 +983,8 @@ def arquivar_atividades_expiradas():
 
     if usando_postgresql():
 
-        limite_valor = (
-            limite.replace(
-                tzinfo=None
-            )
+        limite_valor = limite.replace(
+            tzinfo=None
         )
 
     else:
@@ -1155,8 +1158,10 @@ def cadastro_usuario():
             url_for("login")
         )
 
+    # IMPORTANTE:
+    # o arquivo correto é cadastro.html
     return render_template(
-        "cadastro_usuario.html"
+        "cadastro.html"
     )
 
 
@@ -1206,10 +1211,14 @@ def index():
     )
 
     # ========================================================
-    # CHAT
+    # POST
     # ========================================================
 
     if request.method == "POST":
+
+        # ----------------------------------------------------
+        # CHAT
+        # ----------------------------------------------------
 
         acao_chat = request.form.get(
             "acao_chat"
@@ -1243,9 +1252,9 @@ def index():
                 url_for("index")
             )
 
-        # ====================================================
+        # ----------------------------------------------------
         # NOVA ATIVIDADE
-        # ====================================================
+        # ----------------------------------------------------
 
         atividade = request.form.get(
             "atividade",
@@ -1277,12 +1286,10 @@ def index():
             ""
         ).strip()
 
-        num_requisicao = (
-            normalizar_requisicao(
-                request.form.get(
-                    "num_requisicao",
-                    ""
-                )
+        num_requisicao = normalizar_requisicao(
+            request.form.get(
+                "num_requisicao",
+                ""
             )
         )
 
@@ -1291,6 +1298,8 @@ def index():
             "Inventário",
             "Expedição",
             "Recebimento",
+            "Logística Reversa",
+            "Estoque",
         }
 
         prioridades_validas = {
@@ -1300,17 +1309,27 @@ def index():
         }
 
         if categoria not in categorias_validas:
-
             categoria = "Separação"
 
         if prioridade not in prioridades_validas:
-
             prioridade = "Baixa"
 
         if not atividade:
 
             flash(
                 "Informe a atividade.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("index")
+            )
+
+        # Requisição só é obrigatória para Separação
+        if categoria == "Separação" and not num_requisicao:
+
+            flash(
+                "Informe o número da requisição para uma atividade de Separação.",
                 "warning"
             )
 
@@ -1325,9 +1344,7 @@ def index():
             ):
 
                 flash(
-                    f"A requisição "
-                    f"{num_requisicao} já possui "
-                    "uma atividade ativa.",
+                    f"A requisição {num_requisicao} já possui uma atividade ativa.",
                     "warning"
                 )
 
@@ -1341,15 +1358,11 @@ def index():
 
             if usando_postgresql():
 
-                inicio_em = (
-                    agora_utc_naive()
-                )
+                inicio_em = agora_utc_naive()
 
             else:
 
-                inicio_em = (
-                    agora_sqlite()
-                )
+                inicio_em = agora_sqlite()
 
         executar(
             """
@@ -1452,18 +1465,14 @@ def index():
             """
         )
 
-    atividades = (
-        linhas_para_dict(
-            cursor.fetchall()
-        )
+    atividades = linhas_para_dict(
+        cursor.fetchall()
     )
 
     fechar_cursor(cursor)
 
-    atividades = (
-        preparar_lista_atividades(
-            atividades
-        )
+    atividades = preparar_lista_atividades(
+        atividades
     )
 
     # ========================================================
@@ -1479,13 +1488,13 @@ def index():
         """
     )
 
-    chats = preparar_chat(
+    chat = preparar_chat(
         cursor.fetchall()
     )
 
     fechar_cursor(cursor)
 
-    chats.reverse()
+    chat.reverse()
 
     # ========================================================
     # USUÁRIOS
@@ -1499,10 +1508,8 @@ def index():
         """
     )
 
-    usuarios = (
-        linhas_para_dict(
-            cursor.fetchall()
-        )
+    usuarios = linhas_para_dict(
+        cursor.fetchall()
     )
 
     fechar_cursor(cursor)
@@ -1519,7 +1526,7 @@ def index():
         """
     )
 
-    inv_total_indicador = contar(
+    inv_total = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
@@ -1527,7 +1534,7 @@ def index():
         """
     )
 
-    inv_concluido = contar(
+    inv_conc = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
@@ -1662,12 +1669,12 @@ def index():
 
         perc_atendidas = 0
 
-    if inv_total_indicador > 0:
+    if inv_total > 0:
 
         perc_inventario = round(
             (
-                inv_concluido
-                / inv_total_indicador
+                inv_conc
+                / inv_total
             ) * 100
         )
 
@@ -1688,25 +1695,39 @@ def index():
 
         perc_expedicao = 0
 
+    # ========================================================
+    # DASHBOARD
+    # ========================================================
+
     return render_template(
         "dashboard.html",
         usuario_atual=usuario_atual,
         atividades=atividades,
-        chats=chats,
+
+        # CORRIGIDO:
+        chat=chat,
+
         usuarios=usuarios,
         busca=busca,
+
         total_req=total_req,
         total_atrasados=total_atrasados,
-        inv_concluido=inv_concluido,
-        inv_total_indicador=inv_total_indicador,
+
+        # nomes esperados pelo dashboard
+        inv_conc=inv_conc,
+        inv_total=inv_total,
+
         exp_pend=exp_pend,
         exp_concluido=exp_concluido,
         exp_total=exp_total,
+
         rec_pend=rec_pend,
         total_oco=total_oco,
+
         total_atividades=total_atividades,
         atividades_concluidas=atividades_concluidas,
         atividades_arquivadas=atividades_arquivadas,
+
         perc_atendidas=perc_atendidas,
         perc_inventario=perc_inventario,
         perc_expedicao=perc_expedicao
@@ -1739,10 +1760,8 @@ def atrasados():
         """
     )
 
-    atividades = (
-        preparar_lista_atividades(
-            cursor.fetchall()
-        )
+    atividades = preparar_lista_atividades(
+        cursor.fetchall()
     )
 
     fechar_cursor(cursor)
@@ -1750,9 +1769,7 @@ def atrasados():
     atividades = [
         item
         for item in atividades
-        if item.get(
-            "prazo_atrasado"
-        )
+        if item.get("prazo_atrasado")
     ]
 
     return render_template(
@@ -1761,6 +1778,154 @@ def atrasados():
         usuario_atual=session[
             "usuario_atual"
         ]
+    )
+
+
+# ============================================================
+# INDICADORES
+# ============================================================
+
+@app.route("/indicadores")
+def indicadores():
+
+    if "usuario_atual" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    total_geral = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE status <> 'Arquivado'
+        """
+    )
+
+    concluidas = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE status = 'Concluído'
+        """
+    )
+
+    pendentes = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE status NOT IN (
+            'Concluído',
+            'Arquivado'
+        )
+        """
+    )
+
+    inv_total = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = 'Inventário'
+        """
+    )
+
+    inv_concluido = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = 'Inventário'
+          AND status = 'Concluído'
+        """
+    )
+
+    exp_total = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = 'Expedição'
+        """
+    )
+
+    exp_concluido = contar(
+        """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = 'Expedição'
+          AND status = 'Concluído'
+        """
+    )
+
+    perc_atendidas = (
+        round(
+            concluidas / total_geral * 100
+        )
+        if total_geral > 0
+        else 0
+    )
+
+    perc_inventario = (
+        round(
+            inv_concluido / inv_total * 100
+        )
+        if inv_total > 0
+        else 0
+    )
+
+    perc_expedicao = (
+        round(
+            exp_concluido / exp_total * 100
+        )
+        if exp_total > 0
+        else 0
+    )
+
+    return render_template(
+        "indicadores.html",
+        usuario_atual=session[
+            "usuario_atual"
+        ],
+        total_geral=total_geral,
+        concluidas=concluidas,
+        pendentes=pendentes,
+        perc_atendidas=perc_atendidas,
+        perc_inventario=perc_inventario,
+        perc_expedicao=perc_expedicao
+    )
+
+
+# ============================================================
+# RELATÓRIOS
+# ============================================================
+
+@app.route("/relatorios")
+def relatorios():
+
+    if "usuario_atual" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    cursor = executar(
+        """
+        SELECT *
+        FROM atividades
+        ORDER BY id DESC
+        """
+    )
+
+    itens = preparar_lista_atividades(
+        cursor.fetchall()
+    )
+
+    fechar_cursor(cursor)
+
+    return render_template(
+        "relatorios.html",
+        usuario_atual=session[
+            "usuario_atual"
+        ],
+        itens=itens
     )
 
 
@@ -1777,7 +1942,8 @@ def modulo(nome):
             url_for("login")
         )
 
-    nome = nome.strip().lower()
+    nome_original = nome.strip()
+    nome_normalizado = nome_original.lower()
 
     mapa = {
 
@@ -1788,6 +1954,9 @@ def modulo(nome):
             "Indicadores",
 
         "melhorias":
+            "Melhorias / PDCA",
+
+        "melhorias / pdca":
             "Melhorias / PDCA",
 
         "pdca":
@@ -1816,17 +1985,157 @@ def modulo(nome):
     }
 
     titulo = mapa.get(
-        nome,
-        nome.title()
+        nome_normalizado,
+        nome_original.title()
     )
+
+    # --------------------------------------------------------
+    # CONFIGURAÇÕES
+    # --------------------------------------------------------
+
+    if titulo == "Configurações":
+
+        return render_template(
+            "configuracoes.html",
+            usuario_atual=session[
+                "usuario_atual"
+            ]
+        )
+
+    # --------------------------------------------------------
+    # INDICADORES
+    # --------------------------------------------------------
+
+    if titulo == "Indicadores":
+
+        return redirect(
+            url_for("indicadores")
+        )
+
+    # --------------------------------------------------------
+    # RELATÓRIOS
+    # --------------------------------------------------------
+
+    if titulo == "Relatórios":
+
+        return redirect(
+            url_for("relatorios")
+        )
+
+    # --------------------------------------------------------
+    # CADASTROS
+    # --------------------------------------------------------
+
+    if titulo == "Cadastros":
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM usuarios
+            ORDER BY nome
+            """
+        )
+
+        usuarios = linhas_para_dict(
+            cursor.fetchall()
+        )
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "cadastros.html",
+            usuarios=usuarios,
+            usuario_atual=session[
+                "usuario_atual"
+            ]
+        )
+
+    # --------------------------------------------------------
+    # MELHORIAS / PDCA
+    # --------------------------------------------------------
+
+    if titulo == "Melhorias / PDCA":
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM melhorias
+            ORDER BY id DESC
+            """
+        )
+
+        melhorias = linhas_para_dict(
+            cursor.fetchall()
+        )
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "melhorias.html",
+            melhorias=melhorias,
+            usuario_atual=session[
+                "usuario_atual"
+            ]
+        )
+
+    # --------------------------------------------------------
+    # ESTOQUE
+    # --------------------------------------------------------
+
+    if titulo == "Estoque":
+
+        cursor = executar(
+            """
+            SELECT *
+            FROM estoque
+            ORDER BY id DESC
+            """
+        )
+
+        estoque = linhas_para_dict(
+            cursor.fetchall()
+        )
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "modulo.html",
+            titulo=titulo,
+            modulo=nome_normalizado,
+            usuario_atual=session[
+                "usuario_atual"
+            ],
+            itens=estoque
+        )
+
+    # --------------------------------------------------------
+    # DEMAIS MÓDULOS
+    # --------------------------------------------------------
+
+    cursor = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE categoria = %s
+        ORDER BY id DESC
+        """,
+        (titulo,)
+    )
+
+    itens = preparar_lista_atividades(
+        cursor.fetchall()
+    )
+
+    fechar_cursor(cursor)
 
     return render_template(
         "modulo.html",
         titulo=titulo,
-        modulo=nome,
+        modulo=nome_normalizado,
         usuario_atual=session[
             "usuario_atual"
-        ]
+        ],
+        itens=itens
     )
 
 
@@ -1851,10 +2160,8 @@ def relatorio_pdf():
         """
     )
 
-    atividades = (
-        preparar_lista_atividades(
-            cursor.fetchall()
-        )
+    atividades = preparar_lista_atividades(
+        cursor.fetchall()
     )
 
     fechar_cursor(cursor)
@@ -1902,61 +2209,14 @@ def relatorio_pdf():
 
         dados.append(
             [
-                str(
-                    item.get(
-                        "id",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "num_requisicao",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "atividade",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "categoria",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "responsavel",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "prioridade",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "status",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "prazo_formatado",
-                        ""
-                    )
-                )
+                str(item.get("id", "")),
+                str(item.get("num_requisicao", "")),
+                str(item.get("atividade", "")),
+                str(item.get("categoria", "")),
+                str(item.get("responsavel", "")),
+                str(item.get("prioridade", "")),
+                str(item.get("status", "")),
+                str(item.get("prazo_formatado", ""))
             ]
         )
 
@@ -1972,18 +2232,14 @@ def relatorio_pdf():
                     "BACKGROUND",
                     (0, 0),
                     (-1, 0),
-                    colors.HexColor(
-                        "#212529"
-                    )
+                    colors.HexColor("#212529")
                 ),
-
                 (
                     "TEXTCOLOR",
                     (0, 0),
                     (-1, 0),
                     colors.white
                 ),
-
                 (
                     "GRID",
                     (0, 0),
@@ -1991,14 +2247,12 @@ def relatorio_pdf():
                     0.5,
                     colors.grey
                 ),
-
                 (
                     "FONTSIZE",
                     (0, 0),
                     (-1, -1),
                     7
                 ),
-
                 (
                     "VALIGN",
                     (0, 0),
@@ -2009,9 +2263,7 @@ def relatorio_pdf():
         )
     )
 
-    elementos.append(
-        tabela
-    )
+    elementos.append(tabela)
 
     documento.build(
         elementos
@@ -2023,9 +2275,7 @@ def relatorio_pdf():
         buffer,
         mimetype="application/pdf",
         as_attachment=True,
-        download_name=(
-            "relatorio_almoxarifado.pdf"
-        )
+        download_name="relatorio_almoxarifado.pdf"
     )
 
 
@@ -2080,22 +2330,18 @@ def editar(id):
         """
     )
 
-    usuarios = (
-        linhas_para_dict(
-            cursor.fetchall()
-        )
+    usuarios = linhas_para_dict(
+        cursor.fetchall()
     )
 
     fechar_cursor(cursor)
 
     if request.method == "POST":
 
-        num_requisicao = (
-            normalizar_requisicao(
-                request.form.get(
-                    "num_requisicao",
-                    ""
-                )
+        num_requisicao = normalizar_requisicao(
+            request.form.get(
+                "num_requisicao",
+                ""
             )
         )
 
@@ -2137,31 +2383,50 @@ def editar(id):
             )
         ).strip()
 
-        if prioridade not in {
+        prioridades_validas = {
             "Baixa",
             "Média",
             "Alta"
-        }:
+        }
 
-            prioridade = "Baixa"
-
-        if categoria not in {
+        categorias_validas = {
             "Separação",
             "Inventário",
             "Expedição",
-            "Recebimento"
-        }:
+            "Recebimento",
+            "Logística Reversa",
+            "Estoque"
+        }
 
-            categoria = "Separação"
-
-        if status not in {
+        status_validos = {
             "Pendente",
             "Em andamento",
             "Concluído",
             "Arquivado"
-        }:
+        }
 
+        if prioridade not in prioridades_validas:
+            prioridade = "Baixa"
+
+        if categoria not in categorias_validas:
+            categoria = "Separação"
+
+        if status not in status_validos:
             status = "Pendente"
+
+        if categoria == "Separação" and not num_requisicao:
+
+            flash(
+                "Informe o número da requisição para Separação.",
+                "warning"
+            )
+
+            return render_template(
+                "editar.html",
+                atividade=atividade,
+                usuarios=usuarios,
+                prazo_form=prazo
+            )
 
         if not atividade_nome:
 
@@ -2185,9 +2450,7 @@ def editar(id):
             ):
 
                 flash(
-                    f"A requisição "
-                    f"{num_requisicao} já está "
-                    "em outra atividade ativa.",
+                    f"A requisição {num_requisicao} já está em outra atividade ativa.",
                     "warning"
                 )
 
@@ -2311,8 +2574,7 @@ def concluir(id):
     }:
 
         flash(
-            "Essa atividade não pode "
-            "ser concluída.",
+            "Essa atividade não pode ser concluída.",
             "warning"
         )
 
@@ -2346,17 +2608,13 @@ def concluir(id):
     )
 
     # ========================================================
-    # CRIA EXPEDIÇÃO AUTOMÁTICA
+    # EXPEDIÇÃO AUTOMÁTICA
     # ========================================================
 
-    if atividade.get(
-        "categoria"
-    ) == "Separação":
+    if atividade.get("categoria") == "Separação":
 
-        requisicao = (
-            atividade.get(
-                "num_requisicao"
-            )
+        requisicao = normalizar_requisicao(
+            atividade.get("num_requisicao")
         )
 
         if requisicao:
@@ -2365,7 +2623,7 @@ def concluir(id):
                 """
                 SELECT id
                 FROM atividades
-                WHERE num_requisicao = %s
+                WHERE UPPER(TRIM(num_requisicao)) = %s
                   AND categoria = 'Expedição'
                   AND status NOT IN (
                       'Concluído',
@@ -2488,35 +2746,7 @@ def arquivar(id):
 @app.route("/deletar/<int:id>")
 def deletar(id):
 
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    executar(
-        """
-        UPDATE atividades
-        SET
-            status = 'Arquivado',
-            encerrado_por = %s
-        WHERE id = %s
-        """,
-        (
-            session["usuario_atual"],
-            id
-        ),
-        commit=True
-    )
-
-    flash(
-        "Registro arquivado.",
-        "success"
-    )
-
-    return redirect(
-        url_for("index")
-    )
+    return arquivar(id)
 
 
 # ============================================================

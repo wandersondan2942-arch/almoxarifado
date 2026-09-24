@@ -6,14 +6,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
 <title>Configurações - Almoxarifado Valenet</title>
 
+<!-- Bootstrap -->
 <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
 >
 
+<!-- Font Awesome -->
 <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -22,18 +23,18 @@
 <style>
     body {
         background-color: #f5f6fa;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: "Segoe UI", Arial, sans-serif;
         color: #2d3748;
         min-height: 100vh;
     }
 
     .config-container {
-        max-width: 850px;
+        max-width: 900px;
         margin: 40px auto;
         background: #ffffff;
         padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
     }
 
     .section-title {
@@ -45,11 +46,17 @@
     }
 
     .config-item {
-        padding: 15px;
+        padding: 16px;
         border: 1px solid #e9ecef;
         border-radius: 10px;
         margin-bottom: 12px;
         background: #fafbfc;
+        transition: 0.2s ease;
+    }
+
+    .config-item:hover {
+        border-color: #d6dbe1;
+        background: #ffffff;
     }
 
     .config-item:last-child {
@@ -66,6 +73,11 @@
         cursor: pointer;
     }
 
+    .form-check-input:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
     .unit-card {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
@@ -75,6 +87,7 @@
 
     .status-badge {
         font-size: 0.75rem;
+        white-space: nowrap;
     }
 
     .info-box {
@@ -85,271 +98,393 @@
         padding: 14px 16px;
     }
 
+    .status-card {
+        border: 1px solid #e9ecef !important;
+        transition: 0.2s ease;
+    }
+
+    .status-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
     .btn-back {
         white-space: nowrap;
     }
-</style>
 
+    .footer-info {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    @media (max-width: 768px) {
+
+        .config-container {
+            margin: 15px auto;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .header-config {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 15px;
+        }
+
+        .btn-back {
+            width: 100%;
+        }
+
+        .btn-back .fa-arrow-left {
+            margin-right: 5px;
+        }
+
+        .config-item .d-flex {
+            gap: 12px;
+        }
+
+        .status-badge {
+            margin-top: 5px;
+        }
+    }
+</style>
 
 </head>
 
 <body>
 
-
 <div class="container">
 
-    <div class="config-container">
 
-        <!-- CABEÇALHO -->
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+<div class="config-container">
 
-            <div>
-                <h4 class="fw-bold m-0">
-                    <i class="fa-solid fa-gear text-primary me-2"></i>
-                    Configurações do Sistema
-                </h4>
+    <!-- ===================================================== -->
+    <!-- CABEÇALHO -->
+    <!-- ===================================================== -->
 
-                <small class="text-muted">
-                    Gerencie parâmetros operacionais e preferências do Almoxarifado Valenet
-                </small>
+    <div class="header-config d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+
+        <div>
+
+            <h4 class="fw-bold m-0">
+
+                <i class="fa-solid fa-gear text-primary me-2"></i>
+
+                Configurações do Sistema
+
+            </h4>
+
+            <small class="text-muted">
+
+                Gerencie parâmetros operacionais e preferências
+                do Almoxarifado Valenet.
+
+            </small>
+
+        </div>
+
+        <a
+            href="{{ url_for('index') }}"
+            class="btn btn-outline-primary btn-sm fw-bold btn-back"
+        >
+
+            <i class="fa-solid fa-arrow-left me-1"></i>
+
+            Voltar ao Painel
+
+        </a>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- INFORMAÇÃO -->
+    <!-- ===================================================== -->
+
+    <div class="info-box mb-4">
+
+        <div class="d-flex align-items-start">
+
+            <i class="fa-solid fa-circle-info me-2 mt-1"></i>
+
+            <div class="small">
+
+                <strong>Informação:</strong>
+
+                algumas configurações são controladas automaticamente
+                pelo sistema para garantir a integridade das atividades,
+                do histórico e do banco de dados.
+
             </div>
 
-            <a
-                href="{{ url_for('index') }}"
-                class="btn btn-outline-primary btn-sm fw-bold btn-back"
-            >
-                <i class="fa-solid fa-arrow-left me-1"></i>
-                Voltar ao Painel
-            </a>
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- PARÂMETROS OPERACIONAIS -->
+    <!-- ===================================================== -->
+
+    <div class="mb-4">
+
+        <div class="section-title mb-3">
+
+            <i class="fa-solid fa-sliders me-1"></i>
+
+            Parâmetros Operacionais
 
         </div>
 
 
-        <!-- INFORMAÇÃO -->
-        <div class="info-box mb-4">
+        <!-- ALERTAS -->
 
-            <div class="d-flex align-items-start">
+        <div class="config-item">
 
-                <i class="fa-solid fa-circle-info me-2 mt-1"></i>
+            <div class="form-check form-switch">
 
-                <div class="small">
-                    <strong>Informação:</strong>
-                    algumas configurações são controladas automaticamente
-                    pelo sistema para manter o funcionamento do Almoxarifado.
-                </div>
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="configNotificacoes"
+                    checked
+                >
 
-            </div>
+                <label
+                    class="form-check-label fw-semibold"
+                    for="configNotificacoes"
+                >
 
-        </div>
+                    Ativar alertas para ocorrências de alta prioridade
 
-
-        <!-- PARÂMETROS OPERACIONAIS -->
-        <div class="mb-4">
-
-            <div class="section-title mb-3">
-                <i class="fa-solid fa-sliders me-1"></i>
-                Parâmetros Operacionais
-            </div>
-
-
-            <!-- ALERTAS -->
-            <div class="config-item">
-
-                <div class="form-check form-switch">
-
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="notif"
-                        checked
-                    >
-
-                    <label
-                        class="form-check-label fw-semibold"
-                        for="notif"
-                    >
-                        Ativar alertas sonoros para ocorrências de Alta Prioridade
-                    </label>
-
-                </div>
-
-                <div class="small text-muted ms-5 mt-1">
-                    Permite avisos sonoros quando uma atividade de alta prioridade
-                    exigir atenção da equipe.
-                </div>
+                </label>
 
             </div>
 
+            <div class="small text-muted ms-5 mt-1">
 
-            <!-- ARQUIVAMENTO -->
-            <div class="config-item">
-
-                <div class="d-flex justify-content-between align-items-start">
-
-                    <div>
-
-                        <div class="form-check form-switch">
-
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="auto_arq"
-                                checked
-                                disabled
-                            >
-
-                            <label
-                                class="form-check-label fw-semibold"
-                                for="auto_arq"
-                            >
-                                Arquivamento automático após 24 horas
-                            </label>
-
-                        </div>
-
-                        <div class="small text-muted ms-5 mt-1">
-                            Atividades concluídas permanecem no histórico e são
-                            arquivadas automaticamente após 24 horas.
-                        </div>
-
-                    </div>
-
-                    <span class="badge bg-success status-badge">
-                        Ativo
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <!-- BANCO DE DADOS -->
-            <div class="config-item">
-
-                <div class="d-flex justify-content-between align-items-start">
-
-                    <div>
-
-                        <div class="form-check form-switch">
-
-                            <input
-                                class="form-check-input"
-                                type="checkbox"
-                                id="sync_erp"
-                                checked
-                                disabled
-                            >
-
-                            <label
-                                class="form-check-label fw-semibold"
-                                for="sync_erp"
-                            >
-                                Banco de dados do sistema
-                            </label>
-
-                        </div>
-
-                        <div class="small text-muted ms-5 mt-1">
-                            As atividades, usuários, estoque e demais informações
-                            são armazenados no banco de dados do sistema.
-                        </div>
-
-                    </div>
-
-                    <span class="badge bg-success status-badge">
-                        Ativo
-                    </span>
-
-                </div>
+                Permite que o sistema utilize avisos para chamar
+                atenção da equipe quando houver atividades de
+                alta prioridade.
 
             </div>
 
         </div>
 
 
-        <!-- IDENTIDADE DA UNIDADE -->
-        <div class="mb-4">
+        <!-- ARQUIVAMENTO AUTOMÁTICO -->
 
-            <div class="section-title mb-3">
-                <i class="fa-solid fa-building me-1"></i>
-                Identidade da Unidade
-            </div>
+        <div class="config-item">
 
-            <div class="unit-card">
+            <div class="d-flex justify-content-between align-items-start">
 
-                <div class="row g-3">
+                <div class="flex-grow-1">
 
-                    <div class="col-md-6">
-
-                        <label
-                            for="filial"
-                            class="form-label small fw-bold"
-                        >
-                            Filial / Base
-                        </label>
+                    <div class="form-check form-switch">
 
                         <input
-                            type="text"
-                            id="filial"
-                            class="form-control"
-                            value="Valenet - Itabira (MG)"
-                            readonly
+                            class="form-check-input"
+                            type="checkbox"
+                            id="configArquivamento"
+                            checked
+                            disabled
                         >
+
+                        <label
+                            class="form-check-label fw-semibold"
+                            for="configArquivamento"
+                        >
+
+                            Arquivamento automático após 24 horas
+
+                        </label>
 
                     </div>
 
+                    <div class="small text-muted ms-5 mt-1">
 
-                    <div class="col-md-6">
-
-                        <label
-                            for="responsavel"
-                            class="form-label small fw-bold"
-                        >
-                            Responsável Técnico
-                        </label>
-
-                        <input
-                            type="text"
-                            id="responsavel"
-                            class="form-control"
-                            value="Wanderson F."
-                            readonly
-                        >
+                        Atividades concluídas permanecem no histórico
+                        e são arquivadas automaticamente após 24 horas.
 
                     </div>
 
                 </div>
+
+                <span class="badge bg-success status-badge">
+
+                    Ativo
+
+                </span>
 
             </div>
 
         </div>
 
 
-        <!-- STATUS DO SISTEMA -->
-        <div class="mb-4">
+        <!-- BANCO DE DADOS -->
 
-            <div class="section-title mb-3">
-                <i class="fa-solid fa-server me-1"></i>
-                Status do Sistema
+        <div class="config-item">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div class="flex-grow-1">
+
+                    <div class="form-check form-switch">
+
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="configBancoDados"
+                            checked
+                            disabled
+                        >
+
+                        <label
+                            class="form-check-label fw-semibold"
+                            for="configBancoDados"
+                        >
+
+                            Banco de dados do sistema
+
+                        </label>
+
+                    </div>
+
+                    <div class="small text-muted ms-5 mt-1">
+
+                        Atividades, usuários, estoque, inventário,
+                        expedições, recebimentos e demais informações
+                        são armazenados no banco de dados.
+
+                    </div>
+
+                </div>
+
+                <span class="badge bg-success status-badge">
+
+                    Conectado
+
+                </span>
+
             </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- IDENTIDADE DA UNIDADE -->
+    <!-- ===================================================== -->
+
+    <div class="mb-4">
+
+        <div class="section-title mb-3">
+
+            <i class="fa-solid fa-building me-1"></i>
+
+            Identidade da Unidade
+
+        </div>
+
+        <div class="unit-card">
 
             <div class="row g-3">
 
-                <div class="col-md-4">
+                <!-- FILIAL -->
 
-                    <div class="card border-0 bg-light h-100">
+                <div class="col-md-6">
 
-                        <div class="card-body">
+                    <label
+                        for="configFilial"
+                        class="form-label small fw-bold"
+                    >
 
-                            <small class="text-muted">
-                                Aplicação
-                            </small>
+                        Filial / Base
 
-                            <div class="fw-bold text-success mt-1">
-                                <i class="fa-solid fa-circle me-1"
-                                   style="font-size: 8px;"></i>
-                                Online
-                            </div>
+                    </label>
+
+                    <input
+                        type="text"
+                        id="configFilial"
+                        class="form-control"
+                        value="Valenet - Itabira (MG)"
+                        readonly
+                    >
+
+                </div>
+
+
+                <!-- RESPONSÁVEL -->
+
+                <div class="col-md-6">
+
+                    <label
+                        for="configResponsavel"
+                        class="form-label small fw-bold"
+                    >
+
+                        Usuário atual
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="configResponsavel"
+                        class="form-control"
+                        value="{{ session.get('usuario_atual', 'Usuário não identificado') }}"
+                        readonly
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- STATUS DO SISTEMA -->
+    <!-- ===================================================== -->
+
+    <div class="mb-4">
+
+        <div class="section-title mb-3">
+
+            <i class="fa-solid fa-server me-1"></i>
+
+            Status do Sistema
+
+        </div>
+
+
+        <div class="row g-3">
+
+
+            <!-- APLICAÇÃO -->
+
+            <div class="col-md-4">
+
+                <div class="card status-card bg-light h-100">
+
+                    <div class="card-body">
+
+                        <small class="text-muted">
+
+                            Aplicação
+
+                        </small>
+
+                        <div class="fw-bold text-success mt-1">
+
+                            <i
+                                class="fa-solid fa-circle me-1"
+                                style="font-size: 8px;"
+                            ></i>
+
+                            Online
 
                         </div>
 
@@ -357,22 +492,31 @@
 
                 </div>
 
+            </div>
 
-                <div class="col-md-4">
 
-                    <div class="card border-0 bg-light h-100">
+            <!-- BANCO -->
 
-                        <div class="card-body">
+            <div class="col-md-4">
 
-                            <small class="text-muted">
-                                Banco de Dados
-                            </small>
+                <div class="card status-card bg-light h-100">
 
-                            <div class="fw-bold text-success mt-1">
-                                <i class="fa-solid fa-circle me-1"
-                                   style="font-size: 8px;"></i>
-                                Conectado
-                            </div>
+                    <div class="card-body">
+
+                        <small class="text-muted">
+
+                            Banco de Dados
+
+                        </small>
+
+                        <div class="fw-bold text-success mt-1">
+
+                            <i
+                                class="fa-solid fa-circle me-1"
+                                style="font-size: 8px;"
+                            ></i>
+
+                            Conectado
 
                         </div>
 
@@ -380,20 +524,26 @@
 
                 </div>
 
+            </div>
 
-                <div class="col-md-4">
 
-                    <div class="card border-0 bg-light h-100">
+            <!-- VERSÃO -->
 
-                        <div class="card-body">
+            <div class="col-md-4">
 
-                            <small class="text-muted">
-                                Versão
-                            </small>
+                <div class="card status-card bg-light h-100">
 
-                            <div class="fw-bold text-primary mt-1">
-                                Almoxarifado v1.0
-                            </div>
+                    <div class="card-body">
+
+                        <small class="text-muted">
+
+                            Versão
+
+                        </small>
+
+                        <div class="fw-bold text-primary mt-1">
+
+                            Almoxarifado v1.0
 
                         </div>
 
@@ -405,51 +555,122 @@
 
         </div>
 
+    </div>
 
-        <!-- BOTÕES -->
-        <div class="d-flex justify-content-end gap-2 pt-3 border-top">
 
-            <a
-                href="{{ url_for('index') }}"
-                class="btn btn-outline-secondary fw-bold"
-            >
-                Cancelar
-            </a>
+    <!-- ===================================================== -->
+    <!-- INFORMAÇÕES DO SISTEMA -->
+    <!-- ===================================================== -->
 
-            <button
-                type="button"
-                class="btn btn-primary fw-bold px-4"
-                onclick="salvarConfiguracoes()"
-            >
-                <i class="fa-solid fa-floppy-disk me-1"></i>
-                Salvar Alterações
-            </button>
+    <div class="mb-4">
+
+        <div class="section-title mb-3">
+
+            <i class="fa-solid fa-circle-question me-1"></i>
+
+            Informações
 
         </div>
+
+        <div class="config-item">
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <div class="small text-muted">
+                        Plataforma
+                    </div>
+
+                    <div class="fw-semibold">
+                        Flask
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="small text-muted">
+                        Banco utilizado
+                    </div>
+
+                    <div class="fw-semibold">
+                        PostgreSQL / SQLite
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="small text-muted">
+                        Ambiente
+                    </div>
+
+                    <div class="fw-semibold">
+                        Produção
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-6">
+
+                    <div class="small text-muted">
+                        Controle de histórico
+                    </div>
+
+                    <div class="fw-semibold">
+                        Ativo
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- BOTÕES -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center gap-2 pt-3 border-top">
+
+        <div class="footer-info">
+
+            <i class="fa-solid fa-shield-halved me-1"></i>
+
+            Configurações automáticas são controladas pelo sistema.
+
+        </div>
+
+        <a
+            href="{{ url_for('index') }}"
+            class="btn btn-primary fw-bold px-4"
+        >
+
+            <i class="fa-solid fa-arrow-left me-1"></i>
+
+            Voltar ao Painel
+
+        </a>
 
     </div>
 
 </div>
 
 
-<script>
+</div>
 
-    function salvarConfiguracoes() {
-
-        alert(
-            "As configurações operacionais são controladas pelo sistema. " +
-            "As preferências disponíveis nesta tela foram mantidas."
-        );
-
-    }
-
-</script>
-
+<!-- Bootstrap JS -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
 </script>
-
 
 </body>
 

@@ -1,330 +1,528 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Indicadores - Almoxarifado Valenet</title>
+<title>Indicadores - Almoxarifado Valenet</title>
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    >
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+>
 
-    <style>
-        body {
-            background-color: #f5f6fa;
-            font-family: 'Segoe UI', sans-serif;
-            color: #2d3748;
-        }
+<style>
+    body {
+        background-color: #f5f6fa;
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #2d3748;
+    }
+
+    .main-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 35px 20px 30px;
+    }
+
+    .page-header {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 22px 25px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-header h3 {
+        font-weight: 700;
+    }
+
+    .card {
+        border-radius: 16px;
+    }
+
+    .indicator-card {
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .indicator-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    .indicator-number {
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+
+    .indicator-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 10px;
+    }
+
+    .icon-primary {
+        background: #e7f1ff;
+        color: #0d6efd;
+    }
+
+    .icon-success {
+        background: #e8f7ee;
+        color: #198754;
+    }
+
+    .icon-warning {
+        background: #fff4d6;
+        color: #b78103;
+    }
+
+    .progress {
+        height: 28px;
+        border-radius: 14px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+
+    .progress-bar {
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: width 0.6s ease;
+    }
+
+    .section-title {
+        font-weight: 700;
+    }
+
+    .small-description {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .operational-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        height: 100%;
+        background: #ffffff;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .operational-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    }
+
+    .operational-icon {
+        font-size: 2rem;
+        margin-bottom: 14px;
+    }
+
+    .operational-number {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .footer-text {
+        font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
 
         .main-content {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 20px;
+            padding: 20px 12px;
         }
 
-        .card {
-            border-radius: 16px;
+        .page-header {
+            padding: 18px;
         }
 
-        .indicator-card {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .indicator-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08) !important;
+        .page-header .btn {
+            margin-top: 15px;
         }
 
         .indicator-number {
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 1.9rem;
         }
 
-        .progress {
-            height: 28px;
-            border-radius: 14px;
-            overflow: hidden;
-            background-color: #e9ecef;
+        .operational-number {
+            font-size: 1.8rem;
         }
+    }
+</style>
 
-        .progress-bar {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
 
-        .section-title {
-            font-weight: 700;
-        }
-
-        .small-description {
-            font-size: 0.95rem;
-        }
-    </style>
 </head>
 
 <body>
 
 <div class="main-content">
 
-    <!-- CABEÇALHO -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+
+<!-- =========================================================
+     CABEÇALHO
+     ========================================================= -->
+
+<div class="page-header mb-4">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
 
         <div>
-            <h3 class="fw-bold m-0">
+            <h3 class="m-0">
                 <i class="fa-solid fa-chart-pie text-primary me-2"></i>
                 Indicadores de Desempenho
             </h3>
 
-            <p class="text-muted mb-0 mt-1">
+            <p class="text-muted mb-0 mt-2">
                 Acompanhamento operacional do almoxarifado
             </p>
         </div>
 
-        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fa-solid fa-arrow-left me-1"></i>
-            Voltar
-        </a>
-
-    </div>
-
-
-    <!-- CARDS PRINCIPAIS -->
-    <div class="row g-4 mb-4">
-
-        <!-- TOTAL -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
-
-                <span class="text-muted fw-semibold">
-                    <i class="fa-solid fa-list-check me-1"></i>
-                    Total de Atividades
-                </span>
-
-                <div class="indicator-number text-primary mt-2">
-                    {{ total_geral }}
-                </div>
-
-                <small class="text-muted">
-                    Atividades registradas no sistema
-                </small>
-
-            </div>
-        </div>
-
-
-        <!-- CONCLUÍDAS -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
-
-                <span class="text-muted fw-semibold">
-                    <i class="fa-solid fa-circle-check me-1"></i>
-                    Concluídas
-                </span>
-
-                <div class="indicator-number text-success mt-2">
-                    {{ concluidas }}
-                </div>
-
-                <small class="text-muted">
-                    Atividades finalizadas
-                </small>
-
-            </div>
-        </div>
-
-
-        <!-- PENDENTES -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
-
-                <span class="text-muted fw-semibold">
-                    <i class="fa-solid fa-clock me-1"></i>
-                    Pendentes
-                </span>
-
-                <div class="indicator-number text-warning mt-2">
-                    {{ pendentes }}
-                </div>
-
-                <small class="text-muted">
-                    Atividades aguardando conclusão
-                </small>
-
-            </div>
-        </div>
-
-    </div>
-
-
-    <!-- PRODUTIVIDADE -->
-    <div class="card border-0 shadow-sm p-4 mb-4">
-
-        <h5 class="section-title text-dark mb-3">
-            <i class="fa-solid fa-chart-line text-success me-2"></i>
-            Resumo da Produtividade
-        </h5>
-
-        <p class="text-muted small-description">
-            O acompanhamento dos indicadores permite visualizar o andamento
-            das atividades do almoxarifado, incluindo separação, inventário,
-            expedição e recebimento.
-        </p>
-
-
-        {% set total = total_geral | int %}
-        {% set conc = concluidas | int %}
-
-        {% if total > 0 %}
-            {% set porcentagem = ((conc / total) * 100) | round(0) | int %}
-        {% else %}
-            {% set porcentagem = 0 %}
-        {% endif %}
-
-
-        <div class="d-flex justify-content-between align-items-center mb-2">
-
-            <span class="fw-semibold">
-                Atividades concluídas
-            </span>
-
-            <span class="fw-bold text-success">
-                {{ porcentagem }}%
-            </span>
-
-        </div>
-
-
-        <!-- BARRA DE PROGRESSO -->
-        <div
-            class="progress"
-            role="progressbar"
-            aria-label="Percentual de atividades concluídas"
-            aria-valuenow="{{ porcentagem }}"
-            aria-valuemin="0"
-            aria-valuemax="100"
-        >
-
-            <div
-                class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                style="width: {{ porcentagem }}%;"
+        <div>
+            <a
+                href="{{ url_for('index') }}"
+                class="btn btn-outline-secondary"
             >
-                {{ porcentagem }}% Concluído
-            </div>
-
+                <i class="fa-solid fa-arrow-left me-1"></i>
+                Voltar ao Dashboard
+            </a>
         </div>
-
-    </div>
-
-
-    <!-- INDICADORES OPERACIONAIS -->
-    <div class="card border-0 shadow-sm p-4">
-
-        <h5 class="section-title mb-4">
-            <i class="fa-solid fa-gauge-high text-primary me-2"></i>
-            Indicadores Operacionais
-        </h5>
-
-        <div class="row g-4">
-
-            <!-- ATENDIMENTO -->
-            <div class="col-md-4">
-
-                <div class="border rounded-4 p-4 text-center h-100">
-
-                    <i class="fa-solid fa-headset fa-2x text-primary mb-3"></i>
-
-                    <h6 class="fw-bold">
-                        Atendimento
-                    </h6>
-
-                    <div class="fs-3 fw-bold text-primary">
-                        {{ perc_atendidas | default(0) }}%
-                    </div>
-
-                    <small class="text-muted">
-                        Atividades atendidas
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <!-- INVENTÁRIO -->
-            <div class="col-md-4">
-
-                <div class="border rounded-4 p-4 text-center h-100">
-
-                    <i class="fa-solid fa-boxes-stacked fa-2x text-warning mb-3"></i>
-
-                    <h6 class="fw-bold">
-                        Inventário
-                    </h6>
-
-                    <div class="fs-3 fw-bold text-warning">
-                        {{ perc_inventario | default(0) }}%
-                    </div>
-
-                    <small class="text-muted">
-                        Inventários concluídos
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <!-- EXPEDIÇÃO -->
-            <div class="col-md-4">
-
-                <div class="border rounded-4 p-4 text-center h-100">
-
-                    <i class="fa-solid fa-truck-fast fa-2x text-success mb-3"></i>
-
-                    <h6 class="fw-bold">
-                        Expedição
-                    </h6>
-
-                    <div class="fs-3 fw-bold text-success">
-                        {{ perc_expedicao | default(0) }}%
-                    </div>
-
-                    <small class="text-muted">
-                        Expedições concluídas
-                    </small>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- RODAPÉ -->
-    <div class="text-center mt-4">
-
-        <small class="text-muted">
-            Almoxarifado Valenet • Indicadores Operacionais
-        </small>
 
     </div>
 
 </div>
 
 
+<!-- =========================================================
+     CARDS PRINCIPAIS
+     ========================================================= -->
+
+<div class="row g-4 mb-4">
+
+    <!-- TOTAL -->
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+            <div class="indicator-icon icon-primary">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+
+            <span class="text-muted fw-semibold">
+                Total de Atividades
+            </span>
+
+            <div class="indicator-number text-primary mt-2">
+                {{ total_geral | default(0) }}
+            </div>
+
+            <small class="text-muted">
+                Atividades registradas no sistema
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- CONCLUÍDAS -->
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+            <div class="indicator-icon icon-success">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <span class="text-muted fw-semibold">
+                Concluídas
+            </span>
+
+            <div class="indicator-number text-success mt-2">
+                {{ concluidas | default(0) }}
+            </div>
+
+            <small class="text-muted">
+                Atividades finalizadas
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- PENDENTES -->
+    <div class="col-md-4">
+
+        <div class="card border-0 shadow-sm p-4 text-center indicator-card h-100">
+
+            <div class="indicator-icon icon-warning">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+
+            <span class="text-muted fw-semibold">
+                Pendentes
+            </span>
+
+            <div class="indicator-number text-warning mt-2">
+                {{ pendentes | default(0) }}
+            </div>
+
+            <small class="text-muted">
+                Atividades aguardando conclusão
+            </small>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CÁLCULO DA PRODUTIVIDADE
+     ========================================================= -->
+
+{% set total = total_geral | default(0) | int %}
+{% set conc = concluidas | default(0) | int %}
+
+{% if total > 0 %}
+
+    {% set porcentagem = ((conc / total) * 100) | round(0) | int %}
+
+    {% if porcentagem > 100 %}
+        {% set porcentagem = 100 %}
+    {% endif %}
+
+{% else %}
+
+    {% set porcentagem = 0 %}
+
+{% endif %}
+
+
+<!-- =========================================================
+     RESUMO DA PRODUTIVIDADE
+     ========================================================= -->
+
+<div class="card border-0 shadow-sm p-4 mb-4">
+
+    <h5 class="section-title text-dark mb-3">
+
+        <i class="fa-solid fa-chart-line text-success me-2"></i>
+
+        Resumo da Produtividade
+
+    </h5>
+
+    <p class="text-muted small-description mb-4">
+
+        O acompanhamento dos indicadores permite visualizar o andamento
+        das atividades do almoxarifado, incluindo separação, inventário,
+        expedição e recebimento.
+
+    </p>
+
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+
+        <span class="fw-semibold">
+            Atividades concluídas
+        </span>
+
+        <span class="fw-bold text-success">
+            {{ porcentagem }}%
+        </span>
+
+    </div>
+
+
+    <!-- BARRA DE PROGRESSO -->
+
+    <div
+        class="progress"
+        role="progressbar"
+        aria-label="Percentual de atividades concluídas"
+        aria-valuenow="{{ porcentagem }}"
+        aria-valuemin="0"
+        aria-valuemax="100"
+    >
+
+        <div
+            class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+            style="width: {{ porcentagem }}%;"
+        >
+            {{ porcentagem }}% Concluído
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     INDICADORES OPERACIONAIS
+     ========================================================= -->
+
+<div class="card border-0 shadow-sm p-4">
+
+    <h5 class="section-title mb-4">
+
+        <i class="fa-solid fa-gauge-high text-primary me-2"></i>
+
+        Indicadores Operacionais
+
+    </h5>
+
+
+    <div class="row g-4">
+
+        <!-- =================================================
+             ATENDIMENTO
+             ================================================= -->
+
+        <div class="col-md-4">
+
+            <div class="operational-card">
+
+                <div class="operational-icon text-primary">
+
+                    <i class="fa-solid fa-headset"></i>
+
+                </div>
+
+                <h6 class="fw-bold">
+                    Atendimento
+                </h6>
+
+                <div class="operational-number text-primary">
+
+                    {{ perc_atendidas | default(0) }}%
+
+                </div>
+
+                <small class="text-muted">
+
+                    Atividades atendidas
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             INVENTÁRIO
+             ================================================= -->
+
+        <div class="col-md-4">
+
+            <div class="operational-card">
+
+                <div class="operational-icon text-warning">
+
+                    <i class="fa-solid fa-boxes-stacked"></i>
+
+                </div>
+
+                <h6 class="fw-bold">
+                    Inventário
+                </h6>
+
+                <div class="operational-number text-warning">
+
+                    {{ perc_inventario | default(0) }}%
+
+                </div>
+
+                <small class="text-muted">
+
+                    Inventários concluídos
+
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             EXPEDIÇÃO
+             ================================================= -->
+
+        <div class="col-md-4">
+
+            <div class="operational-card">
+
+                <div class="operational-icon text-success">
+
+                    <i class="fa-solid fa-truck-fast"></i>
+
+                </div>
+
+                <h6 class="fw-bold">
+                    Expedição
+                </h6>
+
+                <div class="operational-number text-success">
+
+                    {{ perc_expedicao | default(0) }}%
+
+                </div>
+
+                <small class="text-muted">
+
+                    Expedições concluídas
+
+                </small>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     RODAPÉ
+     ========================================================= -->
+
+<div class="text-center mt-4">
+
+    <small class="text-muted footer-text">
+
+        Almoxarifado Valenet • Indicadores Operacionais
+
+    </small>
+
+</div>
+```
+
+</div>
+
+<!-- =============================================================
+     BOOTSTRAP
+     ============================================================= -->
+
 <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
 </script>
 
 </body>
 </html>
-

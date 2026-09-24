@@ -471,6 +471,125 @@ def calcular_duracao(inicio, fim):
     )
 
 
+def normalizar_requisicao(valor):
+    """Normaliza o número da requisição sem alterar seu conteúdo."""
+    if valor is None:
+        return ""
+    return str(valor).strip()
+
+
+def requisicao_duplicada(num_requisicao, id_atual=None):
+    """
+    Retorna True se já existir uma requisição ativa com o mesmo número.
+
+    Registros Arquivados não bloqueiam uma nova requisição.
+    """
+    numero = normalizar_requisicao(num_requisicao)
+    if not numero:
+        return False
+
+    cursor = None
+    try:
+        if id_atual is None:
+            cursor = executar(
+                """
+                SELECT COUNT(*)
+                FROM atividades
+                WHERE TRIM(COALESCE(num_requisicao, '')) = %s
+                AND status <> 'Arquivada'
+                """,
+                (numero,)
+            )
+        else:
+            cursor = executar(
+                """
+                SELECT COUNT(*)
+                FROM atividades
+                WHERE TRIM(COALESCE(num_requisicao, '')) = %s
+                AND status <> 'Arquivada'
+                AND id <> %s
+                """,
+                (numero, id_atual)
+            )
+
+        return int(obter_valor(cursor) or 0) > 0
+    except Exception as erro:
+        print(f"[ERRO VERIFICAÇÃO REQUISIÇÃO] {erro}")
+        return False
+    finally:
+        fechar_cursor(cursor)
+
+
+def prazo_em_datetime(valor):
+    """Converte o prazo do formulário/banco em datetime."""
+    if not valor:
+        return None
+
+    texto = str(valor).strip()
+    if not texto:
+        return None
+
+    formatos = (
+        "%Y-%m-%dT%H:%M",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y",
+    )
+
+    for formato in formatos:
+        try:
+            return datetime.strptime(texto[:16] if formato in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M") else texto, formato)
+        except Exception:
+            pass
+
+    return None
+
+
+def prazo_atrasado(valor):
+    """Indica se o prazo já passou considerando o horário de Brasília."""
+    dt = prazo_em_datetime(valor)
+    if not dt:
+        return False
+
+    agora = agora_brasil().replace(tzinfo=None)
+
+    # Se o prazo veio somente como data, considera vencido a partir de 00:00
+    # do dia seguinte, evitando marcar como atrasado durante o próprio dia.
+    texto = str(valor).strip()
+    if len(texto) == 10 and texto.count('-') == 2:
+        return agora.date() > dt.date()
+
+    return agora > dt
+
+
+def texto_atraso(valor):
+    """Gera texto simples para exibição do atraso."""
+    dt = prazo_em_datetime(valor)
+    if not dt:
+        return ""
+
+    agora = agora_brasil().replace(tzinfo=None)
+    texto = str(valor).strip()
+
+    if len(texto) == 10 and texto.count('-') == 2:
+        dias = (agora.date() - dt.date()).days
+        if dias <= 0:
+            return "Vence hoje"
+        return f"{dias} dia(s) atrasado"
+
+    segundos = int((agora - dt).total_seconds())
+    if segundos <= 0:
+        return "Vence hoje"
+
+    dias = segundos // 86400
+    horas = (segundos % 86400) // 3600
+
+    if dias > 0:
+        return f"{dias} dia(s) atrasado"
+    return f"{max(horas, 1)} hora(s) atrasado"
+
+
 # =========================================================
 # PREPARAÇÃO DAS ATIVIDADES
 # =========================================================
@@ -551,6 +670,17 @@ def preparar_atividade(item):
     dados["duracao"] = calcular_duracao(
         inicio_original,
         conclusao_original
+    )
+
+    dados["atrasado"] = (
+        dados.get("status") not in ("Concluído", "Arquivada")
+        and prazo_atrasado(dados.get("prazo"))
+    )
+
+    dados["texto_atraso"] = (
+        texto_atraso(dados.get("prazo"))
+        if dados.get("atrasado")
+        else ""
     )
 
     return dados
@@ -740,6 +870,48 @@ def init_db():
                 SET descricao = ''
                 WHERE descricao IS NULL
             """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET atividade = 'Atividade antiga'
+                WHERE atividade IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET responsavel = 'Não informado'
+                WHERE responsavel IS NULL
+            """)
+
+            # -------------------------------------------------
+            # PROTEÇÃO CONTRA REQUISIÇÃO DUPLICADA
+            # -------------------------------------------------
+
+            cursor.execute("""
+                SELECT num_requisicao, COUNT(*)
+                FROM atividades
+                WHERE TRIM(COALESCE(num_requisicao, '')) <> ''
+                AND status <> 'Arquivada'
+                GROUP BY TRIM(num_requisicao)
+                HAVING COUNT(*) > 1
+            """)
+
+            duplicidades = cursor.fetchall()
+
+            if duplicidades:
+                print(
+                    "[AVISO BANCO] Existem requisições ativas duplicadas. "
+                    "O índice único não será criado até a correção dos registros existentes."
+                )
+                for duplicidade in duplicidades:
+                    print(f"[AVISO DUPLICIDADE] {duplicidade}")
+            else:
+                cursor.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_atividades_req_ativa
+                    ON atividades (TRIM(num_requisicao))
+                    WHERE TRIM(COALESCE(num_requisicao, '')) <> ''
+                    AND status <> 'Arquivada'
+                """)
 
             # -------------------------------------------------
             # CHAT
@@ -968,6 +1140,48 @@ def init_db():
                 SET descricao = ''
                 WHERE descricao IS NULL
             """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET atividade = 'Atividade antiga'
+                WHERE atividade IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE atividades
+                SET responsavel = 'Não informado'
+                WHERE responsavel IS NULL
+            """)
+
+            # -------------------------------------------------
+            # PROTEÇÃO CONTRA REQUISIÇÃO DUPLICADA
+            # -------------------------------------------------
+
+            cursor.execute("""
+                SELECT TRIM(num_requisicao), COUNT(*)
+                FROM atividades
+                WHERE TRIM(COALESCE(num_requisicao, '')) <> ''
+                AND status <> 'Arquivada'
+                GROUP BY TRIM(num_requisicao)
+                HAVING COUNT(*) > 1
+            """)
+
+            duplicidades = cursor.fetchall()
+
+            if duplicidades:
+                print(
+                    "[AVISO BANCO] Existem requisições ativas duplicadas. "
+                    "O índice único não será criado até a correção dos registros existentes."
+                )
+                for duplicidade in duplicidades:
+                    print(f"[AVISO DUPLICIDADE] {duplicidade}")
+            else:
+                cursor.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS idx_atividades_req_ativa
+                    ON atividades (TRIM(num_requisicao))
+                    WHERE TRIM(COALESCE(num_requisicao, '')) <> ''
+                    AND status <> 'Arquivada'
+                """)
 
             # IMPORTANTE:
             # Não criamos artificialmente um horário de início
@@ -1571,6 +1785,20 @@ def index():
             )
 
         # =================================================
+        # BLOQUEIO DE REQUISIÇÃO DUPLICADA
+        # =================================================
+
+        if num_requisicao and requisicao_duplicada(num_requisicao):
+
+            flash(
+                f"A requisição {num_requisicao} já está cadastrada em uma atividade ativa. "
+                "Não é possível criar a mesma requisição duas vezes.",
+                "warning"
+            )
+
+            return redirect(url_for("index"))
+
+        # =================================================
         # DATA/HORA DE INÍCIO
         # =================================================
 
@@ -1785,6 +2013,29 @@ def index():
         """
     )
 
+    # O prazo é texto porque o sistema aceita data e data/hora.
+    # Fazemos a validação final em Python para manter o mesmo comportamento
+    # em PostgreSQL e SQLite.
+    total_atrasados = 0
+    cursor_atrasados = None
+
+    try:
+        cursor_atrasados = executar("""
+            SELECT prazo, status
+            FROM atividades
+            WHERE TRIM(COALESCE(prazo, '')) <> ''
+            AND status NOT IN ('Concluído', 'Arquivada')
+        """)
+        for registro in cursor_atrasados.fetchall():
+            item_atraso = linha_para_dict(registro)
+            if prazo_atrasado(item_atraso.get("prazo")):
+                total_atrasados += 1
+    except Exception as erro:
+        print(f"[ERRO ATRASADOS] {erro}")
+        total_atrasados = 0
+    finally:
+        fechar_cursor(cursor_atrasados)
+
     inv_concluido = contar(
         """
         SELECT COUNT(*)
@@ -1966,6 +2217,8 @@ def index():
 
         total_req=total_req,
 
+        total_atrasados=total_atrasados,
+
         inv_conc=inv_concluido,
 
         inv_total=inv_total_indicador,
@@ -1991,6 +2244,49 @@ def index():
 
 
 # =========================================================
+# REQUISIÇÕES ATRASADAS
+# =========================================================
+
+@app.route("/atrasados")
+def atrasados():
+
+    if "usuario" not in session:
+        return redirect(url_for("login"))
+
+    cursor = None
+
+    try:
+        cursor = executar("""
+            SELECT *
+            FROM atividades
+            WHERE TRIM(COALESCE(prazo, '')) <> ''
+            AND status NOT IN ('Concluído', 'Arquivada')
+            ORDER BY id DESC
+        """)
+
+        registros = cursor.fetchall()
+        itens = []
+
+        for registro in registros:
+            item = preparar_atividade(registro)
+            if item.get("atrasado"):
+                itens.append(item)
+
+    except Exception as erro:
+        print(f"[ERRO ATRASADOS] {erro}")
+        itens = []
+        flash("Não foi possível carregar as atividades atrasadas.", "danger")
+    finally:
+        fechar_cursor(cursor)
+
+    return render_template(
+        "modulo.html",
+        nome="Atrasados",
+        itens=itens
+    )
+
+
+# =========================================================
 # MÓDULOS
 # =========================================================
 
@@ -2007,6 +2303,9 @@ def modulo(nome):
         )
 
     nome_limpo = nome
+
+    if nome_limpo == "Atrasados":
+        return redirect(url_for("atrasados"))
 
     # =====================================================
     # CONFIGURAÇÕES
@@ -3630,6 +3929,151 @@ def relatorio_pdf():
     finally:
 
         fechar_cursor(cursor)
+
+
+# =========================================================
+# EDITAR ATIVIDADE / REQUISIÇÃO
+# =========================================================
+
+@app.route("/editar/<int:id>", methods=["GET", "POST"])
+def editar_atividade(id):
+
+    if "usuario" not in session:
+        return redirect(url_for("login"))
+
+    cursor = None
+
+    try:
+        cursor = executar(
+            "SELECT * FROM atividades WHERE id = %s",
+            (id,)
+        )
+        registro = cursor.fetchone()
+
+        if not registro:
+            flash("Atividade não encontrada.", "warning")
+            return redirect(request.referrer or url_for("index"))
+
+        item = linha_para_dict(registro)
+
+    finally:
+        fechar_cursor(cursor)
+
+    status = item.get("status") or "Pendente"
+
+    if status in ("Concluído", "Arquivada"):
+        flash(
+            "Atividades concluídas ou arquivadas não podem ser editadas. "
+            "O histórico precisa permanecer preservado.",
+            "warning"
+        )
+        return redirect(request.referrer or url_for("index"))
+
+    if request.method == "POST":
+
+        num_requisicao = normalizar_requisicao(
+            request.form.get("num_requisicao", "")
+        )
+        atividade = request.form.get("atividade", "").strip()
+        descricao = request.form.get("descricao", "").strip()
+        categoria = request.form.get("categoria") or "Separação"
+        responsavel = request.form.get("responsavel") or session["usuario"]
+        prioridade = request.form.get("prioridade") or "Baixa"
+        prazo = request.form.get("prazo") or ""
+
+        if not atividade:
+            flash("Informe a atividade.", "warning")
+            return render_template("editar_requisicao.html", item=item)
+
+        if categoria == "Separação" and not num_requisicao:
+            flash("Informe o número da requisição para uma Separação.", "warning")
+            return render_template("editar_requisicao.html", item=item)
+
+        if num_requisicao and requisicao_duplicada(num_requisicao, id_atual=id):
+            flash(
+                f"A requisição {num_requisicao} já está cadastrada em outra atividade ativa.",
+                "warning"
+            )
+            item.update(request.form.to_dict())
+            return render_template("editar_requisicao.html", item=item)
+
+        db = get_db()
+        cursor = None
+
+        try:
+            cursor = executar(
+                """
+                UPDATE atividades
+                SET
+                    num_requisicao = %s,
+                    prioridade = %s,
+                    atividade = %s,
+                    descricao = %s,
+                    categoria = %s,
+                    responsavel = %s,
+                    prazo = %s
+                WHERE id = %s
+                AND status IN ('Pendente', 'Em andamento')
+                """,
+                (
+                    num_requisicao or None,
+                    prioridade,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prazo,
+                    id
+                )
+            )
+
+            if cursor.rowcount == 0:
+                db.rollback()
+                flash("A atividade não está mais disponível para edição.", "warning")
+                return redirect(request.referrer or url_for("index"))
+
+            db.commit()
+
+            flash(
+                f"Atividade #{id} atualizada com sucesso.",
+                "success"
+            )
+
+            return redirect(
+                request.form.get("retorno")
+                or url_for("index")
+            )
+
+        except Exception as erro:
+            db.rollback()
+            print(f"[ERRO EDIÇÃO] {erro}")
+            flash(
+                "Não foi possível salvar a edição. "
+                "Verifique se o número da requisição já está em uso.",
+                "danger"
+            )
+            return render_template("editar_requisicao.html", item=item)
+        finally:
+            fechar_cursor(cursor)
+
+    # Para campos datetime-local, o HTML precisa de YYYY-MM-DDTHH:MM.
+    item["prazo_form"] = str(item.get("prazo") or "").replace(" ", "T")[:16]
+
+    cursor = None
+    try:
+        cursor = executar("SELECT nome FROM usuarios ORDER BY nome")
+        usuarios = linhas_para_dict(cursor.fetchall())
+    except Exception as erro:
+        print(f"[ERRO USUÁRIOS EDIÇÃO] {erro}")
+        usuarios = []
+    finally:
+        fechar_cursor(cursor)
+
+    return render_template(
+        "editar_requisicao.html",
+        item=item,
+        usuarios=usuarios
+    )
 
 
 # =========================================================

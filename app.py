@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import unicodedata
+
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from zoneinfo import ZoneInfo
@@ -45,6 +46,14 @@ app.secret_key = os.environ.get(
 )
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Compatibilidade com URLs antigas do PostgreSQL
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace(
+        "postgres://",
+        "postgresql://",
+        1
+    )
 
 FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
@@ -233,6 +242,11 @@ def normalizar_texto(valor):
     return texto
 
 
+def normalizar_status(valor):
+
+    return normalizar_texto(valor)
+
+
 def normalizar_requisicao(valor):
 
     if valor is None:
@@ -246,11 +260,17 @@ def normalizar_requisicao(valor):
 # ============================================================
 
 def agora_utc():
-    return datetime.now(timezone.utc)
+
+    return datetime.now(
+        timezone.utc
+    )
 
 
 def agora_brasil():
-    return datetime.now(FUSO_BRASIL)
+
+    return datetime.now(
+        FUSO_BRASIL
+    )
 
 
 def agora_utc_naive():
@@ -495,7 +515,7 @@ def prazo_em_datetime(valor):
 
 def registro_foi_atrasado(item):
 
-    status = normalizar_texto(
+    status = normalizar_status(
         obter_valor(
             item,
             "status",
@@ -504,7 +524,7 @@ def registro_foi_atrasado(item):
     )
 
     # ========================================================
-    # REGRA ABSOLUTA:
+    # REGRA:
     # ARQUIVADO NUNCA É ATRASADO
     # ========================================================
 
@@ -531,7 +551,6 @@ def registro_foi_atrasado(item):
         "concluido_em"
     )
 
-    # Se foi concluído, compara o momento da conclusão
     if concluido:
 
         fim = converter_para_brasil(
@@ -542,14 +561,12 @@ def registro_foi_atrasado(item):
 
             return fim > prazo_dt
 
-    # Se ainda não foi concluído,
-    # compara com o momento atual
     return agora_brasil() > prazo_dt
 
 
 def texto_atraso(item):
 
-    status = normalizar_texto(
+    status = normalizar_status(
         obter_valor(
             item,
             "status",
@@ -872,10 +889,6 @@ def init_db():
             )
         """)
 
-        # ----------------------------------------------------
-        # MIGRAÇÕES
-        # ----------------------------------------------------
-
         cursor.execute("""
             ALTER TABLE melhorias
             ADD COLUMN IF NOT EXISTS etapa TEXT
@@ -1118,6 +1131,19 @@ def init_db():
 
 # ============================================================
 # ARQUIVAMENTO AUTOMÁTICO
+#
+# REGRA DEFINITIVA:
+#
+# SOMENTE EXPEDIÇÃO:
+#
+# Concluído
+#     ↓
+# 24 horas
+#     ↓
+# Arquivado
+#
+# Separação, Inventário, Recebimento etc.
+# NÃO são arquivados automaticamente.
 # ============================================================
 
 def arquivar_atividades_expiradas():
@@ -1134,6 +1160,7 @@ def arquivar_atividades_expiradas():
             UPDATE atividades
             SET status = 'Arquivado'
             WHERE status = 'Concluído'
+              AND categoria = 'Expedição'
               AND concluido_em IS NOT NULL
               AND concluido_em <= %s
             """,
@@ -1158,10 +1185,13 @@ def arquivar_atividades_expiradas():
             UPDATE atividades
             SET status = 'Arquivado'
             WHERE status = 'Concluído'
+              AND categoria = 'Expedição'
               AND concluido_em IS NOT NULL
               AND concluido_em <= ?
             """,
-            (limite_texto,),
+            (
+                limite_texto,
+            ),
             commit=True
         )
 
@@ -1391,6 +1421,8 @@ def index():
             url_for("login")
         )
 
+    # Executa a regra das 24 horas.
+    # Somente Expedições concluídas são arquivadas.
     arquivar_atividades_expiradas()
 
     usuario_atual = session[
@@ -1754,7 +1786,7 @@ def index():
         FROM atividades
         WHERE categoria = %s
           AND COALESCE(status,'')
-              NOT IN ('Arquivado')
+              NOT IN ('Concluído','Arquivado')
         """
         if usando_postgresql()
         else
@@ -1763,7 +1795,7 @@ def index():
         FROM atividades
         WHERE categoria = ?
           AND COALESCE(status,'')
-              NOT IN ('Arquivado')
+              NOT IN ('Concluído','Arquivado')
         """,
         ("Separação",)
     )
@@ -1774,7 +1806,7 @@ def index():
         FROM atividades
         WHERE categoria = %s
           AND COALESCE(status,'')
-              NOT IN ('Arquivado')
+              NOT IN ('Concluído','Arquivado')
         """
         if usando_postgresql()
         else
@@ -1783,7 +1815,7 @@ def index():
         FROM atividades
         WHERE categoria = ?
           AND COALESCE(status,'')
-              NOT IN ('Arquivado')
+              NOT IN ('Concluído','Arquivado')
         """,
         ("Inventário",)
     )
@@ -1892,7 +1924,7 @@ def index():
         for item in todas_preparadas
         if (
             item.get("foi_atrasada")
-            and normalizar_texto(
+            and normalizar_status(
                 item.get("status")
             ) != "arquivado"
         )
@@ -1902,10 +1934,12 @@ def index():
         todas_preparadas
     )
 
+    # Concluído + Arquivado contam como históricos
+    # concluídos para indicadores.
     total_concluidas = sum(
         1
         for item in todas_preparadas
-        if normalizar_texto(
+        if normalizar_status(
             item.get("status")
         ) in (
             "concluido",
@@ -1926,7 +1960,7 @@ def index():
         if (
             item.get("categoria")
             == "Expedição"
-            and normalizar_texto(
+            and normalizar_status(
                 item.get("status")
             ) in (
                 "concluido",
@@ -2010,9 +2044,6 @@ def index():
 
     # ========================================================
     # DASHBOARD
-    #
-    # IMPORTANTE:
-    # usamos index.html, que é o template do dashboard atual.
     # ========================================================
 
     return render_template(
@@ -2099,6 +2130,8 @@ def indicadores():
             url_for("login")
         )
 
+    arquivar_atividades_expiradas()
+
     itens = executar(
         """
         SELECT *
@@ -2118,7 +2151,7 @@ def indicadores():
     concluidas = sum(
         1
         for item in itens
-        if normalizar_texto(
+        if normalizar_status(
             item.get("status")
         ) in (
             "concluido",
@@ -2139,7 +2172,7 @@ def indicadores():
         if (
             item.get("categoria")
             == "Inventário"
-            and normalizar_texto(
+            and normalizar_status(
                 item.get("status")
             ) in (
                 "concluido",
@@ -2161,7 +2194,7 @@ def indicadores():
         if (
             item.get("categoria")
             == "Expedição"
-            and normalizar_texto(
+            and normalizar_status(
                 item.get("status")
             ) in (
                 "concluido",
@@ -2231,6 +2264,8 @@ def relatorios():
             url_for("login")
         )
 
+    # Verifica automaticamente as Expedições
+    # que já passaram de 24 horas após conclusão.
     arquivar_atividades_expiradas()
 
     filtro = request.args.get(
@@ -2251,13 +2286,18 @@ def relatorios():
         todas
     )
 
+    # ========================================================
+    # FILTROS
+    # ========================================================
+
     if filtro == "pendentes":
 
         itens = [
             item
             for item in todas
-            if item.get("status")
-            == "Pendente"
+            if normalizar_status(
+                item.get("status")
+            ) == "pendente"
         ]
 
     elif filtro == "andamento":
@@ -2265,44 +2305,57 @@ def relatorios():
         itens = [
             item
             for item in todas
-            if item.get("status")
-            == "Em andamento"
+            if normalizar_status(
+                item.get("status")
+            ) == "em andamento"
         ]
 
     elif filtro == "concluidos":
 
+        # SOMENTE CONCLUÍDOS.
+        # ARQUIVADOS FICAM EM SUA PRÓPRIA ABA.
         itens = [
             item
             for item in todas
-            if item.get("status")
-            == "Concluído"
+            if normalizar_status(
+                item.get("status")
+            ) == "concluido"
         ]
 
     elif filtro == "arquivados":
 
+        # TODOS OS ARQUIVADOS.
         itens = [
             item
             for item in todas
-            if item.get("status")
-            == "Arquivado"
+            if normalizar_status(
+                item.get("status")
+            ) == "arquivado"
         ]
 
     elif filtro == "atrasados":
 
+        # ARQUIVADOS NUNCA APARECEM AQUI.
         itens = [
             item
             for item in todas
             if (
-                item.get("foi_atrasada")
-                and normalizar_texto(
+                normalizar_status(
                     item.get("status")
                 ) != "arquivado"
+                and item.get(
+                    "foi_atrasada"
+                )
             )
         ]
 
     else:
 
         itens = todas
+
+    # ========================================================
+    # CONTADORES
+    # ========================================================
 
     total_todos = len(
         todas
@@ -2311,39 +2364,45 @@ def relatorios():
     total_pendentes = sum(
         1
         for item in todas
-        if item.get("status")
-        == "Pendente"
+        if normalizar_status(
+            item.get("status")
+        ) == "pendente"
     )
 
     total_andamento = sum(
         1
         for item in todas
-        if item.get("status")
-        == "Em andamento"
+        if normalizar_status(
+            item.get("status")
+        ) == "em andamento"
     )
 
     total_concluidos = sum(
         1
         for item in todas
-        if item.get("status")
-        == "Concluído"
+        if normalizar_status(
+            item.get("status")
+        ) == "concluido"
     )
 
     total_arquivados = sum(
         1
         for item in todas
-        if item.get("status")
-        == "Arquivado"
+        if normalizar_status(
+            item.get("status")
+        ) == "arquivado"
     )
 
     total_atrasados = sum(
         1
         for item in todas
         if (
-            item.get("foi_atrasada")
-            and normalizar_texto(
+            normalizar_status(
                 item.get("status")
             ) != "arquivado"
+            and item.get(
+                "foi_atrasada"
+            )
         )
     )
 
@@ -2387,12 +2446,6 @@ def modulo(nome):
         return redirect(
             url_for("login")
         )
-
-    # ========================================================
-    # CORREÇÃO PRINCIPAL:
-    # normalização agora remove TODOS os acentos,
-    # inclusive ç.
-    # ========================================================
 
     nome_normalizado = normalizar_texto(
         nome
@@ -2687,10 +2740,6 @@ def modulo(nome):
             ]
         )
 
-    # ========================================================
-    # MÓDULO DESCONHECIDO
-    # ========================================================
-
     flash(
         f"Módulo '{nome}' não encontrado.",
         "warning"
@@ -2745,8 +2794,6 @@ def editar(id):
             url_for("relatorios")
         )
 
-    # GET:
-    # a edição é feita pelo modal do relatório
     if request.method == "GET":
 
         return redirect(
@@ -2900,14 +2947,13 @@ def editar(id):
         "encerrado_por"
     )
 
-    # --------------------------------------------------------
-    # Se editar para concluído e ainda não tiver conclusão,
-    # registra agora.
-    # --------------------------------------------------------
+    # ========================================================
+    # ALTERADO PARA CONCLUÍDO
+    # ========================================================
 
     if (
         status == "Concluído"
-        and normalizar_texto(
+        and normalizar_status(
             status_anterior
         ) != "concluido"
     ):
@@ -2922,9 +2968,9 @@ def editar(id):
             "usuario_atual"
         ]
 
-    # --------------------------------------------------------
-    # Se voltar para ativo, limpa encerramento.
-    # --------------------------------------------------------
+    # ========================================================
+    # VOLTOU PARA ATIVO
+    # ========================================================
 
     if status in (
         "Pendente",
@@ -2933,6 +2979,11 @@ def editar(id):
 
         concluido_em = None
         encerrado_por = None
+
+    # ========================================================
+    # SE ARQUIVADO MANUALMENTE
+    # PRESERVA A DATA DE CONCLUSÃO
+    # ========================================================
 
     executar(
         """
@@ -3037,7 +3088,7 @@ def concluir(id):
             url_for("index")
         )
 
-    status_atual = normalizar_texto(
+    status_atual = normalizar_status(
         obter_valor(
             atividade,
             "status",
@@ -3213,8 +3264,8 @@ def concluir(id):
                     ),
                     "Pendente",
 
-                    # INÍCIO DA EXPEDIÇÃO =
-                    # MOMENTO DA CONCLUSÃO DA SEPARAÇÃO
+                    # A EXPEDIÇÃO COMEÇA NO MOMENTO
+                    # EM QUE A SEPARAÇÃO É CONCLUÍDA.
                     agora,
 
                     agora
@@ -3249,7 +3300,7 @@ def concluir(id):
 
 
 # ============================================================
-# ARQUIVAR
+# ARQUIVAR MANUALMENTE
 # ============================================================
 
 @app.route(
@@ -3266,14 +3317,14 @@ def arquivar(id):
 
     atividade = executar(
         """
-        SELECT id
+        SELECT *
         FROM atividades
         WHERE id = %s
         """
         if usando_postgresql()
         else
         """
-        SELECT id
+        SELECT *
         FROM atividades
         WHERE id = ?
         """,
@@ -3290,6 +3341,26 @@ def arquivar(id):
 
         return redirect(
             url_for("relatorios")
+        )
+
+    status_atual = normalizar_status(
+        obter_valor(
+            atividade,
+            "status",
+            ""
+        )
+    )
+
+    if status_atual == "arquivado":
+
+        flash(
+            "Esse registro já está arquivado.",
+            "info"
+        )
+
+        return redirect(
+            request.referrer
+            or url_for("relatorios")
         )
 
     executar(
@@ -3324,6 +3395,10 @@ def arquivar(id):
 
 # ============================================================
 # DELETAR - COMPATIBILIDADE
+#
+# IMPORTANTE:
+# NÃO APAGA ATIVIDADES.
+# Apenas arquiva.
 # ============================================================
 
 @app.route(
@@ -3437,6 +3512,8 @@ def relatorio_pdf():
         return redirect(
             url_for("login")
         )
+
+    arquivar_atividades_expiradas()
 
     itens = executar(
         """

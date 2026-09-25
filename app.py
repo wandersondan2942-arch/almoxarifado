@@ -59,7 +59,7 @@ FUSO_BRASIL = ZoneInfo("America/Sao_Paulo")
 
 
 # ============================================================
-# STATUS PADRÃO DO SISTEMA
+# STATUS PADRÃO
 # ============================================================
 
 STATUS_PENDENTE = "Pendente"
@@ -233,7 +233,7 @@ def contar(
 
 
 # ============================================================
-# NORMALIZAÇÃO DE TEXTO
+# NORMALIZAÇÃO
 # ============================================================
 
 def normalizar_texto(valor):
@@ -571,21 +571,24 @@ def prazo_em_datetime(valor):
 
 
 # ============================================================
-# ATRASOS
+# ATRASADOS
 #
-# REGRA DO PAINEL:
+# REGRA:
 #
-# SOMENTE Pendente e Em andamento podem ser
-# considerados ATRASADOS atualmente.
+# SOMENTE Pendente e Em andamento podem estar atrasados.
 #
-# Concluído:
-#    não aparece em "Atrasados atuais"
+# Concluído = histórico
+# Arquivado = histórico
 #
-# Arquivado:
-#    nunca aparece em "Atrasados"
+# Portanto:
+# Concluído NÃO conta em atrasados atuais.
+# Arquivado NÃO conta em atrasados atuais.
 # ============================================================
 
-def prazo_atrasado(prazo, status=None):
+def prazo_atrasado(
+    prazo,
+    status=None
+):
 
     if not status_eh_ativo(status):
         return False
@@ -608,7 +611,6 @@ def registro_foi_atrasado(item):
         ""
     )
 
-    # SOMENTE atividades ativas
     if not status_eh_ativo(status):
         return False
 
@@ -620,14 +622,10 @@ def registro_foi_atrasado(item):
     if not prazo:
         return False
 
-    prazo_dt = prazo_em_datetime(
-        prazo
+    return prazo_atrasado(
+        prazo,
+        status
     )
-
-    if not prazo_dt:
-        return False
-
-    return agora_brasil() > prazo_dt
 
 
 def texto_atraso(item):
@@ -638,7 +636,6 @@ def texto_atraso(item):
         ""
     )
 
-    # Arquivados e concluídos não mostram atraso atual.
     if not status_eh_ativo(status):
         return ""
 
@@ -657,10 +654,9 @@ def texto_atraso(item):
     if not prazo_dt:
         return ""
 
-    agora = agora_brasil()
-
     diferenca = (
-        agora - prazo_dt
+        agora_brasil()
+        - prazo_dt
     )
 
     if diferenca.total_seconds() <= 0:
@@ -698,7 +694,7 @@ def texto_atraso(item):
 
 
 # ============================================================
-# PREPARAÇÃO DE ATIVIDADES
+# PREPARAÇÃO
 # ============================================================
 
 def preparar_atividade(item):
@@ -792,9 +788,39 @@ def preparar_chat(itens):
 
 
 # ============================================================
-# DUPLICIDADE DE REQUISIÇÃO
+# BUSCAS PADRÃO DE ATIVIDADES
+# ============================================================
+
+def buscar_atividades_ativas():
+
+    return executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE LOWER(COALESCE(status,'')) IN
+              ('pendente','em andamento')
+        ORDER BY id DESC
+        """,
+        fetchall=True
+    )
+
+
+def buscar_atividades_historico():
+
+    return executar(
+        """
+        SELECT *
+        FROM atividades
+        ORDER BY id DESC
+        """,
+        fetchall=True
+    )
+
+
+# ============================================================
+# DUPLICIDADE
 #
-# Uma requisição só pode ter uma atividade ATIVA.
+# Somente atividades ATIVAS bloqueiam uma nova requisição.
 # Concluído e Arquivado podem ser reutilizados.
 # ============================================================
 
@@ -1136,7 +1162,7 @@ def init_db():
         """
         SELECT id
         FROM usuarios
-        WHERE nome = %s
+        WHERE LOWER(nome) = LOWER(%s)
         LIMIT 1
         """
         if usando_postgresql()
@@ -1144,7 +1170,7 @@ def init_db():
         """
         SELECT id
         FROM usuarios
-        WHERE nome = ?
+        WHERE LOWER(nome) = LOWER(?)
         LIMIT 1
         """,
         ("Wanderson Fernandes",),
@@ -1184,13 +1210,10 @@ def init_db():
 # ============================================================
 # ARQUIVAMENTO AUTOMÁTICO
 #
-# SOMENTE EXPEDIÇÃO:
+# QUALQUER ATIVIDADE CONCLUÍDA HÁ MAIS DE 24 HORAS
+# PODE SER ARQUIVADA.
 #
-# Concluído
-#     ↓
-# 24 horas
-#     ↓
-# Arquivado
+# O registro NÃO é apagado.
 # ============================================================
 
 def arquivar_atividades_expiradas():
@@ -1200,45 +1223,69 @@ def arquivar_atividades_expiradas():
         - timedelta(hours=24)
     )
 
-    if usando_postgresql():
+    registros = executar(
+        """
+        SELECT id, status, concluido_em
+        FROM atividades
+        WHERE concluido_em IS NOT NULL
+        """,
+        fetchall=True
+    )
 
-        executar(
-            """
-            UPDATE atividades
-            SET status = 'Arquivado'
-            WHERE LOWER(COALESCE(status,'')) = 'concluido'
-              AND categoria = 'Expedição'
-              AND concluido_em IS NOT NULL
-              AND concluido_em <= %s
-            """,
-            (
-                limite.replace(
-                    tzinfo=None
-                ),
-            ),
-            commit=True
+    ids_para_arquivar = []
+
+    for item in registros:
+
+        status = obter_valor(
+            item,
+            "status",
+            ""
         )
 
-    else:
+        if not status_eh_concluido(status):
+            continue
 
-        limite_texto = (
-            limite.strftime(
-                "%Y-%m-%d %H:%M:%S"
+        concluido_em = obter_valor(
+            item,
+            "concluido_em"
+        )
+
+        dt = converter_para_brasil(
+            concluido_em
+        )
+
+        if not dt:
+            continue
+
+        limite_brasil = limite.astimezone(
+            FUSO_BRASIL
+        )
+
+        if dt <= limite_brasil:
+
+            ids_para_arquivar.append(
+                obter_valor(
+                    item,
+                    "id"
+                )
             )
-        )
+
+    for id_atividade in ids_para_arquivar:
 
         executar(
             """
             UPDATE atividades
             SET status = 'Arquivado'
-            WHERE LOWER(COALESCE(status,'')) = 'concluído'
-              AND categoria = 'Expedição'
-              AND concluido_em IS NOT NULL
-              AND concluido_em <= ?
+            WHERE id = %s
+            """
+            if usando_postgresql()
+            else
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE id = ?
             """,
-            (
-                limite_texto,
-            ),
+            (id_atividade,),
             commit=True
         )
 
@@ -1269,7 +1316,7 @@ def login():
             """
             SELECT *
             FROM usuarios
-            WHERE nome = %s
+            WHERE LOWER(nome) = LOWER(%s)
               AND senha = %s
             LIMIT 1
             """
@@ -1278,7 +1325,7 @@ def login():
             """
             SELECT *
             FROM usuarios
-            WHERE nome = ?
+            WHERE LOWER(nome) = LOWER(?)
               AND senha = ?
             LIMIT 1
             """,
@@ -1703,13 +1750,7 @@ def index():
         )
 
     # ========================================================
-    # ATIVIDADES DO DASHBOARD
-    #
-    # SOMENTE:
-    # Pendente
-    # Em andamento
-    #
-    # Concluídos e Arquivados NÃO aparecem.
+    # ATIVIDADES ATIVAS DO DASHBOARD
     # ========================================================
 
     busca = request.args.get(
@@ -1773,16 +1814,7 @@ def index():
 
     else:
 
-        itens = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
-            ORDER BY id DESC
-            """,
-            fetchall=True
-        )
+        itens = buscar_atividades_ativas()
 
     itens = preparar_lista_atividades(
         itens
@@ -1790,13 +1822,16 @@ def index():
 
     # ========================================================
     # USUÁRIOS
+    #
+    # IMPORTANTE:
+    # Aqui estão TODOS os usuários cadastrados.
     # ========================================================
 
     usuarios = executar(
         """
-        SELECT *
+        SELECT id, nome, criado_em
         FROM usuarios
-        ORDER BY nome
+        ORDER BY nome ASC
         """,
         fetchall=True
     )
@@ -1826,38 +1861,39 @@ def index():
     mensagens.reverse()
 
     # ========================================================
-    # INDICADORES
+    # REQUISIÇÕES PENDENTES
     #
-    # REQUISIÇÕES:
-    # somente Separação Pendente.
+    # SOMENTE:
+    # categoria = Separação
+    # status = Pendente
     #
-    # INVENTÁRIO:
-    # somente Pendente + Em andamento.
-    #
-    # EXPEDIÇÃO:
-    # somente Pendente + Em andamento.
-    #
-    # RECEBIMENTO:
-    # somente Pendente + Em andamento.
+    # Usa DISTINCT porque uma requisição é uma requisição,
+    # mesmo que eventualmente existam registros repetidos.
     # ========================================================
 
     total_req = contar(
         """
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT UPPER(TRIM(num_requisicao))) AS total
         FROM atividades
         WHERE categoria = %s
           AND LOWER(COALESCE(status,'')) = 'pendente'
+          AND COALESCE(TRIM(num_requisicao),'') <> ''
         """
         if usando_postgresql()
         else
         """
-        SELECT COUNT(*) AS total
+        SELECT COUNT(DISTINCT UPPER(TRIM(num_requisicao))) AS total
         FROM atividades
         WHERE categoria = ?
           AND LOWER(COALESCE(status,'')) = 'pendente'
+          AND COALESCE(TRIM(num_requisicao),'') <> ''
         """,
         ("Separação",)
     )
+
+    # ========================================================
+    # INVENTÁRIO
+    # ========================================================
 
     inv_total = contar(
         """
@@ -1897,6 +1933,12 @@ def index():
         ("Inventário",)
     )
 
+    # ========================================================
+    # EXPEDIÇÃO
+    #
+    # SOMENTE ATIVAS.
+    # ========================================================
+
     exp_pend = contar(
         """
         SELECT COUNT(*) AS total
@@ -1917,6 +1959,10 @@ def index():
         ("Expedição",)
     )
 
+    # ========================================================
+    # RECEBIMENTO
+    # ========================================================
+
     rec_pend = contar(
         """
         SELECT COUNT(*) AS total
@@ -1936,6 +1982,12 @@ def index():
         """,
         ("Recebimento",)
     )
+
+    # ========================================================
+    # OCORRÊNCIAS
+    #
+    # Alta prioridade + ativa.
+    # ========================================================
 
     total_oco = contar(
         """
@@ -1960,40 +2012,29 @@ def index():
     # ========================================================
     # TODAS AS ATIVIDADES
     #
-    # Usadas para indicadores históricos.
+    # Somente para histórico/indicadores.
     # ========================================================
 
-    todas = executar(
-        """
-        SELECT *
-        FROM atividades
-        """,
-        fetchall=True
-    )
+    todas = buscar_atividades_historico()
 
-    todas_preparadas = (
-        preparar_lista_atividades(
-            todas
-        )
+    todas_preparadas = preparar_lista_atividades(
+        todas
     )
 
     # ========================================================
     # ATRASADOS ATUAIS
     #
-    # AQUI ESTÁ UMA DAS PRINCIPAIS CORREÇÕES.
+    # NUNCA usa apenas o prazo.
     #
-    # Somente Pendente + Em andamento.
+    # Só conta:
+    # Pendente + prazo vencido
+    # Em andamento + prazo vencido
     # ========================================================
 
     total_atrasados = sum(
         1
         for item in todas_preparadas
-        if (
-            status_eh_ativo(
-                item.get("status")
-            )
-            and item.get("foi_atrasada")
-        )
+        if registro_foi_atrasado(item)
     )
 
     # ========================================================
@@ -2005,11 +2046,10 @@ def index():
     )
 
     # ========================================================
-    # TOTAL CONCLUÍDAS
+    # CONCLUÍDAS
     #
-    # Aqui histórico continua contando.
-    # Arquivado nasceu de uma conclusão, então também
-    # participa dos indicadores históricos.
+    # Histórico:
+    # Concluído + Arquivado
     # ========================================================
 
     total_concluidas = sum(
@@ -2024,22 +2064,24 @@ def index():
     )
 
     # ========================================================
-    # EXPEDIÇÃO
+    # EXPEDIÇÃO HISTÓRICA
     # ========================================================
 
     total_expedicao = sum(
         1
         for item in todas_preparadas
-        if item.get("categoria")
-        == "Expedição"
+        if normalizar_texto(
+            item.get("categoria")
+        ) == "expedicao"
     )
 
     expedicao_concluida = sum(
         1
         for item in todas_preparadas
         if (
-            item.get("categoria")
-            == "Expedição"
+            normalizar_texto(
+                item.get("categoria")
+            ) == "expedicao"
             and normalizar_status(
                 item.get("status")
             ) in (
@@ -2155,9 +2197,11 @@ def index():
         inv_conc=inv_conc,
 
         exp_pend=exp_pend,
+
         rec_pend=rec_pend,
 
         total_oco=total_oco,
+
         total_atrasados=total_atrasados,
 
         total_geral=total_geral,
@@ -2222,13 +2266,7 @@ def indicadores():
 
     arquivar_atividades_expiradas()
 
-    itens = executar(
-        """
-        SELECT *
-        FROM atividades
-        """,
-        fetchall=True
-    )
+    itens = buscar_atividades_historico()
 
     itens = preparar_lista_atividades(
         itens
@@ -2252,16 +2290,18 @@ def indicadores():
     inventario_total = sum(
         1
         for item in itens
-        if item.get("categoria")
-        == "Inventário"
+        if normalizar_texto(
+            item.get("categoria")
+        ) == "inventario"
     )
 
     inventario_concluido = sum(
         1
         for item in itens
         if (
-            item.get("categoria")
-            == "Inventário"
+            normalizar_texto(
+                item.get("categoria")
+            ) == "inventario"
             and normalizar_status(
                 item.get("status")
             ) in (
@@ -2274,16 +2314,18 @@ def indicadores():
     expedicao_total = sum(
         1
         for item in itens
-        if item.get("categoria")
-        == "Expedição"
+        if normalizar_texto(
+            item.get("categoria")
+        ) == "expedicao"
     )
 
     expedicao_concluido = sum(
         1
         for item in itens
         if (
-            item.get("categoria")
-            == "Expedição"
+            normalizar_texto(
+                item.get("categoria")
+            ) == "expedicao"
             and normalizar_status(
                 item.get("status")
             ) in (
@@ -2361,14 +2403,7 @@ def relatorios():
         "todos"
     )
 
-    todas = executar(
-        """
-        SELECT *
-        FROM atividades
-        ORDER BY id DESC
-        """,
-        fetchall=True
-    )
+    todas = buscar_atividades_historico()
 
     todas = preparar_lista_atividades(
         todas
@@ -2423,14 +2458,7 @@ def relatorios():
         itens = [
             item
             for item in todas
-            if (
-                status_eh_ativo(
-                    item.get("status")
-                )
-                and item.get(
-                    "foi_atrasada"
-                )
-            )
+            if registro_foi_atrasado(item)
         ]
 
     else:
@@ -2477,18 +2505,10 @@ def relatorios():
         )
     )
 
-    # SOMENTE ATIVOS COM PRAZO VENCIDO
     total_atrasados = sum(
         1
         for item in todas
-        if (
-            status_eh_ativo(
-                item.get("status")
-            )
-            and item.get(
-                "foi_atrasada"
-            )
-        )
+        if registro_foi_atrasado(item)
     )
 
     return render_template(
@@ -2571,12 +2591,28 @@ def modulo(nome):
 
     # ========================================================
     # CADASTROS
+    #
+    # Agora envia os usuários para a tela de cadastros.
     # ========================================================
 
     if nome_normalizado == "cadastros":
 
+        usuarios = executar(
+            """
+            SELECT id, nome, criado_em
+            FROM usuarios
+            ORDER BY nome ASC
+            """,
+            fetchall=True
+        )
+
         return render_template(
             "cadastros.html",
+
+            usuarios=linhas_para_dict(
+                usuarios
+            ),
+
             usuario_atual=session[
                 "usuario_atual"
             ]
@@ -2689,8 +2725,7 @@ def modulo(nome):
             """
             SELECT *
             FROM melhorias
-            WHERE COALESCE(status,'')
-                <> 'Arquivado'
+            WHERE LOWER(COALESCE(status,'')) <> 'arquivado'
             ORDER BY id DESC
             """,
             fetchall=True
@@ -2787,44 +2822,35 @@ def modulo(nome):
         )
 
         # ====================================================
-        # MÓDULO OPERACIONAL
-        #
-        # SOMENTE ATIVIDADES ATIVAS.
+        # SOMENTE ATIVIDADES ATIVAS
         # ====================================================
 
-        if usando_postgresql():
-
-            itens = executar(
-                """
-                SELECT *
-                FROM atividades
-                WHERE categoria = %s
-                  AND LOWER(COALESCE(status,'')) IN
-                      ('pendente','em andamento')
-                ORDER BY id DESC
-                """,
-                (
-                    categoria,
-                ),
-                fetchall=True
-            )
-
-        else:
-
-            itens = executar(
-                """
-                SELECT *
-                FROM atividades
-                WHERE categoria = ?
-                  AND LOWER(COALESCE(status,'')) IN
-                      ('pendente','em andamento')
-                ORDER BY id DESC
-                """,
-                (
-                    categoria,
-                ),
-                fetchall=True
-            )
+        itens = executar(
+            """
+            SELECT *
+            FROM atividades
+            WHERE LOWER(COALESCE(categoria,'')) =
+                  LOWER(%s)
+              AND LOWER(COALESCE(status,'')) IN
+                  ('pendente','em andamento')
+            ORDER BY id DESC
+            """
+            if usando_postgresql()
+            else
+            """
+            SELECT *
+            FROM atividades
+            WHERE LOWER(COALESCE(categoria,'')) =
+                  LOWER(?)
+              AND LOWER(COALESCE(status,'')) IN
+                  ('pendente','em andamento')
+            ORDER BY id DESC
+            """,
+            (
+                categoria,
+            ),
+            fetchall=True
+        )
 
         return render_template(
             "modulo.html",
@@ -2999,11 +3025,9 @@ def editar(id):
         )
 
     if prioridade not in prioridades_validas:
-
         prioridade = "Baixa"
 
     if status not in status_validos:
-
         status = STATUS_PENDENTE
 
     if (
@@ -3020,6 +3044,10 @@ def editar(id):
             url_for("relatorios")
         )
 
+    # ========================================================
+    # DUPLICIDADE
+    # ========================================================
+
     if (
         num_requisicao
         and requisicao_duplicada(
@@ -3029,7 +3057,7 @@ def editar(id):
     ):
 
         flash(
-            f"A requisição {num_requisicao} já está sendo utilizada.",
+            f"A requisição {num_requisicao} já possui uma atividade ativa.",
             "warning"
         )
 
@@ -3054,7 +3082,7 @@ def editar(id):
     )
 
     # ========================================================
-    # ALTERADO PARA CONCLUÍDO
+    # PASSOU PARA CONCLUÍDO
     # ========================================================
 
     if (
@@ -3089,7 +3117,7 @@ def editar(id):
     # ========================================================
     # ARQUIVADO
     #
-    # Preserva data de conclusão.
+    # Preserva conclusão existente.
     # ========================================================
 
     executar(
@@ -3209,7 +3237,7 @@ def concluir(id):
     ):
 
         flash(
-            "Essa atividade já foi encerrada.",
+            "Essa atividade já está encerrada.",
             "info"
         )
 
@@ -3255,6 +3283,7 @@ def concluir(id):
 
     # ========================================================
     # SEPARAÇÃO CONCLUÍDA
+    #
     # → CRIA EXPEDIÇÃO AUTOMATICAMENTE
     # ========================================================
 
@@ -3279,7 +3308,8 @@ def concluir(id):
             """
             SELECT id
             FROM atividades
-            WHERE categoria = %s
+            WHERE LOWER(COALESCE(categoria,'')) =
+                  'expedicao'
               AND UPPER(TRIM(num_requisicao)) = %s
               AND LOWER(COALESCE(status,'')) IN
                   ('pendente','em andamento')
@@ -3290,15 +3320,15 @@ def concluir(id):
             """
             SELECT id
             FROM atividades
-            WHERE categoria = ?
+            WHERE LOWER(COALESCE(categoria,'')) =
+                  'expedicao'
               AND UPPER(TRIM(num_requisicao)) = ?
               AND LOWER(COALESCE(status,'')) IN
                   ('pendente','em andamento')
             LIMIT 1
             """,
             (
-                "Expedição",
-                num_requisicao
+                num_requisicao,
             ),
             fetchone=True
         )
@@ -3403,7 +3433,7 @@ def concluir(id):
 
 
 # ============================================================
-# ARQUIVAR MANUALMENTE
+# ARQUIVAR
 # ============================================================
 
 @app.route(
@@ -3500,7 +3530,6 @@ def arquivar(id):
 # DELETAR - COMPATIBILIDADE
 #
 # NÃO APAGA ATIVIDADES.
-# Apenas arquiva.
 # ============================================================
 
 @app.route(
@@ -3617,14 +3646,7 @@ def relatorio_pdf():
 
     arquivar_atividades_expiradas()
 
-    itens = executar(
-        """
-        SELECT *
-        FROM atividades
-        ORDER BY id DESC
-        """,
-        fetchall=True
-    )
+    itens = buscar_atividades_historico()
 
     itens = preparar_lista_atividades(
         itens
@@ -3814,7 +3836,7 @@ def relatorio_pdf():
 
 
 # ============================================================
-# EXPORTAR ESTOQUE PARA EXCEL
+# EXPORTAR ESTOQUE
 # ============================================================
 
 @app.route("/exportar_estoque")
@@ -4054,7 +4076,7 @@ def importar_estoque():
             )
 
         # ====================================================
-        # NORMALIZAÇÃO DE COLUNAS
+        # NORMALIZAÇÃO DAS COLUNAS
         # ====================================================
 
         df.columns = [

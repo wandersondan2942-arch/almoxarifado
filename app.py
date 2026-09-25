@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from io import BytesIO
 from zoneinfo import ZoneInfo
@@ -112,7 +113,6 @@ def executar(
         if fetchone:
 
             resultado = cursor.fetchone()
-
             cursor.close()
 
             return resultado
@@ -120,7 +120,6 @@ def executar(
         if fetchall:
 
             resultado = cursor.fetchall()
-
             cursor.close()
 
             return resultado
@@ -138,14 +137,6 @@ def executar(
             pass
 
         raise
-
-
-def fechar_cursor(cursor):
-
-    try:
-        cursor.close()
-    except Exception:
-        pass
 
 
 def linha_para_dict(linha):
@@ -184,11 +175,9 @@ def obter_valor(
         )
 
     try:
-
         return linha[campo]
 
     except Exception:
-
         return padrao
 
 
@@ -217,6 +206,39 @@ def contar(
 
     except Exception:
         return 0
+
+
+# ============================================================
+# NORMALIZAÇÃO DE TEXTO
+# ============================================================
+
+def normalizar_texto(valor):
+
+    if valor is None:
+        return ""
+
+    texto = str(valor).strip().lower()
+
+    texto = unicodedata.normalize(
+        "NFD",
+        texto
+    )
+
+    texto = "".join(
+        caractere
+        for caractere in texto
+        if unicodedata.category(caractere) != "Mn"
+    )
+
+    return texto
+
+
+def normalizar_requisicao(valor):
+
+    if valor is None:
+        return ""
+
+    return str(valor).strip().upper()
 
 
 # ============================================================
@@ -363,13 +385,10 @@ def calcular_duracao(
         return "-"
 
     if fim:
-
         fim_dt = converter_para_brasil(
             fim
         )
-
     else:
-
         fim_dt = agora_brasil()
 
     if not fim_dt:
@@ -401,16 +420,8 @@ def calcular_duracao(
 
 
 # ============================================================
-# REQUISIÇÕES / PRAZOS
+# PRAZOS
 # ============================================================
-
-def normalizar_requisicao(valor):
-
-    if valor is None:
-        return ""
-
-    return str(valor).strip().upper()
-
 
 def prazo_em_datetime(valor):
 
@@ -479,48 +490,25 @@ def prazo_em_datetime(valor):
 
 
 # ============================================================
-# VERIFICAÇÃO DE ATRASO
+# ATRASOS
 # ============================================================
-
-def prazo_atrasado(
-    prazo,
-    status=None
-):
-
-    # --------------------------------------------------------
-    # ARQUIVADO NUNCA É ATRASADO
-    # --------------------------------------------------------
-
-    if str(status or "").strip() == "Arquivado":
-        return False
-
-    dt = prazo_em_datetime(
-        prazo
-    )
-
-    if not dt:
-        return False
-
-    return agora_brasil() > dt
-
 
 def registro_foi_atrasado(item):
 
-    status = str(
+    status = normalizar_texto(
         obter_valor(
             item,
             "status",
             ""
         )
-        or ""
-    ).strip()
+    )
 
     # ========================================================
-    # REGRA PRINCIPAL:
-    # ARQUIVADO NÃO PODE SER ATRASADO
+    # REGRA ABSOLUTA:
+    # ARQUIVADO NUNCA É ATRASADO
     # ========================================================
 
-    if status == "Arquivado":
+    if status == "arquivado":
         return False
 
     prazo = obter_valor(
@@ -543,6 +531,7 @@ def registro_foi_atrasado(item):
         "concluido_em"
     )
 
+    # Se foi concluído, compara o momento da conclusão
     if concluido:
 
         fim = converter_para_brasil(
@@ -550,27 +539,25 @@ def registro_foi_atrasado(item):
         )
 
         if fim:
+
             return fim > prazo_dt
 
+    # Se ainda não foi concluído,
+    # compara com o momento atual
     return agora_brasil() > prazo_dt
 
 
 def texto_atraso(item):
 
-    status = str(
+    status = normalizar_texto(
         obter_valor(
             item,
             "status",
             ""
         )
-        or ""
-    ).strip()
+    )
 
-    # ========================================================
-    # ARQUIVADO NÃO POSSUI TEXTO DE ATRASO
-    # ========================================================
-
-    if status == "Arquivado":
+    if status == "arquivado":
         return ""
 
     prazo = obter_valor(
@@ -641,13 +628,11 @@ def texto_atraso(item):
             f"{mins}min de atraso"
         )
 
-    return (
-        f"{mins}min de atraso"
-    )
+    return f"{mins}min de atraso"
 
 
 # ============================================================
-# PREPARAÇÃO DOS REGISTROS
+# PREPARAÇÃO DE ATIVIDADES
 # ============================================================
 
 def preparar_atividade(item):
@@ -689,10 +674,6 @@ def preparar_atividade(item):
         )
     )
 
-    # --------------------------------------------------------
-    # ATRASO
-    # --------------------------------------------------------
-
     item["foi_atrasada"] = (
         registro_foi_atrasado(
             item
@@ -713,9 +694,7 @@ def preparar_atividade(item):
     return item
 
 
-def preparar_lista_atividades(
-    itens
-):
+def preparar_lista_atividades(itens):
 
     return [
         preparar_atividade(item)
@@ -755,10 +734,8 @@ def requisicao_duplicada(
     ignorar_id=None
 ):
 
-    num_requisicao = (
-        normalizar_requisicao(
-            num_requisicao
-        )
+    num_requisicao = normalizar_requisicao(
+        num_requisicao
     )
 
     if not num_requisicao:
@@ -771,7 +748,7 @@ def requisicao_duplicada(
             FROM atividades
             WHERE UPPER(TRIM(num_requisicao)) = %s
               AND COALESCE(status,'')
-                    NOT IN ('Concluído','Arquivado')
+                  NOT IN ('Concluído','Arquivado')
         """
 
         parametros = [
@@ -788,9 +765,7 @@ def requisicao_duplicada(
                 ignorar_id
             )
 
-        sql += """
-            LIMIT 1
-        """
+        sql += " LIMIT 1"
 
     else:
 
@@ -799,7 +774,7 @@ def requisicao_duplicada(
             FROM atividades
             WHERE UPPER(TRIM(num_requisicao)) = ?
               AND COALESCE(status,'')
-                    NOT IN ('Concluído','Arquivado')
+                  NOT IN ('Concluído','Arquivado')
         """
 
         parametros = [
@@ -816,9 +791,7 @@ def requisicao_duplicada(
                 ignorar_id
             )
 
-        sql += """
-            LIMIT 1
-        """
+        sql += " LIMIT 1"
 
     resultado = executar(
         sql,
@@ -830,7 +803,7 @@ def requisicao_duplicada(
 
 
 # ============================================================
-# BANCO - INICIALIZAÇÃO
+# INICIALIZAÇÃO DO BANCO
 # ============================================================
 
 def init_db():
@@ -899,6 +872,10 @@ def init_db():
             )
         """)
 
+        # ----------------------------------------------------
+        # MIGRAÇÕES
+        # ----------------------------------------------------
+
         cursor.execute("""
             ALTER TABLE melhorias
             ADD COLUMN IF NOT EXISTS etapa TEXT
@@ -930,8 +907,19 @@ def init_db():
             ON atividades (num_requisicao)
         """)
 
-        db.commit()
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_status
+            ON atividades (status)
+        """)
 
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_categoria
+            ON atividades (categoria)
+        """)
+
+        db.commit()
         cursor.close()
 
     else:
@@ -994,68 +982,66 @@ def init_db():
             )
         """)
 
-        colunas_melhorias = db.execute(
+        # ----------------------------------------------------
+        # MIGRAÇÃO SQLITE - MELHORIAS
+        # ----------------------------------------------------
+
+        colunas = db.execute(
             "PRAGMA table_info(melhorias)"
         ).fetchall()
 
-        nomes_melhorias = [
+        nomes = [
             coluna["name"]
-            for coluna in colunas_melhorias
+            for coluna in colunas
         ]
 
-        if "etapa" not in nomes_melhorias:
+        if "etapa" not in nomes:
 
-            db.execute(
-                """
+            db.execute("""
                 ALTER TABLE melhorias
                 ADD COLUMN etapa TEXT
-                """
-            )
+            """)
 
-        if "autor" not in nomes_melhorias:
+        if "autor" not in nomes:
 
-            db.execute(
-                """
+            db.execute("""
                 ALTER TABLE melhorias
                 ADD COLUMN autor TEXT
-                """
-            )
+            """)
 
-        colunas_atividades = db.execute(
+        # ----------------------------------------------------
+        # MIGRAÇÃO SQLITE - ATIVIDADES
+        # ----------------------------------------------------
+
+        colunas = db.execute(
             "PRAGMA table_info(atividades)"
         ).fetchall()
 
-        nomes_atividades = [
+        nomes = [
             coluna["name"]
-            for coluna in colunas_atividades
+            for coluna in colunas
         ]
 
-        if "encerrado_por" not in nomes_atividades:
+        if "encerrado_por" not in nomes:
 
-            db.execute(
-                """
+            db.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN encerrado_por TEXT
-                """
-            )
+            """)
 
-        if "inicio_em" not in nomes_atividades:
+        if "inicio_em" not in nomes:
 
-            db.execute(
-                """
+            db.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN inicio_em TEXT
-                """
-            )
+            """)
 
-        if "concluido_em" not in nomes_atividades:
+        if "concluido_em" not in nomes:
 
-            db.execute(
-                """
+            db.execute("""
                 ALTER TABLE atividades
                 ADD COLUMN concluido_em TEXT
-                """
-            )
+            """)
 
         db.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1063,11 +1049,23 @@ def init_db():
             ON atividades (num_requisicao)
         """)
 
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_status
+            ON atividades (status)
+        """)
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_categoria
+            ON atividades (categoria)
+        """)
+
         db.commit()
 
-    # --------------------------------------------------------
-    # USUÁRIO INICIAL
-    # --------------------------------------------------------
+    # ========================================================
+    # USUÁRIO ADMINISTRADOR INICIAL
+    # ========================================================
 
     usuario = executar(
         """
@@ -1399,9 +1397,9 @@ def index():
         "usuario_atual"
     ]
 
-    # --------------------------------------------------------
+    # ========================================================
     # POST
-    # --------------------------------------------------------
+    # ========================================================
 
     if request.method == "POST":
 
@@ -1627,9 +1625,9 @@ def index():
             url_for("index")
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # BUSCA
-    # --------------------------------------------------------
+    # ========================================================
 
     busca = request.args.get(
         "q",
@@ -1647,10 +1645,14 @@ def index():
                 SELECT *
                 FROM atividades
                 WHERE
-                    COALESCE(num_requisicao,'') ILIKE %s
-                    OR COALESCE(atividade,'') ILIKE %s
-                    OR COALESCE(descricao,'') ILIKE %s
-                    OR COALESCE(responsavel,'') ILIKE %s
+                    COALESCE(status,'')
+                        NOT IN ('Concluído','Arquivado')
+                    AND (
+                        COALESCE(num_requisicao,'') ILIKE %s
+                        OR COALESCE(atividade,'') ILIKE %s
+                        OR COALESCE(descricao,'') ILIKE %s
+                        OR COALESCE(responsavel,'') ILIKE %s
+                    )
                 ORDER BY id DESC
                 """,
                 (
@@ -1669,10 +1671,14 @@ def index():
                 SELECT *
                 FROM atividades
                 WHERE
-                    LOWER(COALESCE(num_requisicao,'')) LIKE ?
-                    OR LOWER(COALESCE(atividade,'')) LIKE ?
-                    OR LOWER(COALESCE(descricao,'')) LIKE ?
-                    OR LOWER(COALESCE(responsavel,'')) LIKE ?
+                    COALESCE(status,'')
+                        NOT IN ('Concluído','Arquivado')
+                    AND (
+                        LOWER(COALESCE(num_requisicao,'')) LIKE ?
+                        OR LOWER(COALESCE(atividade,'')) LIKE ?
+                        OR LOWER(COALESCE(descricao,'')) LIKE ?
+                        OR LOWER(COALESCE(responsavel,'')) LIKE ?
+                    )
                 ORDER BY id DESC
                 """,
                 (
@@ -1701,9 +1707,9 @@ def index():
         itens
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # USUÁRIOS
-    # --------------------------------------------------------
+    # ========================================================
 
     usuarios = executar(
         """
@@ -1718,9 +1724,9 @@ def index():
         usuarios
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CHAT
-    # --------------------------------------------------------
+    # ========================================================
 
     mensagens = executar(
         """
@@ -1738,9 +1744,9 @@ def index():
 
     mensagens.reverse()
 
-    # --------------------------------------------------------
+    # ========================================================
     # INDICADORES
-    # --------------------------------------------------------
+    # ========================================================
 
     total_req = contar(
         """
@@ -1767,6 +1773,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = %s
+          AND COALESCE(status,'')
+              NOT IN ('Arquivado')
         """
         if usando_postgresql()
         else
@@ -1774,6 +1782,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = ?
+          AND COALESCE(status,'')
+              NOT IN ('Arquivado')
         """,
         ("Inventário",)
     )
@@ -1859,9 +1869,9 @@ def index():
         ("Alta",)
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CÁLCULOS
-    # --------------------------------------------------------
+    # ========================================================
 
     todas = executar(
         """
@@ -1877,17 +1887,15 @@ def index():
         )
     )
 
-    # --------------------------------------------------------
-    # ARQUIVADOS SÃO EXCLUÍDOS DO ATRASO
-    # pela função registro_foi_atrasado()
-    # --------------------------------------------------------
-
     total_atrasados = sum(
         1
         for item in todas_preparadas
-        if item.get("foi_atrasada")
-        and item.get("status")
-        != "Arquivado"
+        if (
+            item.get("foi_atrasada")
+            and normalizar_texto(
+                item.get("status")
+            ) != "arquivado"
+        )
     )
 
     total_geral = len(
@@ -1897,10 +1905,11 @@ def index():
     total_concluidas = sum(
         1
         for item in todas_preparadas
-        if item.get("status")
-        in (
-            "Concluído",
-            "Arquivado"
+        if normalizar_texto(
+            item.get("status")
+        ) in (
+            "concluido",
+            "arquivado"
         )
     )
 
@@ -1917,10 +1926,11 @@ def index():
         if (
             item.get("categoria")
             == "Expedição"
-            and item.get("status")
-            in (
-                "Concluído",
-                "Arquivado"
+            and normalizar_texto(
+                item.get("status")
+            ) in (
+                "concluido",
+                "arquivado"
             )
         )
     )
@@ -1958,9 +1968,9 @@ def index():
         else 0
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # GRÁFICOS
-    # --------------------------------------------------------
+    # ========================================================
 
     atendidas_pizza = max(
         0,
@@ -1998,34 +2008,58 @@ def index():
         100 - expedicao_pizza
     )
 
+    # ========================================================
+    # DASHBOARD
+    #
+    # IMPORTANTE:
+    # usamos index.html, que é o template do dashboard atual.
+    # ========================================================
+
     return render_template(
-        "dashboard.html",
+        "index.html",
+
         usuario_atual=usuario_atual,
+
         itens=itens,
         atividades=itens,
+
         usuarios=usuarios,
+
         mensagens=mensagens,
+        chat=mensagens,
 
         total_req=total_req,
+
         inv_total=inv_total,
         inv_conc=inv_conc,
+
         exp_pend=exp_pend,
         rec_pend=rec_pend,
+
         total_oco=total_oco,
         total_atrasados=total_atrasados,
 
         total_geral=total_geral,
+
         concluidas=total_concluidas,
+        atividades_concluidas=total_concluidas,
+
         perc_atendidas=perc_atendidas,
         perc_inventario=perc_inventario,
         perc_expedicao=perc_expedicao,
 
         atendidas_pizza=atendidas_pizza,
         pendentes_pizza=pendentes_pizza,
+
         inventario_pizza=inventario_pizza,
-        inventario_pendente_pizza=inventario_pendente_pizza,
+        inventario_pendente_pizza=(
+            inventario_pendente_pizza
+        ),
+
         expedicao_pizza=expedicao_pizza,
-        expedicao_pendente_pizza=expedicao_pendente_pizza,
+        expedicao_pendente_pizza=(
+            expedicao_pendente_pizza
+        ),
 
         busca=busca
     )
@@ -2077,15 +2111,18 @@ def indicadores():
         itens
     )
 
-    total_geral = len(itens)
+    total_geral = len(
+        itens
+    )
 
     concluidas = sum(
         1
         for item in itens
-        if item.get("status")
-        in (
-            "Concluído",
-            "Arquivado"
+        if normalizar_texto(
+            item.get("status")
+        ) in (
+            "concluido",
+            "arquivado"
         )
     )
 
@@ -2102,10 +2139,11 @@ def indicadores():
         if (
             item.get("categoria")
             == "Inventário"
-            and item.get("status")
-            in (
-                "Concluído",
-                "Arquivado"
+            and normalizar_texto(
+                item.get("status")
+            ) in (
+                "concluido",
+                "arquivado"
             )
         )
     )
@@ -2123,10 +2161,11 @@ def indicadores():
         if (
             item.get("categoria")
             == "Expedição"
-            and item.get("status")
-            in (
-                "Concluído",
-                "Arquivado"
+            and normalizar_texto(
+                item.get("status")
+            ) in (
+                "concluido",
+                "arquivado"
             )
         )
     )
@@ -2166,10 +2205,15 @@ def indicadores():
 
     return render_template(
         "indicadores.html",
+
         total_geral=total_geral,
+
         concluidas=concluidas,
+
         perc_atendidas=perc_atendidas,
+
         perc_inventario=perc_inventario,
+
         perc_expedicao=perc_expedicao
     )
 
@@ -2231,10 +2275,7 @@ def relatorios():
             item
             for item in todas
             if item.get("status")
-            in (
-                "Concluído",
-                "Arquivado"
-            )
+            == "Concluído"
         ]
 
     elif filtro == "arquivados":
@@ -2253,8 +2294,9 @@ def relatorios():
             for item in todas
             if (
                 item.get("foi_atrasada")
-                and item.get("status")
-                != "Arquivado"
+                and normalizar_texto(
+                    item.get("status")
+                ) != "arquivado"
             )
         ]
 
@@ -2262,7 +2304,9 @@ def relatorios():
 
         itens = todas
 
-    total_todos = len(todas)
+    total_todos = len(
+        todas
+    )
 
     total_pendentes = sum(
         1
@@ -2282,10 +2326,7 @@ def relatorios():
         1
         for item in todas
         if item.get("status")
-        in (
-            "Concluído",
-            "Arquivado"
-        )
+        == "Concluído"
     )
 
     total_arquivados = sum(
@@ -2300,24 +2341,33 @@ def relatorios():
         for item in todas
         if (
             item.get("foi_atrasada")
-            and item.get("status")
-            != "Arquivado"
+            and normalizar_texto(
+                item.get("status")
+            ) != "arquivado"
         )
     )
 
     return render_template(
         "relatorios.html",
+
         itens=itens,
+
         filtro=filtro,
+
         usuario_atual=session[
             "usuario_atual"
         ],
 
         total_todos=total_todos,
+
         total_pendentes=total_pendentes,
+
         total_andamento=total_andamento,
+
         total_concluidos=total_concluidos,
+
         total_arquivados=total_arquivados,
+
         total_atrasados=total_atrasados
     )
 
@@ -2338,24 +2388,19 @@ def modulo(nome):
             url_for("login")
         )
 
-    nome_normalizado = (
-        nome.strip()
-        .lower()
-        .replace("á", "a")
-        .replace("ã", "a")
-        .replace("â", "a")
-        .replace("é", "e")
-        .replace("ê", "e")
-        .replace("í", "i")
-        .replace("ó", "o")
-        .replace("ô", "o")
-        .replace("õ", "o")
-        .replace("ú", "u")
+    # ========================================================
+    # CORREÇÃO PRINCIPAL:
+    # normalização agora remove TODOS os acentos,
+    # inclusive ç.
+    # ========================================================
+
+    nome_normalizado = normalizar_texto(
+        nome
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CONFIGURAÇÕES
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "configuracoes":
 
@@ -2366,9 +2411,9 @@ def modulo(nome):
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # INDICADORES
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "indicadores":
 
@@ -2376,9 +2421,9 @@ def modulo(nome):
             url_for("indicadores")
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # RELATÓRIOS
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "relatorios":
 
@@ -2386,9 +2431,9 @@ def modulo(nome):
             url_for("relatorios")
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CADASTROS
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "cadastros":
 
@@ -2399,9 +2444,9 @@ def modulo(nome):
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # MELHORIAS / PDCA
-    # --------------------------------------------------------
+    # ========================================================
 
     if (
         "melhoria" in nome_normalizado
@@ -2515,17 +2560,19 @@ def modulo(nome):
 
         return render_template(
             "melhorias.html",
+
             melhorias=linhas_para_dict(
                 melhorias
             ),
+
             usuario_atual=session[
                 "usuario_atual"
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # ESTOQUE
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "estoque":
 
@@ -2540,19 +2587,23 @@ def modulo(nome):
 
         return render_template(
             "modulo.html",
+
             titulo="Estoque",
+
             modulo="Estoque",
+
             itens=linhas_para_dict(
                 itens
             ),
+
             usuario_atual=session[
                 "usuario_atual"
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # MAPA DOS MÓDULOS
-    # --------------------------------------------------------
+    # ========================================================
 
     mapa_modulos = {
 
@@ -2584,7 +2635,7 @@ def modulo(nome):
         "reversa": {
             "titulo": "Logística Reversa",
             "categoria": "Logística Reversa"
-        },
+        }
     }
 
     configuracao = mapa_modulos.get(
@@ -2618,19 +2669,32 @@ def modulo(nome):
 
         return render_template(
             "modulo.html",
+
             titulo=configuracao[
                 "titulo"
             ],
+
             modulo=configuracao[
                 "titulo"
             ],
+
             itens=preparar_lista_atividades(
                 itens
             ),
+
             usuario_atual=session[
                 "usuario_atual"
             ]
         )
+
+    # ========================================================
+    # MÓDULO DESCONHECIDO
+    # ========================================================
+
+    flash(
+        f"Módulo '{nome}' não encontrado.",
+        "warning"
+    )
 
     return redirect(
         url_for("index")
@@ -2681,6 +2745,8 @@ def editar(id):
             url_for("relatorios")
         )
 
+    # GET:
+    # a edição é feita pelo modal do relatório
     if request.method == "GET":
 
         return redirect(
@@ -2818,6 +2884,56 @@ def editar(id):
             url_for("relatorios")
         )
 
+    status_anterior = obter_valor(
+        atividade,
+        "status",
+        "Pendente"
+    )
+
+    concluido_em = obter_valor(
+        atividade,
+        "concluido_em"
+    )
+
+    encerrado_por = obter_valor(
+        atividade,
+        "encerrado_por"
+    )
+
+    # --------------------------------------------------------
+    # Se editar para concluído e ainda não tiver conclusão,
+    # registra agora.
+    # --------------------------------------------------------
+
+    if (
+        status == "Concluído"
+        and normalizar_texto(
+            status_anterior
+        ) != "concluido"
+    ):
+
+        concluido_em = (
+            agora_utc_naive()
+            if usando_postgresql()
+            else agora_sqlite()
+        )
+
+        encerrado_por = session[
+            "usuario_atual"
+        ]
+
+    # --------------------------------------------------------
+    # Se voltar para ativo, limpa encerramento.
+    # --------------------------------------------------------
+
+    if status in (
+        "Pendente",
+        "Em andamento"
+    ):
+
+        concluido_em = None
+        encerrado_por = None
+
     executar(
         """
         UPDATE atividades
@@ -2829,7 +2945,9 @@ def editar(id):
             responsavel = %s,
             prioridade = %s,
             prazo = %s,
-            status = %s
+            status = %s,
+            concluido_em = %s,
+            encerrado_por = %s
         WHERE id = %s
         """
         if usando_postgresql()
@@ -2844,7 +2962,9 @@ def editar(id):
             responsavel = ?,
             prioridade = ?,
             prazo = ?,
-            status = ?
+            status = ?,
+            concluido_em = ?,
+            encerrado_por = ?
         WHERE id = ?
         """,
         (
@@ -2856,6 +2976,8 @@ def editar(id):
             prioridade,
             prazo or None,
             status,
+            concluido_em,
+            encerrado_por,
             id
         ),
         commit=True
@@ -2915,6 +3037,29 @@ def concluir(id):
             url_for("index")
         )
 
+    status_atual = normalizar_texto(
+        obter_valor(
+            atividade,
+            "status",
+            ""
+        )
+    )
+
+    if status_atual in (
+        "concluido",
+        "arquivado"
+    ):
+
+        flash(
+            "Essa atividade já foi encerrada.",
+            "info"
+        )
+
+        return redirect(
+            request.referrer
+            or url_for("index")
+        )
+
     agora = (
         agora_utc_naive()
         if usando_postgresql()
@@ -2950,10 +3095,10 @@ def concluir(id):
         commit=True
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # SEPARAÇÃO CONCLUÍDA
-    # -> CRIA EXPEDIÇÃO AUTOMATICAMENTE
-    # --------------------------------------------------------
+    # → CRIA EXPEDIÇÃO AUTOMATICAMENTE
+    # ========================================================
 
     categoria = obter_valor(
         atividade,
@@ -3067,16 +3212,35 @@ def concluir(id):
                         "prazo"
                     ),
                     "Pendente",
+
+                    # INÍCIO DA EXPEDIÇÃO =
+                    # MOMENTO DA CONCLUSÃO DA SEPARAÇÃO
                     agora,
+
                     agora
                 ),
                 commit=True
             )
 
-    flash(
-        "Atividade concluída com sucesso.",
-        "success"
-    )
+            flash(
+                "Separação concluída e Expedição criada automaticamente.",
+                "success"
+            )
+
+        else:
+
+            flash(
+                "Separação concluída. "
+                "Já existia uma Expedição ativa para essa requisição.",
+                "info"
+            )
+
+    else:
+
+        flash(
+            "Atividade concluída com sucesso.",
+            "success"
+        )
 
     return redirect(
         request.referrer
@@ -3098,6 +3262,34 @@ def arquivar(id):
 
         return redirect(
             url_for("login")
+        )
+
+    atividade = executar(
+        """
+        SELECT id
+        FROM atividades
+        WHERE id = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT id
+        FROM atividades
+        WHERE id = ?
+        """,
+        (id,),
+        fetchone=True
+    )
+
+    if atividade is None:
+
+        flash(
+            "Registro não encontrado.",
+            "warning"
+        )
+
+        return redirect(
+            url_for("relatorios")
         )
 
     executar(
@@ -3305,42 +3497,49 @@ def relatorio_pdf():
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "atividade"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "categoria"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "responsavel"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "inicio_formatado"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "prazo_formatado"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "concluido_formatado"
                 )
                 or "-"
             ),
+
             str(
                 item.get(
                     "status"
@@ -3364,12 +3563,14 @@ def relatorio_pdf():
                     "#212529"
                 )
             ),
+
             (
                 "TEXTCOLOR",
                 (0, 0),
                 (-1, 0),
                 colors.white
             ),
+
             (
                 "GRID",
                 (0, 0),
@@ -3377,24 +3578,28 @@ def relatorio_pdf():
                 0.5,
                 colors.grey
             ),
+
             (
                 "FONTNAME",
                 (0, 0),
                 (-1, 0),
                 "Helvetica-Bold"
             ),
+
             (
                 "FONTSIZE",
                 (0, 0),
                 (-1, -1),
                 7
             ),
+
             (
                 "VALIGN",
                 (0, 0),
                 (-1, -1),
                 "MIDDLE"
             ),
+
             (
                 "ROWBACKGROUNDS",
                 (0, 1),
@@ -3430,7 +3635,7 @@ def relatorio_pdf():
 
 
 # ============================================================
-# EXPORTAÇÃO DO ESTOQUE PARA EXCEL
+# EXPORTAR ESTOQUE PARA EXCEL
 # ============================================================
 
 @app.route("/exportar_estoque")
@@ -3467,16 +3672,19 @@ def exportar_estoque():
                     "codigo",
                     ""
                 ),
+
                 "Descrição": obter_valor(
                     item,
                     "descricao",
                     ""
                 ),
+
                 "Quantidade": obter_valor(
                     item,
                     "quantidade",
                     0
                 ),
+
                 "Cadastrado em": formatar_data_hora(
                     obter_valor(
                         item,
@@ -3532,7 +3740,7 @@ def exportar_estoque():
 
 
 # ============================================================
-# IMPORTAÇÃO DE ESTOQUE
+# IMPORTAR ESTOQUE
 # XLSX / XLS / CSV
 # ============================================================
 
@@ -3577,9 +3785,9 @@ def importar_estoque():
 
     try:
 
-        # ----------------------------------------------------
+        # ====================================================
         # CSV
-        # ----------------------------------------------------
+        # ====================================================
 
         if nome.endswith(".csv"):
 
@@ -3598,9 +3806,9 @@ def importar_estoque():
                     sep=";"
                 )
 
-        # ----------------------------------------------------
+        # ====================================================
         # XLSX
-        # ----------------------------------------------------
+        # ====================================================
 
         elif nome.endswith(".xlsx"):
 
@@ -3609,9 +3817,9 @@ def importar_estoque():
                 engine="openpyxl"
             )
 
-        # ----------------------------------------------------
+        # ====================================================
         # XLS
-        # ----------------------------------------------------
+        # ====================================================
 
         elif nome.endswith(".xls"):
 
@@ -3622,12 +3830,11 @@ def importar_estoque():
                     engine="xlrd"
                 )
 
-            except ImportError:
+            except Exception:
 
                 flash(
-                    "Para importar arquivos .xls antigos, "
-                    "é necessário adicionar xlrd ao "
-                    "requirements.txt. Prefira .xlsx.",
+                    "Não foi possível ler o arquivo .xls. "
+                    "Prefira salvar o arquivo como .xlsx.",
                     "warning"
                 )
 
@@ -3667,14 +3874,12 @@ def importar_estoque():
                 )
             )
 
-        # ----------------------------------------------------
-        # NORMALIZAÇÃO
-        # ----------------------------------------------------
+        # ====================================================
+        # NORMALIZAÇÃO DE COLUNAS
+        # ====================================================
 
         df.columns = [
-            str(coluna)
-            .strip()
-            .lower()
+            normalizar_texto(coluna)
             for coluna in df.columns
         ]
 
@@ -3686,10 +3891,8 @@ def importar_estoque():
 
             if coluna in [
                 "codigo",
-                "código",
                 "cod",
                 "item",
-                "código do item",
                 "codigo do item"
             ]:
 
@@ -3697,7 +3900,6 @@ def importar_estoque():
 
             if coluna in [
                 "descricao",
-                "descrição",
                 "produto",
                 "material",
                 "nome"
@@ -3715,39 +3917,33 @@ def importar_estoque():
 
                 coluna_quantidade = coluna
 
-        # ----------------------------------------------------
+        # ====================================================
         # FALLBACK
-        # ----------------------------------------------------
+        # ====================================================
 
         if coluna_codigo is None:
 
-            coluna_codigo = (
-                df.columns[0]
-                if len(df.columns) >= 1
-                else None
-            )
+            if len(df.columns) >= 1:
+
+                coluna_codigo = df.columns[0]
 
         if coluna_descricao is None:
 
-            coluna_descricao = (
-                df.columns[1]
-                if len(df.columns) >= 2
-                else None
-            )
+            if len(df.columns) >= 2:
+
+                coluna_descricao = df.columns[1]
 
         if coluna_quantidade is None:
 
-            coluna_quantidade = (
-                df.columns[2]
-                if len(df.columns) >= 3
-                else None
-            )
+            if len(df.columns) >= 3:
+
+                coluna_quantidade = df.columns[2]
 
         quantidade_importada = 0
 
-        # ----------------------------------------------------
+        # ====================================================
         # IMPORTAÇÃO
-        # ----------------------------------------------------
+        # ====================================================
 
         for _, linha in df.iterrows():
 
@@ -3804,6 +4000,7 @@ def importar_estoque():
                 and not descricao
                 and quantidade == 0
             ):
+
                 continue
 
             executar(
@@ -3877,6 +4074,10 @@ with app.app_context():
 
         init_db()
 
+        print(
+            "Banco de dados inicializado com sucesso."
+        )
+
     except Exception as erro:
 
         print(
@@ -3893,11 +4094,13 @@ if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
+
         port=int(
             os.environ.get(
                 "PORT",
                 5000
             )
         ),
+
         debug=True
     )

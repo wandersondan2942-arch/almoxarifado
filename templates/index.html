@@ -1,124 +1,1239 @@
-@app.route("/editar/<int:id>", methods=["POST"])
-def editar(id):
+<!DOCTYPE html>
+<html lang="pt-BR">
 
-    if "usuario_atual" not in session:
-        return redirect(url_for("login"))
+<head>
 
-    num_requisicao = normalizar_requisicao(
-        request.form.get("num_requisicao")
-    )
+    <meta charset="UTF-8">
 
-    atividade = request.form.get(
-        "atividade",
-        ""
-    ).strip()
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    descricao = request.form.get(
-        "descricao",
-        ""
-    ).strip()
+    <title>Almoxarifado Valenet</title>
 
-    categoria = request.form.get(
-        "categoria",
-        "Separação"
-    ).strip()
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-    responsavel = request.form.get(
-        "responsavel",
-        session["usuario_atual"]
-    ).strip()
+    <!-- Font Awesome -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    >
 
-    prioridade = request.form.get(
-        "prioridade",
-        "Baixa"
-    ).strip()
+    <style>
 
-    prazo = request.form.get(
-        "prazo",
-        ""
-    ).strip()
+        body {
+            background: #f5f7fb;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
 
-    # =========================
-    # VALIDAÇÕES
-    # =========================
+        /* =========================
+           SIDEBAR
+        ========================= */
 
-    if not atividade:
-        flash(
-            "Informe a atividade.",
-            "warning"
-        )
-        return redirect(url_for("index"))
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            height: 100vh;
+            background: #111827;
+            color: white;
+            padding: 20px 15px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
 
-    if categoria not in CATEGORIAS_VALIDAS:
-        categoria = "Separação"
+        .sidebar h4 {
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
 
-    if prioridade not in PRIORIDADES_VALIDAS:
-        prioridade = "Baixa"
+        .sidebar a {
+            display: block;
+            color: #d1d5db;
+            text-decoration: none;
+            padding: 11px 13px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
 
-    if categoria == "Separação" and not num_requisicao:
-        flash(
-            "A Separação precisa de um número de requisição.",
-            "warning"
-        )
-        return redirect(url_for("index"))
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: #1f2937;
+            color: white;
+        }
 
-    # =========================
-    # ATUALIZA A ATIVIDADE
-    # =========================
-    #
-    # IMPORTANTE:
-    # inicio_em NÃO será alterado.
-    # concluido_em NÃO será alterado.
-    # criado_em NÃO será alterado.
-    # status NÃO será alterado.
-    # encerrado_por NÃO será alterado.
-    #
+        .sidebar i {
+            width: 24px;
+        }
 
-    executar(
-        """
-        UPDATE atividades
-        SET
-            num_requisicao = %s,
-            atividade = %s,
-            descricao = %s,
-            categoria = %s,
-            responsavel = %s,
-            prioridade = %s,
-            prazo = %s
-        WHERE id = %s
-        """
-        if usando_postgresql()
-        else
-        """
-        UPDATE atividades
-        SET
-            num_requisicao = ?,
-            atividade = ?,
-            descricao = ?,
-            categoria = ?,
-            responsavel = ?,
-            prioridade = ?,
-            prazo = ?
-        WHERE id = ?
-        """,
-        (
-            num_requisicao or None,
-            atividade,
-            descricao,
-            categoria,
-            responsavel,
-            prioridade,
-            prazo or None,
-            id
-        ),
-        commit=True
-    )
+        /* =========================
+           CONTEÚDO PRINCIPAL
+        ========================= */
 
-    flash(
-        "Atividade atualizada com sucesso.",
-        "success"
-    )
+        .main {
+            margin-left: 250px;
+            padding: 25px;
+        }
 
-    return redirect(
-        url_for("index")
-    )
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        /* =========================
+           CARDS
+        ========================= */
+
+        .card-dashboard {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, .06);
+        }
+
+        .stat-card {
+            min-height: 125px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        /* =========================
+           ATIVIDADES
+        ========================= */
+
+        .activity-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+            margin-bottom: 12px;
+        }
+
+        .priority-alta {
+            border-left: 5px solid #dc3545;
+        }
+
+        .priority-media {
+            border-left: 5px solid #ffc107;
+        }
+
+        .priority-baixa {
+            border-left: 5px solid #198754;
+        }
+
+        /* =========================
+           INDICADORES
+        ========================= */
+
+        .indicator-circle {
+            width: 95px;
+            height: 95px;
+            border-radius: 50%;
+            border: 8px solid #e5e7eb;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 22px;
+            font-weight: bold;
+
+            margin: auto;
+        }
+
+        /* =========================
+           CHAT
+        ========================= */
+
+        .chat-box {
+            height: 300px;
+            overflow-y: auto;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .chat-message {
+            background: white;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+
+        /* =========================
+           RESPONSIVO
+        ========================= */
+
+        @media (max-width: 900px) {
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<div class="sidebar">
+
+    <h4>
+        <i class="fa-solid fa-box"></i>
+        Almoxarifado
+    </h4>
+
+
+    <a
+        href="{{ url_for('index') }}"
+        class="active"
+    >
+        <i class="fa-solid fa-house"></i>
+        Início
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-file-lines"></i>
+        Requisições
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        Inventário
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-truck-fast"></i>
+        Expedição
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-truck-ramp-box"></i>
+        Recebimento
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-warehouse"></i>
+        Estoque
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-users"></i>
+        Cadastros
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        Melhorias / PDCA
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-chart-line"></i>
+        Indicadores
+    </a>
+
+
+    <a href="{{ url_for('relatorios') }}">
+        <i class="fa-solid fa-chart-column"></i>
+        Relatórios
+    </a>
+
+
+    <a href="#">
+        <i class="fa-solid fa-gear"></i>
+        Configurações
+    </a>
+
+
+    <hr>
+
+
+    <a href="{{ url_for('logout') }}">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Sair
+    </a>
+
+</div>
+
+
+<!-- =========================================================
+     CONTEÚDO PRINCIPAL
+========================================================= -->
+
+<div class="main">
+
+
+    <!-- =====================================================
+         TOPO
+    ====================================================== -->
+
+    <div class="topbar">
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Painel do Almoxarifado
+            </h2>
+
+            <span class="text-muted">
+                Acompanhamento operacional
+            </span>
+
+        </div>
+
+
+        <div>
+
+            <span class="text-muted">
+
+                Olá,
+                <strong>
+                    {{ session["usuario_atual"] }}
+                </strong>
+
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MENSAGENS FLASH
+    ====================================================== -->
+
+    {% with mensagens = get_flashed_messages(
+        with_categories=true
+    ) %}
+
+        {% if mensagens %}
+
+            {% for categoria, mensagem in mensagens %}
+
+                <div
+                    class="alert alert-{{ categoria }} alert-dismissible fade show"
+                    role="alert"
+                >
+
+                    {{ mensagem }}
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                    ></button>
+
+                </div>
+
+            {% endfor %}
+
+        {% endif %}
+
+    {% endwith %}
+
+
+    <!-- =====================================================
+         CARDS SUPERIORES
+    ====================================================== -->
+
+    <div class="row g-3 mb-4">
+
+
+        <!-- REQUISIÇÕES -->
+
+        <div class="col-md-2">
+
+            <div class="card card-dashboard stat-card">
+
+                <div class="card-body">
+
+                    <div class="text-muted">
+                        Requisições
+                    </div>
+
+                    <div class="stat-number">
+                        {{ total_req }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- INVENTÁRIOS -->
+
+        <div class="col-md-2">
+
+            <div class="card card-dashboard stat-card">
+
+                <div class="card-body">
+
+                    <div class="text-muted">
+                        Inventários
+                    </div>
+
+                    <div class="stat-number">
+                        {{ inv_conc }}/{{ inv_total }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- EXPEDIÇÕES -->
+
+        <div class="col-md-2">
+
+            <div class="card card-dashboard stat-card">
+
+                <div class="card-body">
+
+                    <div class="text-muted">
+                        Expedições
+                    </div>
+
+                    <div class="stat-number">
+                        {{ exp_pend }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- RECEBIMENTOS -->
+
+        <div class="col-md-2">
+
+            <div class="card card-dashboard stat-card">
+
+                <div class="card-body">
+
+                    <div class="text-muted">
+                        Recebimentos
+                    </div>
+
+                    <div class="stat-number">
+                        {{ rec_pend }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- OCORRÊNCIAS -->
+
+        <div class="col-md-2">
+
+            <div class="card card-dashboard stat-card">
+
+                <div class="card-body">
+
+                    <div class="text-muted">
+                        Ocorrências
+                    </div>
+
+                    <div class="stat-number">
+                        {{ total_oco }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ATRASADOS -->
+
+        <div class="col-md-2">
+
+            <a
+                href="{{ url_for('atrasados') }}"
+                class="text-decoration-none"
+            >
+
+                <div class="card card-dashboard stat-card">
+
+                    <div class="card-body">
+
+                        <div class="text-muted">
+                            Atrasados
+                        </div>
+
+                        <div class="stat-number text-danger">
+                            {{ total_atrasados }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         NOVA ATIVIDADE
+    ====================================================== -->
+
+    <div class="card card-dashboard mb-4">
+
+        <div class="card-header bg-white">
+
+            <strong>
+
+                <i class="fa-solid fa-plus"></i>
+
+                Nova Atividade
+
+            </strong>
+
+        </div>
+
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                <div class="row g-3">
+
+
+                    <!-- REQUISIÇÃO -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Nº Requisição
+                        </label>
+
+                        <input
+                            type="text"
+                            name="num_requisicao"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <!-- PRIORIDADE -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Prioridade
+                        </label>
+
+                        <select
+                            name="prioridade"
+                            class="form-select"
+                        >
+
+                            <option value="Baixa">
+                                Baixa
+                            </option>
+
+                            <option value="Média">
+                                Média
+                            </option>
+
+                            <option value="Alta">
+                                Alta
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- CATEGORIA -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Categoria
+                        </label>
+
+                        <select
+                            name="categoria"
+                            class="form-select"
+                        >
+
+                            <option value="Separação">
+                                Separação
+                            </option>
+
+                            <option value="Inventário">
+                                Inventário
+                            </option>
+
+                            <option value="Expedição">
+                                Expedição
+                            </option>
+
+                            <option value="Recebimento">
+                                Recebimento
+                            </option>
+
+                            <option value="Logística Reversa">
+                                Logística Reversa
+                            </option>
+
+                            <option value="Estoque">
+                                Estoque
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- RESPONSÁVEL -->
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+                            Responsável
+                        </label>
+
+                        <select
+                            name="responsavel"
+                            class="form-select"
+                        >
+
+                            {% for usuario in usuarios %}
+
+                                <option
+                                    value="{{ usuario.nome }}"
+                                    {% if usuario.nome == session["usuario_atual"] %}
+                                        selected
+                                    {% endif %}
+                                >
+
+                                    {{ usuario.nome }}
+
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- ATIVIDADE -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Atividade
+                        </label>
+
+                        <input
+                            type="text"
+                            name="atividade"
+                            class="form-control"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- PRAZO -->
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Prazo
+                        </label>
+
+                        <input
+                            type="datetime-local"
+                            name="prazo"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <!-- DESCRIÇÃO -->
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Descrição
+                        </label>
+
+                        <textarea
+                            name="descricao"
+                            class="form-control"
+                            rows="2"
+                        ></textarea>
+
+                    </div>
+
+
+                    <!-- BOTÃO -->
+
+                    <div class="col-12 text-end">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+
+                            <i class="fa-solid fa-plus"></i>
+
+                            Criar atividade
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         INDICADORES DO DIA
+    ====================================================== -->
+
+    <div class="card card-dashboard mb-4">
+
+        <div class="card-header bg-white">
+
+            <strong>
+
+                <i class="fa-solid fa-chart-pie"></i>
+
+                Indicadores do Dia
+
+            </strong>
+
+            <div class="text-muted small">
+                Acompanhamento operacional
+            </div>
+
+        </div>
+
+
+        <div class="card-body">
+
+
+            <div class="row text-center g-4">
+
+
+                <!-- ATENDIDAS -->
+
+                <div class="col-md-4">
+
+                    <div class="indicator-circle">
+
+                        {{ perc_atendidas }}%
+
+                    </div>
+
+                    <div class="mt-2 fw-bold">
+                        Atendidas
+                    </div>
+
+                </div>
+
+
+                <!-- INVENTÁRIO -->
+
+                <div class="col-md-4">
+
+                    <div class="indicator-circle">
+
+                        {{ perc_inventario }}%
+
+                    </div>
+
+                    <div class="mt-2 fw-bold">
+                        Inventário
+                    </div>
+
+                </div>
+
+
+                <!-- EXPEDIÇÃO -->
+
+                <div class="col-md-4">
+
+                    <div class="indicator-circle">
+
+                        {{ perc_expedicao }}%
+
+                    </div>
+
+                    <div class="mt-2 fw-bold">
+                        Expedição
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <hr>
+
+
+            <div class="row text-center">
+
+
+                <!-- CONCLUÍDAS -->
+
+                <div class="col-md-6">
+
+                    <div class="fs-3 fw-bold">
+
+                        {{ atividades_concluidas }}
+
+                    </div>
+
+                    <div class="text-muted">
+                        Atividades concluídas
+                    </div>
+
+                </div>
+
+
+                <!-- PENDENTES -->
+
+                <div class="col-md-6">
+
+                    <div class="fs-3 fw-bold">
+
+                        {{ atividades_pendentes }}
+
+                    </div>
+
+                    <div class="text-muted">
+                        Atividades pendentes
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         ATIVIDADES
+    ====================================================== -->
+
+    <div class="card card-dashboard mb-4">
+
+        <div class="card-header bg-white">
+
+            <strong>
+
+                <i class="fa-solid fa-list-check"></i>
+
+                Atividades
+
+            </strong>
+
+        </div>
+
+
+        <div class="card-body">
+
+
+            {% if atividades %}
+
+
+                {% for item in atividades %}
+
+
+                    <div
+                        class="
+                            card
+                            activity-card
+
+                            {% if item.prioridade == 'Alta' %}
+                                priority-alta
+                            {% elif item.prioridade == 'Média' %}
+                                priority-media
+                            {% else %}
+                                priority-baixa
+                            {% endif %}
+                        "
+                    >
+
+
+                        <div class="card-body">
+
+
+                            <div class="row align-items-center">
+
+
+                                <!-- INFORMAÇÕES -->
+
+                                <div class="col-md-7">
+
+
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+
+                                        <strong>
+
+                                            {{ item.atividade }}
+
+                                        </strong>
+
+
+                                        {% if item.prioridade == "Alta" %}
+
+                                            <span class="badge bg-danger">
+                                                Alta
+                                            </span>
+
+                                        {% elif item.prioridade == "Média" %}
+
+                                            <span class="badge bg-warning text-dark">
+                                                Média
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge bg-success">
+                                                Baixa
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+
+                                    {% if item.num_requisicao %}
+
+                                        <div class="small text-muted">
+
+                                            <i class="fa-solid fa-file-lines"></i>
+
+                                            Requisição:
+
+                                            <strong>
+                                                {{ item.num_requisicao }}
+                                            </strong>
+
+                                        </div>
+
+                                    {% endif %}
+
+
+                                    <div class="small text-muted">
+
+                                        <i class="fa-solid fa-layer-group"></i>
+
+                                        {{ item.categoria }}
+
+                                    </div>
+
+
+                                    <div class="small text-muted">
+
+                                        <i class="fa-solid fa-user"></i>
+
+                                        {{ item.responsavel }}
+
+                                    </div>
+
+
+                                    {% if item.descricao %}
+
+                                        <div class="mt-2">
+
+                                            {{ item.descricao }}
+
+                                        </div>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                                <!-- PRAZO -->
+
+                                <div class="col-md-2">
+
+                                    <div class="small text-muted">
+                                        Prazo
+                                    </div>
+
+                                    <strong>
+
+                                        {{ item.prazo_formatado or "-" }}
+
+                                    </strong>
+
+                                </div>
+
+
+                                <!-- AÇÕES -->
+
+                                <div class="col-md-3 text-end">
+
+
+                                    <!-- EDITAR -->
+
+                                    <a
+                                        href="{{ url_for('editar_form', id=item.id) }}"
+                                        class="btn btn-sm btn-outline-primary mb-1"
+                                    >
+
+                                        <i class="fa-solid fa-pen"></i>
+
+                                        Editar
+
+                                    </a>
+
+
+                                    <!-- CONCLUIR -->
+
+                                    {% if item.status == "Pendente" %}
+
+                                        <a
+                                            href="{{ url_for('concluir', id=item.id) }}"
+                                            class="btn btn-sm btn-success mb-1"
+                                        >
+
+                                            <i class="fa-solid fa-check"></i>
+
+                                            Concluir
+
+                                        </a>
+
+                                    {% endif %}
+
+
+                                </div>
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                {% endfor %}
+
+
+            {% else %}
+
+
+                <div class="text-center text-muted py-4">
+
+                    <i
+                        class="fa-solid fa-circle-check fa-2x mb-2"
+                    ></i>
+
+                    <div>
+                        Nenhuma atividade pendente.
+                    </div>
+
+                </div>
+
+
+            {% endif %}
+
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CHAT DA EQUIPE
+    ====================================================== -->
+
+    <div class="card card-dashboard">
+
+
+        <div class="card-header bg-white">
+
+            <strong>
+
+                <i class="fa-solid fa-comments"></i>
+
+                Chat da Equipe
+
+            </strong>
+
+        </div>
+
+
+        <div class="card-body">
+
+
+            <div class="chat-box mb-3">
+
+
+                {% if chat %}
+
+
+                    {% for mensagem in chat %}
+
+
+                        <div class="chat-message">
+
+
+                            <strong>
+
+                                {{ mensagem.usuario }}
+
+                            </strong>
+
+
+                            <div>
+
+                                {{ mensagem.mensagem }}
+
+                            </div>
+
+
+                        </div>
+
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <div class="text-muted text-center">
+
+                        Nenhuma mensagem ainda.
+
+                    </div>
+
+
+                {% endif %}
+
+
+            </div>
+
+
+            <form method="POST">
+
+
+                <input
+                    type="hidden"
+                    name="acao_chat"
+                    value="enviar"
+                >
+
+
+                <div class="input-group">
+
+
+                    <input
+                        type="text"
+                        name="mensagem"
+                        class="form-control"
+                        placeholder="Digite uma mensagem..."
+                        required
+                    >
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fa-solid fa-paper-plane"></i>
+
+                        Enviar
+
+                    </button>
+
+
+                </div>
+
+
+            </form>
+
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =========================================================
+     BOOTSTRAP JS
+     Não temos script.js separado.
+========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
+
+
+</body>
+
+</html>

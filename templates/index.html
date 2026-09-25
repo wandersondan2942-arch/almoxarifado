@@ -1012,12 +1012,19 @@
                                 </label>
 
                                 <input
-                                    type="date"
+                                    type="datetime-local"
                                     id="prazo"
                                     name="prazo"
                                     class="form-control"
                                     required
                                 >
+
+                                <div
+                                    id="prazoHelp"
+                                    class="form-text"
+                                >
+                                    Selecione a data e o horário limite da atividade.
+                                </div>
 
                             </div>
 
@@ -1756,12 +1763,67 @@
 
 
     /* =========================================================
-       VALIDAÇÃO DA REQUISIÇÃO
+       DATA E HORA DO BRASIL
+       
+       Preenche automaticamente o prazo com o horário atual
+       de America/Sao_Paulo.
+    ========================================================= */
+
+    function obterDataHoraBrasil() {
+
+        const agora = new Date();
+
+        const partes = new Intl.DateTimeFormat(
+            "en-CA",
+            {
+                timeZone: "America/Sao_Paulo",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hourCycle: "h23"
+            }
+        ).formatToParts(agora);
+
+
+        const valores = {};
+
+        partes.forEach(function (parte) {
+
+            if (parte.type !== "literal") {
+                valores[parte.type] = parte.value;
+            }
+
+        });
+
+
+        return (
+            valores.year +
+            "-" +
+            valores.month +
+            "-" +
+            valores.day +
+            "T" +
+            valores.hour +
+            ":" +
+            valores.minute
+        );
+
+    }
+
+
+    /* =========================================================
+       INICIALIZAÇÃO DA PÁGINA
     ========================================================= */
 
     document.addEventListener(
         "DOMContentLoaded",
         function () {
+
+            /* =================================================
+               ELEMENTOS
+            ================================================= */
 
             const categoria =
                 document.getElementById("categoria");
@@ -1772,6 +1834,94 @@
             const requisicaoHelp =
                 document.getElementById("requisicaoHelp");
 
+            const prazo =
+                document.getElementById("prazo");
+
+            const prazoHelp =
+                document.getElementById("prazoHelp");
+
+
+            /* =================================================
+               PRAZO
+            ================================================= */
+
+            if (prazo) {
+
+                const agoraBrasil =
+                    obterDataHoraBrasil();
+
+
+                /*
+                 * Define o menor prazo permitido como
+                 * o momento atual no Brasil.
+                 */
+                prazo.min = agoraBrasil;
+
+
+                /*
+                 * Se o campo estiver vazio, inicia
+                 * automaticamente com o horário atual.
+                 */
+                if (!prazo.value) {
+
+                    prazo.value = agoraBrasil;
+
+                }
+
+
+                /*
+                 * Quando o usuário alterar o prazo,
+                 * evita datas anteriores ao momento atual.
+                 */
+                prazo.addEventListener(
+                    "change",
+                    function () {
+
+                        const agoraAtual =
+                            obterDataHoraBrasil();
+
+
+                        if (
+                            prazo.value &&
+                            prazo.value < agoraAtual
+                        ) {
+
+                            prazo.value = agoraAtual;
+
+
+                            if (prazoHelp) {
+
+                                prazoHelp.textContent =
+                                    "O prazo não pode ser anterior ao horário atual.";
+
+                                prazoHelp.className =
+                                    "form-text text-danger";
+
+                            }
+
+                        } else {
+
+                            if (prazoHelp) {
+
+                                prazoHelp.textContent =
+                                    "Prazo válido.";
+
+                                prazoHelp.className =
+                                    "form-text text-success";
+
+                            }
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            /* =================================================
+               VALIDAÇÃO DA REQUISIÇÃO
+            ================================================= */
 
             function validarRequisicao() {
 
@@ -1831,6 +1981,34 @@
                 validarRequisicao();
 
             }
+
+
+            /* =================================================
+               ATUALIZA O MINUTO DO PRAZO
+               
+               Isso evita que a página fique aberta por muito
+               tempo e continue permitindo um horário que já
+               passou.
+            ================================================= */
+
+            setInterval(
+                function () {
+
+                    if (!prazo) {
+                        return;
+                    }
+
+
+                    const agoraBrasil =
+                        obterDataHoraBrasil();
+
+
+                    prazo.min =
+                        agoraBrasil;
+
+                },
+                60000
+            );
 
         }
     );

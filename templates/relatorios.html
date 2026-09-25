@@ -52,12 +52,15 @@
         }
 
         .stat-card {
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            transition:
+                transform 0.15s ease,
+                box-shadow 0.15s ease;
         }
 
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            box-shadow:
+                0 6px 18px rgba(0, 0, 0, 0.08);
         }
 
         .badge-categoria {
@@ -134,6 +137,37 @@
             font-size: 11px;
         }
 
+        .acoes-tabela {
+            min-width: 145px;
+            white-space: nowrap;
+        }
+
+        .btn-acao {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e9ecef;
+        }
+
+        .campo-obrigatorio::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        .texto-arquivado {
+            font-size: 11px;
+        }
+
         @media (max-width: 768px) {
 
             .titulo-relatorio {
@@ -147,6 +181,10 @@
             .filtro-btn {
                 min-width: auto;
                 flex: 1;
+            }
+
+            .acoes-tabela {
+                min-width: 125px;
             }
 
         }
@@ -180,7 +218,8 @@
         <h4 class="fw-bold m-0 titulo-relatorio">
 
             <i
-                class="fa-solid fa-chart-pie text-primary me-2"
+                class="fa-solid fa-chart-pie
+                       text-primary me-2"
             ></i>
 
             Relatório Geral Consolidado
@@ -246,19 +285,31 @@
 
                 {% if categoria == 'success' %}
 
-                    <i class="fa-solid fa-circle-check me-1"></i>
+                    <i
+                        class="fa-solid fa-circle-check me-1"
+                    ></i>
 
                 {% elif categoria == 'danger' %}
 
-                    <i class="fa-solid fa-circle-exclamation me-1"></i>
+                    <i
+                        class="fa-solid
+                               fa-circle-exclamation
+                               me-1"
+                    ></i>
 
                 {% elif categoria == 'warning' %}
 
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <i
+                        class="fa-solid
+                               fa-triangle-exclamation
+                               me-1"
+                    ></i>
 
                 {% else %}
 
-                    <i class="fa-solid fa-circle-info me-1"></i>
+                    <i
+                        class="fa-solid fa-circle-info me-1"
+                    ></i>
 
                 {% endif %}
 
@@ -282,7 +333,7 @@
 
 
 <!-- ===================================================== -->
-<!-- FILTRO ATUAL -->
+<!-- FILTROS -->
 <!-- ===================================================== -->
 
 {% set filtro_atual = filtro|default('todos') %}
@@ -312,8 +363,8 @@
 
             <small class="text-muted">
 
-                Consulte as atividades conforme o status ou
-                visualize somente os registros atrasados.
+                Consulte as atividades conforme o status
+                ou visualize somente os registros atrasados.
 
             </small>
 
@@ -322,15 +373,14 @@
 
         <div class="d-flex gap-2 flex-wrap">
 
-
             <a
                 href="{{ url_for('relatorios', filtro='todos') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'todos' %}
-                           btn-primary
-                       {% else %}
-                           btn-outline-primary
-                       {% endif %}"
+                {% if filtro_atual == 'todos' %}
+                    btn-primary
+                {% else %}
+                    btn-outline-primary
+                {% endif %}"
             >
 
                 <i class="fa-solid fa-list me-1"></i>
@@ -343,11 +393,11 @@
             <a
                 href="{{ url_for('relatorios', filtro='pendentes') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'pendentes' %}
-                           btn-warning
-                       {% else %}
-                           btn-outline-warning
-                       {% endif %}"
+                {% if filtro_atual == 'pendentes' %}
+                    btn-warning
+                {% else %}
+                    btn-outline-warning
+                {% endif %}"
             >
 
                 <i class="fa-solid fa-clock me-1"></i>
@@ -360,11 +410,11 @@
             <a
                 href="{{ url_for('relatorios', filtro='andamento') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'andamento' %}
-                           btn-info
-                       {% else %}
-                           btn-outline-info
-                       {% endif %}"
+                {% if filtro_atual == 'andamento' %}
+                    btn-info
+                {% else %}
+                    btn-outline-info
+                {% endif %}"
             >
 
                 <i class="fa-solid fa-spinner me-1"></i>
@@ -377,11 +427,11 @@
             <a
                 href="{{ url_for('relatorios', filtro='concluidos') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'concluidos' %}
-                           btn-success
-                       {% else %}
-                           btn-outline-success
-                       {% endif %}"
+                {% if filtro_atual == 'concluidos' %}
+                    btn-success
+                {% else %}
+                    btn-outline-success
+                {% endif %}"
             >
 
                 <i class="fa-solid fa-circle-check me-1"></i>
@@ -394,11 +444,11 @@
             <a
                 href="{{ url_for('relatorios', filtro='arquivados') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'arquivados' %}
-                           btn-secondary
-                       {% else %}
-                           btn-outline-secondary
-                       {% endif %}"
+                {% if filtro_atual == 'arquivados' %}
+                    btn-secondary
+                {% else %}
+                    btn-outline-secondary
+                {% endif %}"
             >
 
                 <i class="fa-solid fa-box-archive me-1"></i>
@@ -411,14 +461,18 @@
             <a
                 href="{{ url_for('relatorios', filtro='atrasados') }}"
                 class="btn btn-sm filtro-btn
-                       {% if filtro_atual == 'atrasados' %}
-                           btn-danger
-                       {% else %}
-                           btn-outline-danger
-                       {% endif %}"
+                {% if filtro_atual == 'atrasados' %}
+                    btn-danger
+                {% else %}
+                    btn-outline-danger
+                {% endif %}"
             >
 
-                <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                <i
+                    class="fa-solid
+                           fa-triangle-exclamation
+                           me-1"
+                ></i>
 
                 Atrasados
 
@@ -517,9 +571,7 @@
                 <div>
 
                     <small class="text-muted">
-
                         Registros exibidos
-
                     </small>
 
                     <h3
@@ -534,7 +586,8 @@
                 </div>
 
                 <i
-                    class="fa-solid fa-list-check
+                    class="fa-solid
+                           fa-list-check
                            fa-2x text-primary opacity-25"
                 ></i>
 
@@ -579,7 +632,8 @@
                 </div>
 
                 <i
-                    class="fa-solid fa-circle-check
+                    class="fa-solid
+                           fa-circle-check
                            fa-2x text-success opacity-25"
                 ></i>
 
@@ -624,7 +678,8 @@
                 </div>
 
                 <i
-                    class="fa-solid fa-clock
+                    class="fa-solid
+                           fa-clock
                            fa-2x text-warning opacity-25"
                 ></i>
 
@@ -669,7 +724,8 @@
                 </div>
 
                 <i
-                    class="fa-solid fa-triangle-exclamation
+                    class="fa-solid
+                           fa-triangle-exclamation
                            fa-2x text-danger opacity-25"
                 ></i>
 
@@ -684,7 +740,7 @@
 
 
 <!-- ===================================================== -->
-<!-- AVISO DE ATRASADOS -->
+<!-- AVISOS -->
 <!-- ===================================================== -->
 
 {% if filtro_atual == 'atrasados' %}
@@ -695,7 +751,8 @@
 >
 
     <i
-        class="fa-solid fa-triangle-exclamation
+        class="fa-solid
+               fa-triangle-exclamation
                fa-lg mt-1"
     ></i>
 
@@ -723,7 +780,8 @@
 >
 
     <i
-        class="fa-solid fa-box-archive
+        class="fa-solid
+               fa-box-archive
                fa-lg mt-1"
     ></i>
 
@@ -734,8 +792,10 @@
         <div class="small mt-1">
 
             As atividades arquivadas continuam armazenadas
-            para consulta e rastreamento. Nenhum registro
-            é apagado definitivamente pelo fluxo normal.
+            para consulta e rastreamento.
+
+            Nenhum registro é apagado definitivamente
+            pelo fluxo normal.
 
         </div>
 
@@ -768,7 +828,8 @@
             <h6 class="fw-bold mb-1">
 
                 <i
-                    class="fa-solid fa-clock-rotate-left
+                    class="fa-solid
+                           fa-clock-rotate-left
                            text-primary me-2"
                 ></i>
 
@@ -804,7 +865,9 @@
                        text-success border filtro-info"
             >
 
-                <i class="fa-solid fa-shield-halved me-1"></i>
+                <i class="fa-solid
+                           fa-shield-halved
+                           me-1"></i>
 
                 Histórico preservado
 
@@ -826,7 +889,8 @@
     >
 
         <i
-            class="fa-solid fa-circle-info
+            class="fa-solid
+                   fa-circle-info
                    text-primary mt-1"
         ></i>
 
@@ -888,6 +952,10 @@
 
                     <th>Status</th>
 
+                    <th class="text-center acoes-tabela">
+                        Ações
+                    </th>
+
                 </tr>
 
             </thead>
@@ -901,7 +969,6 @@
                 {% set status_atual =
                     i.status|default('Pendente')|trim
                 %}
-
 
                 <tr
                     class="
@@ -923,9 +990,7 @@
                     <td>
 
                         <span class="text-muted">
-
                             #{{ i.id }}
-
                         </span>
 
                     </td>
@@ -1001,7 +1066,9 @@
                                                me-1"
                                     ></i>
 
-                                    {{ i.texto_atraso|default('Atividade atrasada') }}
+                                    {{ i.texto_atraso|default(
+                                        'Atividade atrasada'
+                                    ) }}
 
                                 </span>
 
@@ -1515,8 +1582,7 @@
                             <div class="mt-1">
 
                                 <span
-                                    class="badge
-                                           bg-danger"
+                                    class="badge bg-danger"
                                     title="Atividade ultrapassou o prazo"
                                 >
 
@@ -1537,6 +1603,88 @@
                     </td>
 
 
+
+                    <!-- ================================================= -->
+                    <!-- AÇÕES -->
+                    <!-- ================================================= -->
+
+                    <td class="text-center acoes-tabela">
+
+                        {% if status_atual != 'Arquivado'
+                              and status_atual != 'Arquivada' %}
+
+                            <!-- EDITAR -->
+
+                            <button
+                                type="button"
+                                class="btn btn-outline-primary
+                                       btn-sm btn-acao me-1"
+                                title="Editar atividade"
+                                data-bs-toggle="modal"
+                                data-bs-target="#modalEditar"
+                                data-id="{{ i.id }}"
+                                data-requisicao="{{ i.num_requisicao or '' }}"
+                                data-atividade="{{ i.atividade or '' }}"
+                                data-categoria="{{ i.categoria or '' }}"
+                                data-responsavel="{{ i.responsavel or '' }}"
+                                data-prioridade="{{ i.prioridade or 'Média' }}"
+                                data-prazo="{{ i.prazo or '' }}"
+                                data-descricao="{{ i.descricao or '' }}"
+                                onclick="prepararEdicao(this)"
+                            >
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </button>
+
+
+                            <!-- ARQUIVAR -->
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('arquivar', id=i.id) }}"
+                                class="d-inline"
+                                onsubmit="return confirmarArquivamento('{{ i.id }}', '{{ i.atividade|replace("'", "\\'") }}');"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-outline-secondary
+                                           btn-sm btn-acao"
+                                    title="Arquivar atividade"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-box-archive"
+                                    ></i>
+
+                                </button>
+
+                            </form>
+
+                        {% else %}
+
+                            <span
+                                class="badge
+                                       bg-light
+                                       text-secondary
+                                       border"
+                            >
+
+                                <i
+                                    class="fa-solid
+                                           fa-lock me-1"
+                                ></i>
+
+                                Arquivado
+
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
                 </tr>
 
 
@@ -1547,7 +1695,7 @@
                 <tr>
 
                     <td
-                        colspan="10"
+                        colspan="11"
                         class="text-center
                                text-muted
                                py-5"
@@ -1612,7 +1760,8 @@
                 <div>
 
                     <i
-                        class="fa-solid fa-user
+                        class="fa-solid
+                               fa-user
                                text-primary fa-lg"
                     ></i>
 
@@ -1654,7 +1803,8 @@
                 <div>
 
                     <i
-                        class="fa-solid fa-user-check
+                        class="fa-solid
+                               fa-user-check
                                text-success fa-lg"
                     ></i>
 
@@ -1695,7 +1845,8 @@
                 <div>
 
                     <i
-                        class="fa-solid fa-triangle-exclamation
+                        class="fa-solid
+                               fa-triangle-exclamation
                                text-danger fa-lg"
                     ></i>
 
@@ -1716,6 +1867,512 @@
                     </div>
 
                 </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- MODAL DE EDIÇÃO -->
+<!-- ===================================================== -->
+
+<div
+    class="modal fade"
+    id="modalEditar"
+    tabindex="-1"
+    aria-labelledby="modalEditarLabel"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-dialog modal-lg modal-dialog-centered"
+    >
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <h5
+                        class="modal-title fw-bold"
+                        id="modalEditarLabel"
+                    >
+
+                        <i
+                            class="fa-solid
+                                   fa-pen-to-square
+                                   text-primary me-2"
+                        ></i>
+
+                        Editar atividade
+
+                    </h5>
+
+                    <small class="text-muted">
+
+                        Altere os dados da atividade selecionada.
+
+                    </small>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar"
+                ></button>
+
+            </div>
+
+
+            <form
+                method="POST"
+                id="formEditar"
+            >
+
+                <div class="modal-body">
+
+                    <div class="alert alert-light border">
+
+                        <i
+                            class="fa-solid
+                                   fa-circle-info
+                                   text-primary me-2"
+                        ></i>
+
+                        A edição não apaga o histórico da atividade.
+                        Os registros de início e conclusão permanecem
+                        preservados.
+
+                    </div>
+
+
+                    <div class="row g-3">
+
+
+                        <!-- REQUISIÇÃO -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="editar_requisicao"
+                                class="form-label fw-semibold"
+                            >
+
+                                Nº Requisição
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editar_requisicao"
+                                name="num_requisicao"
+                                maxlength="100"
+                            >
+
+                            <small class="text-muted">
+
+                                Obrigatório para Separação.
+
+                            </small>
+
+                        </div>
+
+
+
+                        <!-- ATIVIDADE -->
+
+                        <div class="col-md-8">
+
+                            <label
+                                for="editar_atividade"
+                                class="form-label
+                                       fw-semibold
+                                       campo-obrigatorio"
+                            >
+
+                                Atividade
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editar_atividade"
+                                name="atividade"
+                                required
+                                maxlength="255"
+                            >
+
+                        </div>
+
+
+
+                        <!-- CATEGORIA -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="editar_categoria"
+                                class="form-label
+                                       fw-semibold
+                                       campo-obrigatorio"
+                            >
+
+                                Categoria
+
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="editar_categoria"
+                                name="categoria"
+                                required
+                            >
+
+                                <option value="Separação">
+                                    Separação
+                                </option>
+
+                                <option value="Inventário">
+                                    Inventário
+                                </option>
+
+                                <option value="Expedição">
+                                    Expedição
+                                </option>
+
+                                <option value="Recebimento">
+                                    Recebimento
+                                </option>
+
+                                <option value="Logística Reversa">
+                                    Logística Reversa
+                                </option>
+
+                                <option value="Estoque">
+                                    Estoque
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- RESPONSÁVEL -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="editar_responsavel"
+                                class="form-label
+                                       fw-semibold
+                                       campo-obrigatorio"
+                            >
+
+                                Responsável
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editar_responsavel"
+                                name="responsavel"
+                                required
+                                maxlength="150"
+                            >
+
+                        </div>
+
+
+
+                        <!-- PRIORIDADE -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="editar_prioridade"
+                                class="form-label fw-semibold"
+                            >
+
+                                Prioridade
+
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="editar_prioridade"
+                                name="prioridade"
+                            >
+
+                                <option value="Baixa">
+                                    Baixa
+                                </option>
+
+                                <option value="Média">
+                                    Média
+                                </option>
+
+                                <option value="Alta">
+                                    Alta
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+
+                        <!-- PRAZO -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="editar_prazo"
+                                class="form-label fw-semibold"
+                            >
+
+                                Prazo
+
+                            </label>
+
+                            <input
+                                type="datetime-local"
+                                class="form-control"
+                                id="editar_prazo"
+                                name="prazo"
+                            >
+
+                        </div>
+
+
+
+                        <!-- ID -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                class="form-label fw-semibold"
+                            >
+
+                                ID do registro
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control bg-light"
+                                id="editar_id_visual"
+                                readonly
+                            >
+
+                        </div>
+
+
+
+                        <!-- DESCRIÇÃO -->
+
+                        <div class="col-12">
+
+                            <label
+                                for="editar_descricao"
+                                class="form-label fw-semibold"
+                            >
+
+                                Descrição
+
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="editar_descricao"
+                                name="descricao"
+                                rows="4"
+                                maxlength="2000"
+                                placeholder="Detalhes adicionais da atividade..."
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal"
+                    >
+
+                        <i
+                            class="fa-solid
+                                   fa-xmark me-1"
+                        ></i>
+
+                        Cancelar
+
+                    </button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary fw-bold"
+                    >
+
+                        <i
+                            class="fa-solid
+                                   fa-floppy-disk me-1"
+                        ></i>
+
+                        Salvar alterações
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- ===================================================== -->
+<!-- MODAL DE CONFIRMAÇÃO DE ARQUIVAMENTO -->
+<!-- ===================================================== -->
+
+<div
+    class="modal fade"
+    id="modalArquivar"
+    tabindex="-1"
+    aria-labelledby="modalArquivarLabel"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-dialog modal-dialog-centered"
+    >
+
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header">
+
+                <h5
+                    class="modal-title fw-bold"
+                    id="modalArquivarLabel"
+                >
+
+                    <i
+                        class="fa-solid
+                               fa-box-archive
+                               text-secondary me-2"
+                    ></i>
+
+                    Arquivar atividade
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                ></button>
+
+            </div>
+
+
+            <div class="modal-body">
+
+                <p class="mb-2">
+
+                    Você está prestes a arquivar:
+
+                </p>
+
+                <div
+                    class="alert alert-secondary
+                           border"
+                >
+
+                    <strong id="nomeAtividadeArquivar">
+                        —
+                    </strong>
+
+                </div>
+
+                <div class="small text-muted">
+
+                    <i
+                        class="fa-solid
+                               fa-shield-halved
+                               me-1"
+                    ></i>
+
+                    O registro <strong>não será apagado</strong>.
+
+                    Ele ficará disponível em:
+
+                    <strong>
+                        Relatórios → Arquivados
+                    </strong>.
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal"
+                >
+
+                    Cancelar
+
+                </button>
+
+
+                <form
+                    method="POST"
+                    id="formArquivarModal"
+                >
+
+                    <button
+                        type="submit"
+                        class="btn btn-secondary fw-bold"
+                    >
+
+                        <i
+                            class="fa-solid
+                                   fa-box-archive
+                                   me-1"
+                        ></i>
+
+                        Confirmar arquivamento
+
+                    </button>
+
+                </form>
 
             </div>
 
@@ -1759,9 +2416,158 @@
 </div>
 
 
+
+<!-- ===================================================== -->
+<!-- BOOTSTRAP -->
+<!-- ===================================================== -->
+
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 ></script>
+
+
+
+<script>
+
+/* =========================================================
+   PREPARAR MODAL DE EDIÇÃO
+   ========================================================= */
+
+function prepararEdicao(botao) {
+
+    const id = botao.dataset.id || "";
+    const requisicao = botao.dataset.requisicao || "";
+    const atividade = botao.dataset.atividade || "";
+    const categoria = botao.dataset.categoria || "";
+    const responsavel = botao.dataset.responsavel || "";
+    const prioridade = botao.dataset.prioridade || "Média";
+    const prazo = botao.dataset.prazo || "";
+    const descricao = botao.dataset.descricao || "";
+
+    document.getElementById(
+        "editar_id_visual"
+    ).value = id;
+
+    document.getElementById(
+        "editar_requisicao"
+    ).value = requisicao;
+
+    document.getElementById(
+        "editar_atividade"
+    ).value = atividade;
+
+    document.getElementById(
+        "editar_categoria"
+    ).value = categoria;
+
+    document.getElementById(
+        "editar_responsavel"
+    ).value = responsavel;
+
+    document.getElementById(
+        "editar_prioridade"
+    ).value = prioridade;
+
+    document.getElementById(
+        "editar_prazo"
+    ).value = converterPrazoParaInput(prazo);
+
+    document.getElementById(
+        "editar_descricao"
+    ).value = descricao;
+
+
+    /*
+     * O backend utiliza:
+     * /editar/<id>
+     */
+
+    document.getElementById(
+        "formEditar"
+    ).action = "/editar/" + id;
+
+}
+
+
+/* =========================================================
+   CONVERTER PRAZO
+   ========================================================= */
+
+function converterPrazoParaInput(valor) {
+
+    if (!valor) {
+        return "";
+    }
+
+    /*
+     * Caso já esteja no formato:
+     * 2026-09-24T18:30
+     */
+
+    if (
+        valor.includes("T") &&
+        valor.length >= 16
+    ) {
+
+        return valor.substring(0, 16);
+
+    }
+
+
+    /*
+     * Caso venha como:
+     * 2026-09-24 18:30:00
+     */
+
+    if (valor.includes(" ")) {
+
+        const partes = valor.split(" ");
+
+        if (partes.length >= 2) {
+
+            const data = partes[0];
+
+            const hora = partes[1];
+
+            return data + "T" + hora.substring(0, 5);
+
+        }
+
+    }
+
+    return valor;
+
+}
+
+
+/* =========================================================
+   CONFIRMAÇÃO DE ARQUIVAMENTO
+   ========================================================= */
+
+function confirmarArquivamento(id, atividade) {
+
+    /*
+     * Mantemos a confirmação simples caso
+     * o navegador bloqueie algum modal.
+     */
+
+    const nome =
+        atividade && atividade.trim()
+            ? atividade
+            : "esta atividade";
+
+    return confirm(
+        "Arquivar " +
+        nome +
+        "?\n\n" +
+        "O registro não será apagado. " +
+        "Ele continuará disponível em Relatórios > Arquivados."
+    );
+
+}
+
+</script>
+
 
 </body>
 

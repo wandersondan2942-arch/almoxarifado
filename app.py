@@ -2508,6 +2508,237 @@ def obter_dados_dashboard():
         "exp_conc_hoje": exp_conc_hoje,
         "exp_total_hoje": exp_total_hoje,
     }
+
+@app.route("/", methods=["GET", "POST"])
+def index():
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+
+        usuario_atual = session["usuario_atual"]
+        acao_chat = request.form.get("acao_chat")
+
+        # =========================
+        # ENVIO DE MENSAGEM NO CHAT
+        # =========================
+        if acao_chat == "enviar":
+
+            mensagem = request.form.get(
+                "mensagem",
+                ""
+            ).strip()
+
+            if mensagem:
+
+                executar(
+                    """
+                    INSERT INTO chat
+                        (usuario, mensagem, criado_em)
+                    VALUES
+                        (%s, %s, %s)
+                    """
+                    if usando_postgresql()
+                    else
+                    """
+                    INSERT INTO chat
+                        (usuario, mensagem, criado_em)
+                    VALUES
+                        (?, ?, ?)
+                    """,
+                    (
+                        usuario_atual,
+                        mensagem,
+                        (
+                            agora_utc_naive()
+                            if usando_postgresql()
+                            else agora_sqlite()
+                        )
+                    ),
+                    commit=True
+                )
+
+            return redirect(url_for("index"))
+
+        # =========================
+        # NOVA ATIVIDADE
+        # =========================
+
+        num_requisicao = normalizar_requisicao(
+            request.form.get("num_requisicao")
+        )
+
+        atividade = request.form.get(
+            "atividade",
+            ""
+        ).strip()
+
+        descricao = request.form.get(
+            "descricao",
+            ""
+        ).strip()
+
+        categoria = request.form.get(
+            "categoria",
+            "Separação"
+        ).strip()
+
+        responsavel = request.form.get(
+            "responsavel",
+            usuario_atual
+        ).strip()
+
+        prioridade = request.form.get(
+            "prioridade",
+            "Baixa"
+        ).strip()
+
+        prazo = request.form.get(
+            "prazo",
+            ""
+        ).strip()
+
+        # =========================
+        # VALIDAÇÕES
+        # =========================
+
+        if categoria not in CATEGORIAS_VALIDAS:
+            categoria = "Separação"
+
+        if prioridade not in PRIORIDADES_VALIDAS:
+            prioridade = "Baixa"
+
+        if not atividade:
+
+            flash(
+                "Informe a atividade.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("index")
+            )
+
+        if categoria == "Separação" and not num_requisicao:
+
+            flash(
+                "A Separação precisa de um número de requisição.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("index")
+            )
+
+        if num_requisicao and requisicao_duplicada(
+            num_requisicao
+        ):
+
+            flash(
+                f"A requisição {num_requisicao} já possui uma atividade ativa.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("index")
+            )
+
+        # =========================
+        # HORÁRIO DE INÍCIO
+        # =========================
+
+        inicio_em = None
+
+        if categoria == "Separação":
+
+            inicio_em = (
+                agora_utc_naive()
+                if usando_postgresql()
+                else agora_sqlite()
+            )
+
+        agora_criacao = (
+            agora_utc_naive()
+            if usando_postgresql()
+            else agora_sqlite()
+        )
+
+        # =========================
+        # SALVAR ATIVIDADE
+        # =========================
+
+        executar(
+            """
+            INSERT INTO atividades
+            (
+                num_requisicao,
+                atividade,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo,
+                status,
+                inicio_em,
+                criado_em
+            )
+            VALUES
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            if usando_postgresql()
+            else
+            """
+            INSERT INTO atividades
+            (
+                num_requisicao,
+                atividade,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo,
+                status,
+                inicio_em,
+                criado_em
+            )
+            VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                num_requisicao or None,
+                atividade,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo or None,
+                STATUS_PENDENTE,
+                inicio_em,
+                agora_criacao
+            ),
+            commit=True
+        )
+
+        flash(
+            "Atividade criada com sucesso.",
+            "success"
+        )
+
+        return redirect(
+            url_for("index")
+        )
+
+    # =========================
+    # DADOS DO DASHBOARD
+    # =========================
+
+    dados = obter_dados_dashboard()
+
+    return render_template(
+        "index.html",
+        **dados
+    )
 @app.route(
     "/dashboard",
     methods=["GET"]

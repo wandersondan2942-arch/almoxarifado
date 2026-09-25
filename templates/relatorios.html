@@ -1,105 +1,174 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editar requisição</title>
+    <title>Relatórios - Almoxarifado Valenet</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        body{background:#f5f6fa;font-family:'Segoe UI',sans-serif;color:#2d3748}.card{border:0;border-radius:14px}.table{font-size:13px}.table th{white-space:nowrap;vertical-align:middle}.table td{vertical-align:middle}.stat{min-height:100px}.linha-atrasada{background:rgba(220,53,69,.07)!important}.linha-concluida{background:rgba(25,135,84,.04)}.linha-arquivada{background:rgba(108,117,125,.05)}.descricao{max-width:330px;white-space:normal;word-break:break-word}.data-hora{white-space:nowrap;font-size:12px}.numero-requisicao{font-weight:600;white-space:nowrap}.acoes{white-space:nowrap;min-width:130px}.btn-acao{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}.small-info{font-size:12px}.table-responsive{border-radius:12px}
+    </style>
 </head>
-<body class="bg-light">
-<div class="container py-4" style="max-width: 1000px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<body class="p-3 p-md-4">
+<div class="container-fluid" style="max-width:1700px">
+
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
         <div>
-            <h2 class="mb-1"><i class="fa-solid fa-pen-to-square"></i> Editar atividade</h2>
-            <div class="text-muted">Registro #{{ item.id }}</div>
+            <h3 class="fw-bold mb-1"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Relatório Diário do Almoxarifado</h3>
+            <div class="text-muted">Atividades registradas no dia selecionado.</div>
         </div>
-        <a href="{{ request.args.get('retorno') or url_for('index') }}" class="btn btn-outline-secondary">
-            <i class="fa-solid fa-arrow-left"></i> Voltar
-        </a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('index') }}"><i class="fa-solid fa-house me-1"></i>Início</a>
+            <a class="btn btn-danger" href="{{ url_for('relatorio_pdf', data=data_relatorio) }}"><i class="fa-solid fa-file-pdf me-1"></i>PDF do dia</a>
+        </div>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
+    {% with mensagens = get_flashed_messages(with_categories=true) %}
+        {% if mensagens %}
+            {% for categoria, mensagem in mensagens %}
+                <div class="alert alert-{{ categoria }} alert-dismissible fade show">
+                    {{ mensagem }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
     {% endwith %}
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-            <form method="POST">
-                <input type="hidden" name="retorno" value="{{ request.args.get('retorno', '') }}">
-
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Nº da requisição</label>
-                        <input type="text" name="num_requisicao" class="form-control"
-                               value="{{ item.num_requisicao or '' }}">
-                        <div class="form-text">Não é permitido repetir uma requisição ativa.</div>
-                    </div>
-
-                    <div class="col-md-8">
-                        <label class="form-label fw-semibold">Atividade</label>
-                        <input type="text" name="atividade" class="form-control" required
-                               value="{{ item.atividade or '' }}">
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Categoria</label>
-                        <select name="categoria" class="form-select">
-                            {% for opcao in ['Separação', 'Inventário', 'Expedição', 'Recebimento'] %}
-                                <option value="{{ opcao }}" {% if item.categoria == opcao %}selected{% endif %}>{{ opcao }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Responsável</label>
-                        <select name="responsavel" class="form-select">
-                            {% for usuario in usuarios %}
-                                <option value="{{ usuario.nome }}" {% if item.responsavel == usuario.nome %}selected{% endif %}>
-                                    {{ usuario.nome }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Prioridade</label>
-                        <select name="prioridade" class="form-select">
-                            {% for opcao in ['Baixa', 'Média', 'Alta'] %}
-                                <option value="{{ opcao }}" {% if item.prioridade == opcao %}selected{% endif %}>{{ opcao }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Prazo</label>
-                        <input type="datetime-local" name="prazo" class="form-control"
-                               value="{{ item.prazo_form or '' }}">
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Descrição / observações</label>
-                        <textarea name="descricao" class="form-control" rows="6"
-                                  placeholder="Ex.: Foi criado um localizador 2345667 para a requisição.">{{ item.descricao or '' }}</textarea>
-                    </div>
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('relatorios') }}" class="row g-3 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label class="form-label fw-semibold">Consultar dia</label>
+                    <input type="date" name="data" value="{{ data_relatorio }}" class="form-control" required>
                 </div>
-
-                <div class="d-flex justify-content-end gap-2 mt-4">
-                    <a href="{{ request.args.get('retorno') or url_for('index') }}" class="btn btn-outline-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa-solid fa-floppy-disk"></i> Salvar alterações
-                    </button>
+                <div class="col-12 col-md-auto">
+                    <button class="btn btn-primary" type="submit"><i class="fa-solid fa-magnifying-glass me-1"></i>Consultar</button>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <a class="btn btn-outline-danger" href="{{ url_for('relatorio_pdf', data=data_relatorio) }}"><i class="fa-solid fa-file-pdf me-1"></i>Gerar PDF</a>
+                </div>
+                <div class="col-12 col-md-auto ms-md-auto">
+                    <span class="badge text-bg-light border p-2"><i class="fa-regular fa-calendar me-1"></i>{{ data_formatada|default(data_relatorio) }}</span>
                 </div>
             </form>
         </div>
     </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Total</div><div class="fs-3 fw-bold">{{ total_todos|default(itens|length) }}</div></div></div></div>
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Pendentes</div><div class="fs-3 fw-bold text-warning">{{ total_pendentes|default(0) }}</div></div></div></div>
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Em andamento</div><div class="fs-3 fw-bold text-primary">{{ total_andamento|default(0) }}</div></div></div></div>
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Concluídas</div><div class="fs-3 fw-bold text-success">{{ total_concluidos|default(0) }}</div></div></div></div>
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Arquivadas</div><div class="fs-3 fw-bold text-secondary">{{ total_arquivados|default(0) }}</div></div></div></div>
+        <div class="col-6 col-md-2"><div class="card stat shadow-sm"><div class="card-body"><div class="text-muted small">Atrasadas</div><div class="fs-3 fw-bold text-danger">{{ total_atrasados|default(0) }}</div></div></div></div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="fw-semibold me-1">Filtro do dia:</span>
+                <a class="btn btn-sm {% if filtro == 'todos' %}btn-dark{% else %}btn-outline-dark{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='todos') }}">Todos</a>
+                <a class="btn btn-sm {% if filtro == 'pendentes' %}btn-warning{% else %}btn-outline-warning{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='pendentes') }}">Pendentes</a>
+                <a class="btn btn-sm {% if filtro == 'andamento' %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='andamento') }}">Em andamento</a>
+                <a class="btn btn-sm {% if filtro == 'concluidos' %}btn-success{% else %}btn-outline-success{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='concluidos') }}">Concluídos</a>
+                <a class="btn btn-sm {% if filtro == 'arquivados' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='arquivados') }}">Arquivados</a>
+                <a class="btn btn-sm {% if filtro == 'atrasados' %}btn-danger{% else %}btn-outline-danger{% endif %}" href="{{ url_for('relatorios', data=data_relatorio, filtro='atrasados') }}">Atrasados</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div><strong><i class="fa-solid fa-list-check me-2 text-primary"></i>Atividades do Dia</strong></div>
+                <span class="badge text-bg-light border">{{ itens|length }} registro(s)</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if itens %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Req.</th><th>Atividade</th><th>Categoria</th><th>Responsável</th><th>Prioridade</th><th>Início</th><th>Prazo</th><th>Conclusão</th><th>Status</th><th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in itens %}
+                        {% set status = item.status|default('Pendente')|string|trim %}
+                        {% set status_norm = status|lower %}
+                        {% set arquivado = status_norm in ['arquivado','arquivada'] %}
+                        {% set concluido = status_norm in ['concluído','concluido'] %}
+                        {% set atrasado = (not arquivado) and (item.foi_atrasada|default(false)) %}
+                        <tr class="{% if arquivado %}linha-arquivada{% elif atrasado %}linha-atrasada{% elif concluido %}linha-concluida{% endif %}">
+                            <td><span class="numero-requisicao">{{ item.num_requisicao|default('-') or '-' }}</span></td>
+                            <td><div class="fw-semibold">{{ item.atividade|default('-') }}</div>{% if item.descricao %}<div class="descricao text-muted small">{{ item.descricao }}</div>{% endif %}</td>
+                            <td>{{ item.categoria|default('-') }}</td>
+                            <td>{{ item.responsavel|default('-') }}</td>
+                            <td>
+                                {% set p = item.prioridade|default('Baixa') %}
+                                <span class="badge {% if p|lower == 'alta' %}text-bg-danger{% elif p|lower == 'média' or p|lower == 'media' %}text-bg-warning{% else %}text-bg-secondary{% endif %}">{{ p }}</span>
+                            </td>
+                            <td class="data-hora">{{ item.inicio_formatado|default('-') }}</td>
+                            <td class="data-hora">{{ item.prazo_formatado|default(item.prazo|default('-')) }}</td>
+                            <td class="data-hora">{{ item.concluido_formatado|default('-') }}</td>
+                            <td>
+                                {% if arquivado %}<span class="badge text-bg-secondary">Arquivado</span>
+                                {% elif concluido %}<span class="badge text-bg-success">Concluído</span>
+                                {% elif status_norm == 'em andamento' %}<span class="badge text-bg-primary">Em andamento</span>
+                                {% else %}<span class="badge text-bg-warning">Pendente</span>{% endif %}
+                                {% if atrasado %}<div class="text-danger small mt-1"><i class="fa-solid fa-triangle-exclamation me-1"></i>Atrasado</div>{% endif %}
+                            </td>
+                            <td class="acoes">
+                                {% if not arquivado %}
+                                <button class="btn btn-outline-primary btn-sm btn-acao" title="Editar" data-bs-toggle="modal" data-bs-target="#modalEditar{{ item.id }}"><i class="fa-solid fa-pen"></i></button>
+                                <form method="POST" action="{{ url_for('arquivar', id=item.id) }}" class="d-inline" onsubmit="return confirm('Arquivar este registro? Ele continuará disponível no histórico.');">
+                                    <button class="btn btn-outline-secondary btn-sm btn-acao" title="Arquivar"><i class="fa-solid fa-box-archive"></i></button>
+                                </form>
+                                {% else %}<span class="text-muted small">Arquivado</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-5 text-center text-muted">
+                <i class="fa-regular fa-calendar-xmark fs-1 mb-3"></i>
+                <h5>Nenhuma atividade encontrada</h5>
+                <p class="mb-0">Não há registros para {{ data_formatada|default(data_relatorio) }} com este filtro.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% for item in itens if item.status|default('')|lower not in ['arquivado','arquivada'] %}
+    <div class="modal fade" id="modalEditar{{ item.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('editar', id=item.id) }}">
+                    <div class="modal-header"><h5 class="modal-title"><i class="fa-solid fa-pen me-2"></i>Editar atividade #{{ item.id }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-4"><label class="form-label">Nº Requisição</label><input name="num_requisicao" class="form-control" value="{{ item.num_requisicao|default('') }}"></div>
+                            <div class="col-md-8"><label class="form-label">Atividade</label><input name="atividade" class="form-control" required value="{{ item.atividade|default('') }}"></div>
+                            <div class="col-md-6"><label class="form-label">Categoria</label><select name="categoria" class="form-select" required>{% for c in ['Separação','Inventário','Expedição','Recebimento'] %}<option value="{{ c }}" {% if item.categoria == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+                            <div class="col-md-6"><label class="form-label">Responsável</label><input name="responsavel" class="form-control" value="{{ item.responsavel|default('') }}"></div>
+                            <div class="col-md-4"><label class="form-label">Prioridade</label><select name="prioridade" class="form-select">{% for p in ['Baixa','Média','Alta'] %}<option value="{{ p }}" {% if item.prioridade == p %}selected{% endif %}>{{ p }}</option>{% endfor %}</select></div>
+                            <div class="col-md-4"><label class="form-label">Prazo</label><input type="datetime-local" name="prazo" class="form-control" value="{{ item.prazo_input|default('') }}"></div>
+                            <div class="col-md-4"><label class="form-label">Status</label><select name="status" class="form-select"><option value="Pendente" {% if item.status|default('')|lower == 'pendente' %}selected{% endif %}>Pendente</option><option value="Em andamento" {% if item.status|default('')|lower == 'em andamento' %}selected{% endif %}>Em andamento</option><option value="Concluído" {% if item.status|default('')|lower in ['concluído','concluido'] %}selected{% endif %}>Concluído</option><option value="Arquivado" {% if item.status|default('')|lower in ['arquivado','arquivada'] %}selected{% endif %}>Arquivado</option></select></div>
+                            <div class="col-12"><label class="form-label">Descrição</label><textarea name="descricao" class="form-control" rows="4">{{ item.descricao|default('') }}</textarea></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk me-1"></i>Salvar alterações</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="text-center text-muted small mt-4">Relatório diário • Almoxarifado Valenet</div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

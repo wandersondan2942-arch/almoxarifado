@@ -2807,13 +2807,17 @@ def editar(id):
     # ATUALIZA A ATIVIDADE
     # =========================
     #
-    # IMPORTANTE:
-    # inicio_em NÃO será alterado.
-    # concluido_em NÃO será alterado.
-    # criado_em NÃO será alterado.
-    # status NÃO será alterado.
-    # encerrado_por NÃO será alterado.
+    # Os campos abaixo NÃO serão alterados:
     #
+    # inicio_em
+    # concluido_em
+    # criado_em
+    # status
+    # encerrado_por
+    #
+    # Apenas os dados editáveis da atividade
+    # serão atualizados.
+    # =========================
 
     executar(
         """
@@ -2863,7 +2867,6 @@ def editar(id):
     return redirect(
         url_for("index")
     )
-
 @app.route(
     "/dashboard",
     methods=["GET"]

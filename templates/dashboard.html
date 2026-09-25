@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Início - Almoxarifado Valenet</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <!-- Font Awesome -->
+    <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        rel="stylesheet"
+    >
 
     <style>
+
         :root {
             --sidebar: #111827;
             --sidebar-hover: #1f2937;
@@ -47,7 +63,11 @@
             left: 0;
             width: 260px;
             height: 100vh;
-            background: linear-gradient(180deg, #111827 0%, #0f172a 100%);
+            background: linear-gradient(
+                180deg,
+                #111827 0%,
+                #0f172a 100%
+            );
             color: white;
             padding: 20px 14px;
             overflow-y: auto;
@@ -67,12 +87,17 @@
             width: 44px;
             height: 44px;
             border-radius: 13px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(
+                135deg,
+                #2563eb,
+                #1d4ed8
+            );
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+            box-shadow:
+                0 8px 20px rgba(37, 99, 235, 0.25);
         }
 
         .brand-text {
@@ -133,7 +158,8 @@
                 rgba(37, 99, 235, .75)
             );
             color: white;
-            box-shadow: 0 6px 15px rgba(37, 99, 235, .18);
+            box-shadow:
+                0 6px 15px rgba(37, 99, 235, .18);
         }
 
         .sidebar hr {
@@ -159,7 +185,11 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            background: linear-gradient(
+                135deg,
+                #2563eb,
+                #7c3aed
+            );
             display: flex;
             align-items: center;
             justify-content: center;
@@ -236,7 +266,8 @@
             height: 7px;
             border-radius: 50%;
             background: #22c55e;
-            box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+            box-shadow:
+                0 0 0 4px rgba(34,197,94,.12);
         }
 
         /* =========================================================
@@ -262,12 +293,14 @@
             border-radius: 14px 0 0 14px;
             border: 1px solid var(--border);
             padding-left: 45px;
-            box-shadow: 0 3px 12px rgba(15,23,42,.04);
+            box-shadow:
+                0 3px 12px rgba(15,23,42,.04);
         }
 
         .search-wrapper input:focus {
             border-color: #93c5fd;
-            box-shadow: 0 0 0 4px rgba(37,99,235,.08);
+            box-shadow:
+                0 0 0 4px rgba(37,99,235,.08);
         }
 
         .search-wrapper button {
@@ -288,12 +321,14 @@
             padding: 19px;
             overflow: hidden;
             transition: all .22s ease;
-            box-shadow: 0 5px 18px rgba(15,23,42,.045);
+            box-shadow:
+                0 5px 18px rgba(15,23,42,.045);
         }
 
         .stat-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(15,23,42,.09);
+            box-shadow:
+                0 12px 28px rgba(15,23,42,.09);
         }
 
         .stat-card::after {
@@ -395,7 +430,8 @@
             background: white;
             border: 1px solid var(--border);
             border-radius: var(--card-radius);
-            box-shadow: 0 5px 18px rgba(15,23,42,.045);
+            box-shadow:
+                0 5px 18px rgba(15,23,42,.045);
             margin-top: 22px;
             overflow: hidden;
         }
@@ -428,8 +464,12 @@
            INDICADORES
         ========================================================= */
 
+        .indicator-panel {
+            height: 100%;
+        }
+
         .indicator-row {
-            margin-bottom: 21px;
+            margin-bottom: 20px;
         }
 
         .indicator-row:last-child {
@@ -467,12 +507,63 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
             margin-top: 20px;
         }
 
         .small-info {
             font-size: 11px;
             color: var(--muted);
+        }
+
+        /* =========================================================
+           GRÁFICOS
+        ========================================================= */
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .chart-card {
+            border: 1px solid #eef2f7;
+            background: #fbfcfe;
+            border-radius: 15px;
+            padding: 13px;
+            text-align: center;
+        }
+
+        .chart-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 125px;
+            height: 125px;
+            margin: 0 auto;
+        }
+
+        .chart-wrapper canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .chart-center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 17px;
+            font-weight: 800;
+            color: #111827;
+            pointer-events: none;
         }
 
         /* =========================================================
@@ -501,7 +592,8 @@
         .form-control:focus,
         .form-select:focus {
             border-color: #93c5fd;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+            box-shadow:
+                0 0 0 3px rgba(37,99,235,.08);
         }
 
         .btn-create {
@@ -510,12 +602,21 @@
             border-radius: 11px;
             font-size: 12px;
             font-weight: 700;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            box-shadow: 0 7px 15px rgba(37,99,235,.18);
+            background: linear-gradient(
+                135deg,
+                #2563eb,
+                #1d4ed8
+            );
+            box-shadow:
+                0 7px 15px rgba(37,99,235,.18);
         }
 
         .btn-create:hover {
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            background: linear-gradient(
+                135deg,
+                #1d4ed8,
+                #1e40af
+            );
             transform: translateY(-1px);
         }
 
@@ -647,13 +748,6 @@
             color: #475569;
         }
 
-        .activity-actions {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            margin-left: 10px;
-        }
-
         .btn-action {
             border-radius: 9px;
             font-size: 10px;
@@ -760,6 +854,7 @@
         ========================================================= */
 
         @media (max-width: 1200px) {
+
             .sidebar {
                 width: 230px;
             }
@@ -768,9 +863,15 @@
                 margin-left: 230px;
                 padding: 22px;
             }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
         }
 
         @media (max-width: 991px) {
+
             .sidebar {
                 position: relative;
                 width: 100%;
@@ -808,9 +909,16 @@
             .page-title {
                 font-size: 21px;
             }
+
+            .chart-grid {
+                grid-template-columns:
+                    repeat(3, 1fr);
+            }
+
         }
 
         @media (max-width: 576px) {
+
             .main {
                 padding: 13px;
             }
@@ -835,19 +943,28 @@
                 flex-direction: column;
             }
 
-            .activity-actions {
-                margin-left: 0;
-                margin-top: 10px;
-            }
-
             .section-body {
                 padding: 15px;
             }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-wrapper {
+                max-width: 140px;
+                height: 140px;
+            }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
 <!-- =========================================================
      SIDEBAR
@@ -856,76 +973,128 @@
 <aside class="sidebar">
 
     <div class="brand">
+
         <div class="brand-icon">
             <i class="fa-solid fa-boxes-stacked"></i>
         </div>
 
         <div class="brand-text">
-            <div class="brand-title">Almoxarifado</div>
-            <div class="brand-subtitle">Valenet • Operacional</div>
+
+            <div class="brand-title">
+                Almoxarifado
+            </div>
+
+            <div class="brand-subtitle">
+                Valenet • Operacional
+            </div>
+
         </div>
+
     </div>
 
-    <div class="menu-title">Menu principal</div>
 
-    <a href="{{ url_for('index') }}" class="active">
+    <div class="menu-title">
+        Menu principal
+    </div>
+
+
+    <a
+        href="{{ url_for('index') }}"
+        class="active"
+    >
         <i class="fa-solid fa-house"></i>
         <span>Início</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Requisições') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Requisições') }}"
+    >
         <i class="fa-solid fa-list-check"></i>
         <span>Requisições</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Inventário') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Inventário') }}"
+    >
         <i class="fa-solid fa-boxes-stacked"></i>
         <span>Inventário</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Expedição') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Expedição') }}"
+    >
         <i class="fa-solid fa-truck-fast"></i>
         <span>Expedição</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Recebimento') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Recebimento') }}"
+    >
         <i class="fa-solid fa-truck-ramp-box"></i>
         <span>Recebimento</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Estoque') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Estoque') }}"
+    >
         <i class="fa-solid fa-warehouse"></i>
         <span>Estoque</span>
     </a>
 
-    <div class="menu-title">Gestão</div>
 
-    <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}">
+    <div class="menu-title">
+        Gestão
+    </div>
+
+
+    <a
+        href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+    >
         <i class="fa-solid fa-arrows-rotate"></i>
         <span>Melhorias / PDCA</span>
     </a>
 
-    <a href="{{ url_for('indicadores') }}">
+
+    <a
+        href="{{ url_for('indicadores') }}"
+    >
         <i class="fa-solid fa-chart-line"></i>
         <span>Indicadores</span>
     </a>
 
-    <a href="{{ url_for('relatorios') }}">
+
+    <a
+        href="{{ url_for('relatorios') }}"
+    >
         <i class="fa-solid fa-file-lines"></i>
         <span>Relatórios</span>
     </a>
 
-    <a href="{{ url_for('modulo', nome='Configurações') }}">
+
+    <a
+        href="{{ url_for('modulo', nome='Configurações') }}"
+    >
         <i class="fa-solid fa-gear"></i>
         <span>Configurações</span>
     </a>
 
+
     <hr>
 
+
     <a href="{{ url_for('logout') }}">
+
         <i class="fa-solid fa-right-from-bracket"></i>
+
         <span>Sair</span>
+
     </a>
+
 
     <div class="sidebar-user">
 
@@ -935,15 +1104,21 @@
                 {{ (usuario_atual or 'U')[0]|upper }}
             </div>
 
+
             <div style="min-width:0;">
+
                 <div class="user-name">
                     {{ usuario_atual or 'Usuário' }}
                 </div>
 
                 <div class="user-status">
+
                     <i class="fa-solid fa-circle"></i>
+
                     Online
+
                 </div>
+
             </div>
 
         </div>
@@ -959,27 +1134,44 @@
 
 <main class="main">
 
-    <!-- TOPO -->
+
+    <!-- =====================================================
+         TOPO
+    ====================================================== -->
 
     <div class="topbar">
 
         <div>
 
             <h1 class="page-title">
+
                 <i class="fa-solid fa-house"></i>
+
                 Painel do Almoxarifado
+
             </h1>
 
+
             <div class="welcome">
-                Bem-vindo, <strong>{{ usuario_atual or 'Usuário' }}</strong>.
+
+                Bem-vindo,
+                <strong>
+                    {{ usuario_atual or 'Usuário' }}
+                </strong>.
+
                 Acompanhe a operação do dia.
+
             </div>
 
         </div>
 
+
         <div class="online-badge">
+
             <span class="online-dot"></span>
+
             Sistema online
+
         </div>
 
     </div>
@@ -989,11 +1181,15 @@
          BUSCA
     ====================================================== -->
 
-    <form method="GET" action="{{ url_for('index') }}">
+    <form
+        method="GET"
+        action="{{ url_for('index') }}"
+    >
 
         <div class="input-group search-wrapper">
 
             <i class="fa-solid fa-magnifying-glass"></i>
+
 
             <input
                 type="text"
@@ -1003,9 +1199,16 @@
                 value="{{ busca or '' }}"
             >
 
-            <button class="btn btn-dark" type="submit">
+
+            <button
+                class="btn btn-dark"
+                type="submit"
+            >
+
                 <i class="fa-solid fa-magnifying-glass me-1"></i>
+
                 <span>Pesquisar</span>
+
             </button>
 
         </div>
@@ -1018,6 +1221,7 @@
     ====================================================== -->
 
     <div class="row g-3">
+
 
         <!-- REQUISIÇÕES -->
 
@@ -1037,16 +1241,21 @@
 
                 </div>
 
+
                 <div class="stat-number">
                     {{ total_req|default(0) }}
                 </div>
+
 
                 <a
                     href="{{ url_for('modulo', nome='Requisições') }}"
                     class="stat-link"
                 >
+
                     Ver requisições
+
                     <i class="fa-solid fa-arrow-right ms-1"></i>
+
                 </a>
 
             </div>
@@ -1072,16 +1281,23 @@
 
                 </div>
 
+
                 <div class="stat-number">
+
                     {{ inv_conc|default(0) }}/{{ inv_total|default(0) }}
+
                 </div>
+
 
                 <a
                     href="{{ url_for('modulo', nome='Inventário') }}"
                     class="stat-link"
                 >
+
                     Ver inventário
+
                     <i class="fa-solid fa-arrow-right ms-1"></i>
+
                 </a>
 
             </div>
@@ -1107,16 +1323,21 @@
 
                 </div>
 
+
                 <div class="stat-number">
                     {{ exp_pend|default(0) }}
                 </div>
+
 
                 <a
                     href="{{ url_for('modulo', nome='Expedição') }}"
                     class="stat-link"
                 >
+
                     Ver expedições
+
                     <i class="fa-solid fa-arrow-right ms-1"></i>
+
                 </a>
 
             </div>
@@ -1142,16 +1363,21 @@
 
                 </div>
 
+
                 <div class="stat-number">
                     {{ rec_pend|default(0) }}
                 </div>
+
 
                 <a
                     href="{{ url_for('modulo', nome='Recebimento') }}"
                     class="stat-link"
                 >
+
                     Ver recebimentos
+
                     <i class="fa-solid fa-arrow-right ms-1"></i>
+
                 </a>
 
             </div>
@@ -1177,9 +1403,11 @@
 
                 </div>
 
+
                 <div class="stat-number">
                     {{ total_oco|default(0) }}
                 </div>
+
 
                 <span class="stat-link">
                     Pendências registradas
@@ -1208,16 +1436,21 @@
 
                 </div>
 
+
                 <div class="stat-number">
                     {{ total_atrasados|default(0) }}
                 </div>
+
 
                 <a
                     href="{{ url_for('relatorios', filtro='atrasados') }}"
                     class="stat-link text-danger"
                 >
+
                     Ver em relatórios
+
                     <i class="fa-solid fa-arrow-right ms-1"></i>
+
                 </a>
 
             </div>
@@ -1233,159 +1466,36 @@
 
     <div class="row g-3 mt-1">
 
-        <!-- INDICADORES -->
 
-        <div class="col-lg-7">
+        <!-- =================================================
+             NOVA ATIVIDADE
+        ================================================== -->
 
-            <div class="section-card">
-
-                <div class="section-header">
-
-                    <h5 class="section-title">
-                        <i class="fa-solid fa-chart-pie"></i>
-                        Indicadores do Dia
-                    </h5>
-
-                    <span class="small-info">
-                        Desempenho operacional
-                    </span>
-
-                </div>
-
-                <div class="section-body">
-
-                    <!-- ATENDIDAS -->
-
-                    <div class="indicator-row">
-
-                        <div class="indicator-label">
-
-                            <span>
-                                <i class="fa-solid fa-check-circle text-success me-1"></i>
-                                Atendidas
-                            </span>
-
-                            <strong>
-                                {{ perc_atendidas|default(0) }}%
-                            </strong>
-
-                        </div>
-
-                        <div class="progress">
-
-                            <div
-                                class="progress-bar bg-success"
-                                role="progressbar"
-                                style="width: {{ perc_atendidas|default(0) }}%;"
-                            ></div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- INVENTÁRIO -->
-
-                    <div class="indicator-row">
-
-                        <div class="indicator-label">
-
-                            <span>
-                                <i class="fa-solid fa-boxes-stacked text-info me-1"></i>
-                                Inventário
-                            </span>
-
-                            <strong>
-                                {{ perc_inventario|default(0) }}%
-                            </strong>
-
-                        </div>
-
-                        <div class="progress">
-
-                            <div
-                                class="progress-bar bg-info"
-                                role="progressbar"
-                                style="width: {{ perc_inventario|default(0) }}%;"
-                            ></div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- EXPEDIÇÃO -->
-
-                    <div class="indicator-row">
-
-                        <div class="indicator-label">
-
-                            <span>
-                                <i class="fa-solid fa-truck-fast text-warning me-1"></i>
-                                Expedição
-                            </span>
-
-                            <strong>
-                                {{ perc_expedicao|default(0) }}%
-                            </strong>
-
-                        </div>
-
-                        <div class="progress">
-
-                            <div
-                                class="progress-bar bg-warning"
-                                role="progressbar"
-                                style="width: {{ perc_expedicao|default(0) }}%;"
-                            ></div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="indicator-footer">
-
-                        <span class="small-info">
-                            <i class="fa-solid fa-chart-line me-1"></i>
-                            Indicadores calculados pelo sistema
-                        </span>
-
-                        <a
-                            href="{{ url_for('indicadores') }}"
-                            class="btn btn-sm btn-outline-dark"
-                        >
-                            Ver completos
-                            <i class="fa-solid fa-arrow-right ms-1"></i>
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- NOVA ATIVIDADE -->
-
-        <div class="col-lg-5">
+        <div class="col-lg-7 order-2 order-lg-1">
 
             <div class="section-card">
 
                 <div class="section-header">
 
                     <h5 class="section-title">
+
                         <i class="fa-solid fa-plus-circle"></i>
+
                         Nova Atividade
+
                     </h5>
 
                 </div>
 
+
                 <div class="section-body">
 
-                    <form method="POST" action="{{ url_for('index') }}">
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('index') }}"
+                    >
+
 
                         <!-- REQUISIÇÃO -->
 
@@ -1394,6 +1504,7 @@
                             <label class="form-label">
                                 Nº Requisição
                             </label>
+
 
                             <input
                                 type="text"
@@ -1404,12 +1515,15 @@
                                 autocomplete="off"
                             >
 
+
                             <div
                                 id="ajuda-requisicao"
                                 class="form-text"
                                 style="font-size: 10px;"
                             >
+
                                 Obrigatório para Separação.
+
                             </div>
 
                         </div>
@@ -1422,6 +1536,7 @@
                             <label class="form-label">
                                 Atividade
                             </label>
+
 
                             <input
                                 type="text"
@@ -1436,6 +1551,7 @@
 
                         <div class="row">
 
+
                             <!-- CATEGORIA -->
 
                             <div class="col-md-6 mb-3">
@@ -1443,6 +1559,7 @@
                                 <label class="form-label">
                                     Categoria
                                 </label>
+
 
                                 <select
                                     name="categoria"
@@ -1488,6 +1605,7 @@
                                     Prioridade
                                 </label>
 
+
                                 <select
                                     name="prioridade"
                                     class="form-select"
@@ -1521,6 +1639,7 @@
                                 Responsável
                             </label>
 
+
                             <select
                                 name="responsavel"
                                 class="form-select"
@@ -1531,8 +1650,15 @@
 
                                     {% for usuario in usuarios %}
 
-                                        <option value="{{ usuario.nome }}">
+                                        <option
+                                            value="{{ usuario.nome }}"
+                                            {% if usuario.nome == usuario_atual %}
+                                                selected
+                                            {% endif %}
+                                        >
+
                                             {{ usuario.nome }}
+
                                         </option>
 
                                     {% endfor %}
@@ -1540,7 +1666,9 @@
                                 {% else %}
 
                                     <option value="{{ usuario_atual }}">
+
                                         {{ usuario_atual or 'Usuário' }}
+
                                     </option>
 
                                 {% endif %}
@@ -1557,6 +1685,7 @@
                             <label class="form-label">
                                 Prazo
                             </label>
+
 
                             <input
                                 type="datetime-local"
@@ -1575,6 +1704,7 @@
                                 Descrição
                             </label>
 
+
                             <textarea
                                 name="descricao"
                                 class="form-control"
@@ -1591,11 +1721,260 @@
                         >
 
                             <i class="fa-solid fa-plus me-1"></i>
+
                             Criar atividade
 
                         </button>
 
+
                     </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             INDICADORES
+        ================================================== -->
+
+        <div class="col-lg-5 order-1 order-lg-2">
+
+            <div class="section-card indicator-panel">
+
+                <div class="section-header">
+
+                    <h5 class="section-title">
+
+                        <i class="fa-solid fa-chart-pie"></i>
+
+                        Indicadores do Dia
+
+                    </h5>
+
+
+                    <span class="small-info">
+                        Desempenho operacional
+                    </span>
+
+                </div>
+
+
+                <div class="section-body">
+
+
+                    <!-- GRÁFICOS DE PIZZA -->
+
+                    <div class="chart-grid">
+
+
+                        <!-- ATENDIDAS -->
+
+                        <div class="chart-card">
+
+                            <div class="chart-title">
+
+                                <i class="fa-solid fa-check-circle text-success me-1"></i>
+
+                                Atendidas
+
+                            </div>
+
+
+                            <div class="chart-wrapper">
+
+                                <canvas id="chartAtendidas"></canvas>
+
+
+                                <div class="chart-center">
+
+                                    {{ perc_atendidas|default(0) }}%
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- INVENTÁRIO -->
+
+                        <div class="chart-card">
+
+                            <div class="chart-title">
+
+                                <i class="fa-solid fa-boxes-stacked text-info me-1"></i>
+
+                                Inventário
+
+                            </div>
+
+
+                            <div class="chart-wrapper">
+
+                                <canvas id="chartInventario"></canvas>
+
+
+                                <div class="chart-center">
+
+                                    {{ perc_inventario|default(0) }}%
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- EXPEDIÇÃO -->
+
+                        <div class="chart-card">
+
+                            <div class="chart-title">
+
+                                <i class="fa-solid fa-truck-fast text-warning me-1"></i>
+
+                                Expedição
+
+                            </div>
+
+
+                            <div class="chart-wrapper">
+
+                                <canvas id="chartExpedicao"></canvas>
+
+
+                                <div class="chart-center">
+
+                                    {{ perc_expedicao|default(0) }}%
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BARRA ATENDIDAS -->
+
+                    <div class="indicator-row">
+
+                        <div class="indicator-label">
+
+                            <span>
+                                <i class="fa-solid fa-check-circle text-success me-1"></i>
+                                Atendidas
+                            </span>
+
+                            <strong>
+                                {{ perc_atendidas|default(0) }}%
+                            </strong>
+
+                        </div>
+
+
+                        <div class="progress">
+
+                            <div
+                                class="progress-bar bg-success"
+                                role="progressbar"
+                                style="width: {{ perc_atendidas|default(0) }}%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BARRA INVENTÁRIO -->
+
+                    <div class="indicator-row">
+
+                        <div class="indicator-label">
+
+                            <span>
+                                <i class="fa-solid fa-boxes-stacked text-info me-1"></i>
+                                Inventário
+                            </span>
+
+                            <strong>
+                                {{ perc_inventario|default(0) }}%
+                            </strong>
+
+                        </div>
+
+
+                        <div class="progress">
+
+                            <div
+                                class="progress-bar bg-info"
+                                role="progressbar"
+                                style="width: {{ perc_inventario|default(0) }}%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BARRA EXPEDIÇÃO -->
+
+                    <div class="indicator-row">
+
+                        <div class="indicator-label">
+
+                            <span>
+                                <i class="fa-solid fa-truck-fast text-warning me-1"></i>
+                                Expedição
+                            </span>
+
+                            <strong>
+                                {{ perc_expedicao|default(0) }}%
+                            </strong>
+
+                        </div>
+
+
+                        <div class="progress">
+
+                            <div
+                                class="progress-bar bg-warning"
+                                role="progressbar"
+                                style="width: {{ perc_expedicao|default(0) }}%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="indicator-footer">
+
+                        <span class="small-info">
+
+                            <i class="fa-solid fa-chart-line me-1"></i>
+
+                            Indicadores calculados pelo sistema
+
+                        </span>
+
+
+                        <a
+                            href="{{ url_for('indicadores') }}"
+                            class="btn btn-sm btn-outline-dark"
+                        >
+
+                            Ver completos
+
+                            <i class="fa-solid fa-arrow-right ms-1"></i>
+
+                        </a>
+
+                    </div>
 
                 </div>
 
@@ -1615,16 +1994,23 @@
         <div class="section-header">
 
             <h5 class="section-title">
+
                 <i class="fa-solid fa-list-check"></i>
+
                 Atividades
+
             </h5>
+
 
             <a
                 href="{{ url_for('relatorios') }}"
                 class="btn btn-sm btn-outline-dark"
             >
+
                 <i class="fa-solid fa-file-lines me-1"></i>
+
                 Relatórios
+
             </a>
 
         </div>
@@ -1632,7 +2018,9 @@
 
         {% set lista_atividades = atividades if atividades is defined else itens %}
 
+
         {% if lista_atividades %}
+
 
             {% for item in lista_atividades %}
 
@@ -1640,27 +2028,36 @@
 
                     <div class="activity-main">
 
+
+                        <!-- ÍCONE -->
+
                         <div class="activity-icon">
+
 
                             {% if item.categoria == 'Expedição' %}
 
                                 <i class="fa-solid fa-truck-fast"></i>
 
+
                             {% elif item.categoria == 'Inventário' %}
 
                                 <i class="fa-solid fa-boxes-stacked"></i>
+
 
                             {% elif item.categoria == 'Recebimento' %}
 
                                 <i class="fa-solid fa-truck-ramp-box"></i>
 
+
                             {% elif item.categoria == 'Logística Reversa' %}
 
                                 <i class="fa-solid fa-arrows-rotate"></i>
 
+
                             {% elif item.categoria == 'Estoque' %}
 
                                 <i class="fa-solid fa-warehouse"></i>
+
 
                             {% else %}
 
@@ -1668,24 +2065,35 @@
 
                             {% endif %}
 
+
                         </div>
 
 
+                        <!-- CONTEÚDO -->
+
                         <div class="activity-content">
 
+
                             <div class="d-flex flex-wrap justify-content-between gap-2">
+
 
                                 <div>
 
                                     <span class="activity-title">
+
                                         {{ item.atividade }}
+
                                     </span>
+
 
                                     {% if item.num_requisicao %}
 
                                         <span class="meta-chip req-chip ms-1">
+
                                             <i class="fa-solid fa-hashtag"></i>
+
                                             {{ item.num_requisicao }}
+
                                         </span>
 
                                     {% endif %}
@@ -1697,38 +2105,55 @@
 
                                 <div>
 
+
                                     {% if item.status == 'Concluído'
                                        or item.status == 'Concluido' %}
 
                                         <span class="status-badge status-concluido">
+
                                             <i class="fa-solid fa-check"></i>
+
                                             Concluído
+
                                         </span>
+
 
                                     {% elif item.status == 'Em andamento'
                                        or item.status == 'Em Andamento' %}
 
                                         <span class="status-badge status-andamento">
+
                                             <i class="fa-solid fa-spinner"></i>
+
                                             Em andamento
+
                                         </span>
+
 
                                     {% elif item.status == 'Arquivado'
                                        or item.status == 'Arquivada' %}
 
                                         <span class="status-badge status-arquivado">
+
                                             <i class="fa-solid fa-box-archive"></i>
+
                                             Arquivado
+
                                         </span>
+
 
                                     {% else %}
 
                                         <span class="status-badge status-pendente">
+
                                             <i class="fa-solid fa-clock"></i>
+
                                             {{ item.status or 'Pendente' }}
+
                                         </span>
 
                                     {% endif %}
+
 
                                 </div>
 
@@ -1738,6 +2163,7 @@
                             <!-- META -->
 
                             <div class="activity-meta">
+
 
                                 {% if item.responsavel %}
 
@@ -1768,10 +2194,12 @@
                                 {% if item.prazo %}
 
                                     <span
-                                        class="meta-chip
-                                        {% if item.esta_atrasada or item.foi_atrasada %}
-                                            overdue-text
-                                        {% endif %}"
+                                        class="
+                                            meta-chip
+                                            {% if item.esta_atrasada or item.foi_atrasada %}
+                                                overdue-text
+                                            {% endif %}
+                                        "
                                     >
 
                                         <i class="fa-solid fa-calendar"></i>
@@ -1785,42 +2213,61 @@
 
                                 {% if item.prioridade %}
 
+
                                     {% if item.prioridade == 'Alta' %}
 
                                         <span class="priority-badge priority-alta">
+
                                             <i class="fa-solid fa-arrow-up"></i>
+
                                             Alta
+
                                         </span>
+
 
                                     {% elif item.prioridade == 'Média' %}
 
                                         <span class="priority-badge priority-media">
+
                                             <i class="fa-solid fa-minus"></i>
+
                                             Média
+
                                         </span>
+
 
                                     {% else %}
 
                                         <span class="priority-badge priority-baixa">
+
                                             <i class="fa-solid fa-arrow-down"></i>
+
                                             Baixa
+
                                         </span>
 
                                     {% endif %}
+
 
                                 {% endif %}
 
                             </div>
 
 
+                            <!-- DESCRIÇÃO -->
+
                             {% if item.descricao %}
 
                                 <div class="activity-description">
+
                                     {{ item.descricao }}
+
                                 </div>
 
                             {% endif %}
 
+
+                            <!-- ATRASO -->
 
                             {% if item.esta_atrasada or item.foi_atrasada %}
 
@@ -1844,19 +2291,23 @@
 
                                 <div class="mt-3">
 
+
                                     <a
                                         href="{{ url_for('concluir', id=item.id) }}"
                                         class="btn btn-sm btn-outline-success btn-action"
                                     >
 
                                         <i class="fa-solid fa-check me-1"></i>
+
                                         Concluir
 
                                     </a>
 
+
                                 </div>
 
                             {% endif %}
+
 
                         </div>
 
@@ -1866,21 +2317,26 @@
 
             {% endfor %}
 
+
         {% else %}
+
 
             <div class="empty-state">
 
                 <i class="fa-solid fa-inbox d-block"></i>
 
+
                 <p>
                     Nenhuma atividade encontrada.
                 </p>
+
 
                 <small>
                     As novas atividades aparecerão aqui.
                 </small>
 
             </div>
+
 
         {% endif %}
 
@@ -1896,9 +2352,13 @@
         <div class="section-header">
 
             <h5 class="section-title">
+
                 <i class="fa-solid fa-comments"></i>
+
                 Chat da Equipe
+
             </h5>
+
 
             <span class="small-info">
                 Comunicação interna
@@ -1909,11 +2369,16 @@
 
         <div class="chat-box">
 
-            {% if chat %}
 
-                {% for mensagem in chat %}
+            {% if mensagens or chat %}
+
+                {% set lista_chat = mensagens if mensagens else chat %}
+
+
+                {% for mensagem in lista_chat %}
 
                     <div class="chat-item">
+
 
                         <div class="chat-avatar">
 
@@ -1924,21 +2389,31 @@
 
                         <div class="chat-message">
 
+
                             <div>
 
                                 <span class="chat-name">
+
                                     {{ mensagem.usuario or 'Usuário' }}
+
                                 </span>
+
 
                                 <span class="chat-date">
+
                                     {{ mensagem.criado_em or '' }}
+
                                 </span>
 
                             </div>
 
+
                             <div class="chat-text">
+
                                 {{ mensagem.mensagem }}
+
                             </div>
+
 
                         </div>
 
@@ -1946,11 +2421,14 @@
 
                 {% endfor %}
 
+
             {% else %}
+
 
                 <div class="empty-state py-4">
 
                     <i class="fa-solid fa-comments d-block"></i>
+
 
                     <p>
                         Nenhuma mensagem ainda.
@@ -1958,7 +2436,9 @@
 
                 </div>
 
+
             {% endif %}
+
 
         </div>
 
@@ -1969,13 +2449,16 @@
             class="chat-form"
         >
 
+
             <input
                 type="hidden"
                 name="acao_chat"
                 value="enviar"
             >
 
+
             <div class="input-group">
+
 
                 <input
                     type="text"
@@ -1985,6 +2468,7 @@
                     autocomplete="off"
                     required
                 >
+
 
                 <button
                     class="btn btn-dark"
@@ -1996,6 +2480,7 @@
 
                 </button>
 
+
             </div>
 
         </form>
@@ -2003,35 +2488,239 @@
     </div>
 
 
-    <!-- RODAPÉ -->
+    <!-- =====================================================
+         RODAPÉ
+    ====================================================== -->
 
     <div class="text-center py-4">
 
         <small class="text-muted">
+
             Almoxarifado Valenet • Painel Operacional
+
         </small>
 
     </div>
+
 
 </main>
 
 
 <!-- =========================================================
-     JAVASCRIPT
+     CHART.JS
 ========================================================= -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
+></script>
+
 
 <script>
 
     /*
-     * Controle do campo Nº Requisição.
+     * =========================================================
+     * INDICADORES
+     * =========================================================
+     */
+
+    const percAtendidas =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number("{{ perc_atendidas|default(0) }}") || 0
+            )
+        );
+
+
+    const percInventario =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number("{{ perc_inventario|default(0) }}") || 0
+            )
+        );
+
+
+    const percExpedicao =
+        Math.min(
+            100,
+            Math.max(
+                0,
+                Number("{{ perc_expedicao|default(0) }}") || 0
+            )
+        );
+
+
+    /*
+     * Cria gráfico doughnut.
+     */
+
+    function criarGraficoPizza(
+        elemento,
+        percentual,
+        corPrincipal
+    ) {
+
+        if (!elemento) {
+            return;
+        }
+
+
+        new Chart(elemento, {
+
+            type: "doughnut",
+
+            data: {
+
+                labels: [
+                    "Concluído",
+                    "Restante"
+                ],
+
+                datasets: [{
+
+                    data: [
+                        percentual,
+                        100 - percentual
+                    ],
+
+                    backgroundColor: [
+                        corPrincipal,
+                        "#e5e7eb"
+                    ],
+
+                    borderWidth: 0,
+
+                    hoverOffset: 3
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                cutout: "72%",
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+                        callbacks: {
+
+                            label: function(context) {
+
+                                return (
+                                    context.label +
+                                    ": " +
+                                    context.raw +
+                                    "%"
+                                );
+
+                            }
+
+                        }
+                    }
+
+                },
+
+                animation: {
+
+                    duration: 900
+
+                }
+
+            }
+
+        });
+
+    }
+
+
+    /*
+     * ATENDIDAS
+     */
+
+    criarGraficoPizza(
+
+        document.getElementById(
+            "chartAtendidas"
+        ),
+
+        percAtendidas,
+
+        "#16a34a"
+
+    );
+
+
+    /*
+     * INVENTÁRIO
+     */
+
+    criarGraficoPizza(
+
+        document.getElementById(
+            "chartInventario"
+        ),
+
+        percInventario,
+
+        "#0891b2"
+
+    );
+
+
+    /*
+     * EXPEDIÇÃO
+     */
+
+    criarGraficoPizza(
+
+        document.getElementById(
+            "chartExpedicao"
+        ),
+
+        percExpedicao,
+
+        "#f59e0b"
+
+    );
+
+
+    /*
+     * =========================================================
+     * CAMPO DE REQUISIÇÃO
+     * =========================================================
      *
      * Separação = obrigatório
      * Demais categorias = opcional
      */
 
-    const categoria = document.getElementById("categoria");
-    const requisicao = document.getElementById("num_requisicao");
-    const ajudaRequisicao = document.getElementById("ajuda-requisicao");
+    const categoria =
+        document.getElementById(
+            "categoria"
+        );
+
+
+    const requisicao =
+        document.getElementById(
+            "num_requisicao"
+        );
+
+
+    const ajudaRequisicao =
+        document.getElementById(
+            "ajuda-requisicao"
+        );
 
 
     function validarRequisicao() {
@@ -2040,12 +2729,14 @@
             return;
         }
 
+
         if (categoria.value === "Separação") {
 
             requisicao.required = true;
 
             requisicao.placeholder =
                 "Obrigatório para Separação — Ex.: YAC55";
+
 
             if (ajudaRequisicao) {
 
@@ -2055,11 +2746,14 @@
 
             }
 
+
         } else {
 
             requisicao.required = false;
 
-            requisicao.placeholder = "Opcional";
+            requisicao.placeholder =
+                "Opcional";
+
 
             if (ajudaRequisicao) {
 
@@ -2081,38 +2775,52 @@
             validarRequisicao
         );
 
+
         validarRequisicao();
 
     }
 
 
     /*
-     * Confirmação simples antes de concluir.
+     * =========================================================
+     * CONFIRMAÇÃO DE CONCLUSÃO
+     * =========================================================
      */
 
-    document.querySelectorAll(
-        'a[href*="/concluir/"]'
-    ).forEach(function(botao) {
+    document
+        .querySelectorAll(
+            'a[href*="/concluir/"]'
+        )
+        .forEach(function(botao) {
 
-        botao.addEventListener("click", function(event) {
 
-            const confirmar = confirm(
-                "Deseja realmente marcar esta atividade como concluída?"
+            botao.addEventListener(
+                "click",
+                function(event) {
+
+
+                    const confirmar =
+                        confirm(
+                            "Deseja realmente marcar esta atividade como concluída?"
+                        );
+
+
+                    if (!confirmar) {
+
+                        event.preventDefault();
+
+                    }
+
+                }
             );
-
-            if (!confirmar) {
-
-                event.preventDefault();
-
-            }
 
         });
 
-    });
-
 
     /*
-     * Data atual no console apenas para diagnóstico.
+     * =========================================================
+     * DIAGNÓSTICO
+     * =========================================================
      */
 
     console.log(
@@ -2122,7 +2830,13 @@
 </script>
 
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
+
 
 </body>
+
 </html>

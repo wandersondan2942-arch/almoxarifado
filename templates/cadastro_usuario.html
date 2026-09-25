@@ -32,7 +32,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: "Segoe UI", sans-serif;
         padding: 20px;
     }
 
@@ -247,7 +247,7 @@
             minlength="2"
             maxlength="100"
             autocomplete="name"
-            placeholder="Seu nome"
+            placeholder="Digite o nome completo"
             value="{{ request.form.get('nome', '') }}"
             autofocus
         >
@@ -269,7 +269,6 @@
 
         </label>
 
-
         <div class="password-wrapper">
 
             <input
@@ -289,6 +288,7 @@
                 class="toggle-password"
                 onclick="alternarSenha()"
                 aria-label="Mostrar ou ocultar senha"
+                title="Mostrar ou ocultar senha"
             >
 
                 <i
@@ -299,7 +299,6 @@
             </button>
 
         </div>
-
 
         <div class="form-text small">
 
@@ -358,6 +357,10 @@
 
         const campo = document.getElementById("senha");
         const icone = document.getElementById("iconeSenha");
+
+        if (!campo || !icone) {
+            return;
+        }
 
         if (campo.type === "password") {
 

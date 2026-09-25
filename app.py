@@ -111,7 +111,10 @@ def executar(sql, parametros=(), commit=False):
 
     except Exception:
 
-        cursor.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
 
         if commit:
 
@@ -409,6 +412,7 @@ def prazo_em_datetime(valor):
 
     if dt.tzinfo is None:
 
+        # Prazo vindo do formulário é horário de Brasília.
         dt = dt.replace(
             tzinfo=FUSO_BRASIL
         )
@@ -462,8 +466,18 @@ def registro_foi_atrasado(atividade):
         "concluido_em"
     )
 
-    # Se já foi concluído/arquivado,
-    # comparamos o prazo com a data de conclusão.
+    prazo_dt = prazo_em_datetime(
+        prazo
+    )
+
+    if not prazo_dt:
+        return False
+
+    # --------------------------------------------------------
+    # Se foi concluído ou arquivado:
+    # verificamos se terminou depois do prazo.
+    # --------------------------------------------------------
+
     if status_normalizado in {
         "concluído",
         "concluido",
@@ -473,21 +487,29 @@ def registro_foi_atrasado(atividade):
 
         if concluido_em:
 
-            prazo_dt = prazo_em_datetime(
-                prazo
-            )
-
             conclusao_dt = prazo_em_datetime(
                 concluido_em
             )
 
-            if prazo_dt and conclusao_dt:
+            if conclusao_dt:
 
                 return conclusao_dt > prazo_dt
 
-    # Se ainda está aberta,
-    # comparamos com o momento atual.
-    return prazo_atrasado(prazo)
+        # Registro arquivado sem conclusão registrada.
+        if status_normalizado in {
+            "arquivado",
+            "arquivada"
+        }:
+
+            return prazo_dt < agora_brasil()
+
+        return False
+
+    # --------------------------------------------------------
+    # Registro ainda aberto.
+    # --------------------------------------------------------
+
+    return prazo_dt < agora_brasil()
 
 
 def texto_atraso(valor, referencia=None):
@@ -504,10 +526,13 @@ def texto_atraso(valor, referencia=None):
         )
 
         if referencia_dt:
+
             diferenca = (
                 referencia_dt - dt
             )
+
         else:
+
             diferenca = (
                 agora_brasil() - dt
             )
@@ -744,6 +769,10 @@ def init_db():
 
         cursor = db.cursor()
 
+        # ----------------------------------------------------
+        # USUÁRIOS
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -753,6 +782,10 @@ def init_db():
             )
             """
         )
+
+        # ----------------------------------------------------
+        # ATIVIDADES
+        # ----------------------------------------------------
 
         cursor.execute(
             """
@@ -774,6 +807,10 @@ def init_db():
             """
         )
 
+        # ----------------------------------------------------
+        # CHAT
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS chat (
@@ -785,6 +822,10 @@ def init_db():
             """
         )
 
+        # ----------------------------------------------------
+        # MELHORIAS
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -793,10 +834,16 @@ def init_db():
                 descricao TEXT,
                 status TEXT DEFAULT 'A Fazer',
                 responsavel TEXT,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                etapa TEXT DEFAULT 'PDCA',
+                autor TEXT
             )
             """
         )
+
+        # ----------------------------------------------------
+        # ESTOQUE
+        # ----------------------------------------------------
 
         cursor.execute(
             """
@@ -872,7 +919,7 @@ def init_db():
         }
 
         novas_colunas_melhorias = {
-            "etapa": "TEXT",
+            "etapa": "TEXT DEFAULT 'PDCA'",
             "autor": "TEXT",
         }
 
@@ -890,13 +937,12 @@ def init_db():
         db.commit()
 
         # ----------------------------------------------------
-        # ÍNDICE DE REQUISIÇÃO
+        # ÍNDICE NORMAL DE REQUISIÇÃO
         #
-        # Não criamos mais um índice único global que possa
-        # travar dados antigos duplicados.
+        # Não é UNIQUE.
         #
-        # A proteção contra duplicidade é feita pela função
-        # requisicao_duplicada().
+        # Isso evita que registros históricos antigos
+        # impeçam o sistema de iniciar.
         # ----------------------------------------------------
 
         try:
@@ -928,6 +974,10 @@ def init_db():
 
         cursor = db.cursor()
 
+        # ----------------------------------------------------
+        # USUÁRIOS
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -937,6 +987,10 @@ def init_db():
             )
             """
         )
+
+        # ----------------------------------------------------
+        # ATIVIDADES
+        # ----------------------------------------------------
 
         cursor.execute(
             """
@@ -958,6 +1012,10 @@ def init_db():
             """
         )
 
+        # ----------------------------------------------------
+        # CHAT
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS chat (
@@ -969,6 +1027,10 @@ def init_db():
             """
         )
 
+        # ----------------------------------------------------
+        # MELHORIAS
+        # ----------------------------------------------------
+
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -977,10 +1039,16 @@ def init_db():
                 descricao TEXT,
                 status TEXT DEFAULT 'A Fazer',
                 responsavel TEXT,
-                criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
+                etapa TEXT DEFAULT 'PDCA',
+                autor TEXT
             )
             """
         )
+
+        # ----------------------------------------------------
+        # ESTOQUE
+        # ----------------------------------------------------
 
         cursor.execute(
             """
@@ -1047,10 +1115,12 @@ def init_db():
             for linha in cursor.fetchall()
         }
 
-        for coluna, tipo in {
+        novas_colunas_melhorias = {
             "etapa": "TEXT",
             "autor": "TEXT",
-        }.items():
+        }
+
+        for coluna, tipo in novas_colunas_melhorias.items():
 
             if coluna not in colunas_melhorias:
 
@@ -1802,10 +1872,9 @@ def index():
     # ========================================================
     # ATRASADOS
     #
-    # Agora o atraso não é um módulo.
-    # Contamos registros atrasados que estão:
-    # - pendentes/em andamento; ou
-    # - concluídos/arquivados depois do prazo.
+    # Não existe módulo separado.
+    #
+    # O histórico permanece em Relatórios.
     # ========================================================
 
     cursor = executar(
@@ -1913,11 +1982,10 @@ def index():
 # ============================================================
 # ATRASADOS
 #
-# ROTA DE COMPATIBILIDADE
+# COMPATIBILIDADE
 #
-# Não existe mais módulo/página atrasados.html.
-# Se algum link antigo acessar /atrasados, ele será enviado
-# para Relatórios já filtrado.
+# Não existe atrasados.html.
+# O link antigo simplesmente abre Relatórios filtrado.
 # ============================================================
 
 @app.route("/atrasados")
@@ -2064,10 +2132,9 @@ def indicadores():
 
 
 # ============================================================
-# RELATÓRIOS
+# RELATÓRIOS / HISTÓRICO
 #
-# Aqui ficam os registros históricos.
-# Não existe módulo "Atividades".
+# Aqui ficam as atividades antigas, concluídas e arquivadas.
 #
 # Filtros:
 # - todos
@@ -2123,7 +2190,7 @@ def relatorios():
     fechar_cursor(cursor)
 
     # --------------------------------------------------------
-    # FILTROS
+    # FILTRO PENDENTES
     # --------------------------------------------------------
 
     if filtro == "pendentes":
@@ -2133,11 +2200,13 @@ def relatorios():
             for item in itens
             if str(
                 item.get("status", "")
-            ).lower()
-            in {
-                "pendente"
-            }
+            ).strip().lower()
+            == "pendente"
         ]
+
+    # --------------------------------------------------------
+    # FILTRO EM ANDAMENTO
+    # --------------------------------------------------------
 
     elif filtro == "andamento":
 
@@ -2146,11 +2215,13 @@ def relatorios():
             for item in itens
             if str(
                 item.get("status", "")
-            ).lower()
-            in {
-                "em andamento"
-            }
+            ).strip().lower()
+            == "em andamento"
         ]
+
+    # --------------------------------------------------------
+    # FILTRO CONCLUÍDOS
+    # --------------------------------------------------------
 
     elif filtro == "concluidos":
 
@@ -2159,12 +2230,16 @@ def relatorios():
             for item in itens
             if str(
                 item.get("status", "")
-            ).lower()
+            ).strip().lower()
             in {
                 "concluído",
                 "concluido"
             }
         ]
+
+    # --------------------------------------------------------
+    # FILTRO ARQUIVADOS
+    # --------------------------------------------------------
 
     elif filtro == "arquivados":
 
@@ -2173,17 +2248,26 @@ def relatorios():
             for item in itens
             if str(
                 item.get("status", "")
-            ).lower()
+            ).strip().lower()
             in {
                 "arquivado",
                 "arquivada"
             }
         ]
 
+    # --------------------------------------------------------
+    # FILTRO ATRASADOS
+    #
+    # IMPORTANTE:
+    # Não criamos uma página separada.
+    #
+    # Um registro pode aparecer aqui mesmo se já estiver
+    # concluído ou arquivado, desde que tenha sido finalizado
+    # depois do prazo.
+    # --------------------------------------------------------
+
     elif filtro == "atrasados":
 
-        # Aqui entram também os atrasados que já foram
-        # concluídos e arquivados.
         itens = [
             item
             for item in itens
@@ -2204,7 +2288,10 @@ def relatorios():
 # MÓDULOS
 # ============================================================
 
-@app.route("/modulo/<path:nome>")
+@app.route(
+    "/modulo/<path:nome>",
+    methods=["GET", "POST"]
+)
 def modulo(nome):
 
     if "usuario_atual" not in session:
@@ -2375,6 +2462,92 @@ def modulo(nome):
 
     if titulo == "Melhorias / PDCA":
 
+        # ----------------------------------------------------
+        # SALVAR NOVA MELHORIA
+        # ----------------------------------------------------
+
+        if request.method == "POST":
+
+            titulo_melhoria = request.form.get(
+                "titulo",
+                ""
+            ).strip()
+
+            descricao = request.form.get(
+                "descricao",
+                ""
+            ).strip()
+
+            etapa = request.form.get(
+                "etapa",
+                "PDCA"
+            ).strip()
+
+            responsavel = request.form.get(
+                "responsavel",
+                session["usuario_atual"]
+            ).strip()
+
+            if not titulo_melhoria:
+
+                flash(
+                    "Informe o título da melhoria.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "modulo",
+                        nome="melhorias"
+                    )
+                )
+
+            executar(
+                """
+                INSERT INTO melhorias (
+                    titulo,
+                    descricao,
+                    status,
+                    responsavel,
+                    etapa,
+                    autor
+                )
+                VALUES (
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s,
+                    %s
+                )
+                """,
+                (
+                    titulo_melhoria,
+                    descricao,
+                    "A Fazer",
+                    responsavel,
+                    etapa or "PDCA",
+                    session["usuario_atual"]
+                ),
+                commit=True
+            )
+
+            flash(
+                "Melhoria registrada com sucesso.",
+                "success"
+            )
+
+            return redirect(
+                url_for(
+                    "modulo",
+                    nome="melhorias"
+                )
+            )
+
+        # ----------------------------------------------------
+        # LISTAR MELHORIAS
+        # ----------------------------------------------------
+
         cursor = executar(
             """
             SELECT *
@@ -2428,33 +2601,63 @@ def modulo(nome):
         )
 
     # --------------------------------------------------------
-    # DEMAIS MÓDULOS
+    # CORREÇÃO DOS MÓDULOS
+    #
+    # "Requisições" é o módulo visual.
+    # A categoria gravada no banco é "Separação".
     # --------------------------------------------------------
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE categoria = %s
-        ORDER BY id DESC
-        """,
-        (titulo,)
+    categorias_modulo = {
+
+        "Requisições": "Separação",
+
+        "Inventário": "Inventário",
+
+        "Expedição": "Expedição",
+
+        "Recebimento": "Recebimento",
+
+        "Logística Reversa": "Logística Reversa",
+    }
+
+    categoria_filtro = categorias_modulo.get(
+        titulo
     )
 
-    itens = preparar_lista_atividades(
-        cursor.fetchall()
-    )
+    if categoria_filtro:
 
-    fechar_cursor(cursor)
+        cursor = executar(
+            """
+            SELECT *
+            FROM atividades
+            WHERE categoria = %s
+            ORDER BY id DESC
+            """,
+            (categoria_filtro,)
+        )
 
-    return render_template(
-        "modulo.html",
-        titulo=titulo,
-        modulo=nome_normalizado,
-        usuario_atual=session[
-            "usuario_atual"
-        ],
-        itens=itens
+        itens = preparar_lista_atividades(
+            cursor.fetchall()
+        )
+
+        fechar_cursor(cursor)
+
+        return render_template(
+            "modulo.html",
+            titulo=titulo,
+            modulo=nome_normalizado,
+            usuario_atual=session[
+                "usuario_atual"
+            ],
+            itens=itens
+        )
+
+    # --------------------------------------------------------
+    # FALLBACK
+    # --------------------------------------------------------
+
+    return redirect(
+        url_for("index")
     )
 
 
@@ -2646,7 +2849,9 @@ def relatorio_pdf():
         )
     )
 
-    elementos.append(tabela)
+    elementos.append(
+        tabela
+    )
 
     documento.build(
         elementos
@@ -2849,6 +3054,28 @@ def editar(id):
                     prazo_form=prazo
                 )
 
+        # ----------------------------------------------------
+        # Se mudou para Separação e ainda não tinha início,
+        # registramos o início.
+        # ----------------------------------------------------
+
+        inicio_em = atividade.get(
+            "inicio_em"
+        )
+
+        if (
+            categoria == "Separação"
+            and not inicio_em
+        ):
+
+            if usando_postgresql():
+
+                inicio_em = agora_utc_naive()
+
+            else:
+
+                inicio_em = agora_sqlite()
+
         executar(
             """
             UPDATE atividades
@@ -2860,7 +3087,8 @@ def editar(id):
                 categoria = %s,
                 responsavel = %s,
                 prazo = %s,
-                status = %s
+                status = %s,
+                inicio_em = %s
             WHERE id = %s
             """,
             (
@@ -2872,6 +3100,7 @@ def editar(id):
                 responsavel,
                 prazo or None,
                 status,
+                inicio_em,
                 id
             ),
             commit=True
@@ -2891,7 +3120,9 @@ def editar(id):
         or ""
     )
 
-    if prazo_form and "T" not in prazo_form:
+    if prazo_form and "T" not in str(
+        prazo_form
+    ):
 
         try:
 
@@ -3191,8 +3422,8 @@ def deletar_melhoria(id):
             url_for("login")
         )
 
-    # Mantemos a rota antiga para não quebrar o template,
-    # mas agora arquivamos em vez de apagar.
+    # Não apagamos a melhoria.
+    # Ela fica preservada no banco.
     executar(
         """
         UPDATE melhorias

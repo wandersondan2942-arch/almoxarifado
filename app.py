@@ -3700,62 +3700,34 @@ def editar(id):
         return redirect(
             url_for("relatorios")
         )
-
     # ========================================================
-    # PRAZO
+    # PRAZO (CORRIGIDO)
     # ========================================================
+    prazo_original = obter_valor(atividade, "prazo")
 
     if prazo:
-
-        prazo_valido, prazo_dt = prazo_formulario_valido(
-            prazo
-        )
+        # Tenta validar o novo prazo inserido no formulário
+        prazo_valido, prazo_dt = prazo_formulario_valido(prazo)
 
         if not prazo_valido:
-
+            # Se a atividade estiver ativa e a data inserida for no passado, barra a alteração
             if status_eh_ativo(status):
-
                 flash(
-                    "O prazo informado já passou. "
-                    "Escolha uma data e horário futuros.",
+                    "O prazo informado já passou. Escolha uma data e horário futuros.",
                     "warning"
                 )
-
-                return redirect(
-                    url_for("relatorios")
-                )
-
+                return redirect(url_for("relatorios"))
+            else:
+                # Se o status for concluído/arquivado, aceita a data formatada
+                prazo = prazo_dt.strftime("%Y-%m-%d %H:%M") if prazo_dt else prazo_original
         else:
-
-            prazo = prazo_dt.strftime(
-                "%Y-%m-%d %H:%M"
-            )
-
+            prazo = prazo_dt.strftime("%Y-%m-%d %H:%M")
     else:
+        # CASO O CAMPO PRAZO FIQUE VAZIO NO FORMULÁRIO:
+        # Mantém o prazo original que já estava salvo no banco de dados
+        prazo = prazo_original
 
-        prazo = None
-
-    status_anterior = obter_valor(
-        atividade,
-        "status",
-        STATUS_PENDENTE
-    )
-
-    inicio_em = obter_valor(
-        atividade,
-        "inicio_em"
-    )
-
-    concluido_em = obter_valor(
-        atividade,
-        "concluido_em"
-    )
-
-    encerrado_por = obter_valor(
-        atividade,
-        "encerrado_por"
-    )
-
+   
     # ========================================================
     # CORREÇÃO DO HORÁRIO DE INÍCIO
     # ========================================================

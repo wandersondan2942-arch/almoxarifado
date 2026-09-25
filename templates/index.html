@@ -143,8 +143,8 @@
         ====================================================== */
 
         .circle-badge {
-            width: 68px;
-            height: 68px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             border: 3px solid #3b82f6;
             display: flex;
@@ -155,11 +155,6 @@
             color: #1e293b;
             margin: 0 auto 6px auto;
             background: #fff;
-            transition: 0.2s ease;
-        }
-
-        .circle-badge:hover {
-            transform: scale(1.05);
         }
 
         .indicator-label {
@@ -382,7 +377,6 @@
 
     </div>
 
-
     <!-- USUÁRIO -->
 
     <div class="px-3">
@@ -453,7 +447,6 @@
             </p>
 
         </div>
-
 
         <div class="col-md-5 search-area">
 
@@ -763,10 +756,7 @@
 
     <div class="row g-4 mb-4">
 
-
-        <!-- ====================================================
-             NOVA ATIVIDADE
-        ===================================================== -->
+        <!-- NOVA ATIVIDADE -->
 
         <div class="col-lg-8">
 
@@ -803,7 +793,6 @@
                         <!-- REQUISIÇÃO / PRIORIDADE / CATEGORIA -->
 
                         <div class="row g-3 mb-3">
-
 
                             <!-- REQUISIÇÃO -->
 
@@ -950,7 +939,6 @@
 
                         <div class="row g-3 mb-3">
 
-
                             <!-- RESPONSÁVEL -->
 
                             <div class="col-md-6">
@@ -1012,19 +1000,12 @@
                                 </label>
 
                                 <input
-                                    type="datetime-local"
+                                    type="date"
                                     id="prazo"
                                     name="prazo"
                                     class="form-control"
                                     required
                                 >
-
-                                <div
-                                    id="prazoHelp"
-                                    class="form-text"
-                                >
-                                    Selecione a data e o horário limite da atividade.
-                                </div>
 
                             </div>
 
@@ -1077,7 +1058,7 @@
 
 
         <!-- ====================================================
-             INDICADORES DO DIA
+             INDICADORES
         ===================================================== -->
 
         <div class="col-lg-4">
@@ -1099,23 +1080,15 @@
                     </small>
 
 
-                    <!-- =================================================
-                         CÍRCULOS DINÂMICOS
-                    ================================================== -->
-
                     <div class="row text-center mt-4">
-
 
                         <!-- ATENDIMENTO -->
 
                         <div class="col-4">
 
-                            <div
-                                class="circle-badge"
-                                title="Percentual de atividades do dia concluídas"
-                            >
+                            <div class="circle-badge">
 
-                                {{ perc_atendidas|default(0, true)|int }}%
+                                {{ perc_atendidas|default(0) }}%
 
                             </div>
 
@@ -1130,12 +1103,9 @@
 
                         <div class="col-4">
 
-                            <div
-                                class="circle-badge"
-                                title="Percentual dos inventários do dia concluídos"
-                            >
+                            <div class="circle-badge">
 
-                                {{ perc_inventario|default(0, true)|int }}%
+                                {{ perc_inventario|default(0) }}%
 
                             </div>
 
@@ -1150,12 +1120,9 @@
 
                         <div class="col-4">
 
-                            <div
-                                class="circle-badge"
-                                title="Percentual das expedições do dia concluídas"
-                            >
+                            <div class="circle-badge">
 
-                                {{ perc_expedicao|default(0, true)|int }}%
+                                {{ perc_expedicao|default(0) }}%
 
                             </div>
 
@@ -1171,14 +1138,9 @@
                     <hr>
 
 
-                    <!-- =================================================
-                         RESUMO DINÂMICO
-                    ================================================== -->
+                    <!-- RESUMO -->
 
                     <div class="small text-muted">
-
-
-                        <!-- CONCLUÍDAS -->
 
                         <div class="d-flex justify-content-between mb-2">
 
@@ -1187,13 +1149,11 @@
                             </span>
 
                             <strong class="text-success">
-                                {{ atividades_concluidas|default(0, true)|int }}
+                                {{ atividades_concluidas|default(0) }}
                             </strong>
 
                         </div>
 
-
-                        <!-- PENDENTES -->
 
                         <div class="d-flex justify-content-between">
 
@@ -1202,65 +1162,12 @@
                             </span>
 
                             <strong class="text-warning">
-                                {{ atividades_pendentes|default(0, true)|int }}
+                                {{ atividades_pendentes|default(0) }}
                             </strong>
 
                         </div>
 
                     </div>
-
-
-                    <!-- =================================================
-                         DETALHAMENTO DO DIA
-                    ================================================== -->
-
-                    {% if indicadores_dia %}
-
-                        <hr>
-
-                        <div class="small">
-
-                            <div class="d-flex justify-content-between mb-2">
-
-                                <span class="text-muted">
-                                    Atividades do dia
-                                </span>
-
-                                <strong>
-                                    {{ indicadores_dia.total|default(0, true)|int }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="d-flex justify-content-between mb-2">
-
-                                <span class="text-muted">
-                                    Finalizadas hoje
-                                </span>
-
-                                <strong class="text-success">
-                                    {{ indicadores_dia.finalizadas|default(0, true)|int }}
-                                </strong>
-
-                            </div>
-
-
-                            <div class="d-flex justify-content-between">
-
-                                <span class="text-muted">
-                                    Pendentes hoje
-                                </span>
-
-                                <strong class="text-warning">
-                                    {{ indicadores_dia.pendentes|default(0, true)|int }}
-                                </strong>
-
-                            </div>
-
-                        </div>
-
-                    {% endif %}
 
                 </div>
 
@@ -1277,10 +1184,7 @@
 
     <div class="row g-4">
 
-
-        <!-- ====================================================
-             ATIVIDADES
-        ===================================================== -->
+        <!-- ATIVIDADES -->
 
         <div class="col-lg-8">
 
@@ -1306,9 +1210,8 @@
 
                         </div>
 
-
                         <span class="badge bg-primary">
-                            {{ atividades_pendentes|default(0, true)|int }}
+                            {{ atividades_pendentes|default(0) }}
                         </span>
 
                     </div>
@@ -1349,11 +1252,6 @@
 
                                     <div class="d-flex justify-content-between align-items-start">
 
-
-                                        <!-- =================================================
-                                             INFORMAÇÕES DA ATIVIDADE
-                                        ================================================== -->
-
                                         <div class="pe-3">
 
                                             <!-- TÍTULO -->
@@ -1377,7 +1275,6 @@
                                             <!-- INFORMAÇÕES -->
 
                                             <div class="mt-2 small text-muted">
-
 
                                                 {% if item.num_requisicao %}
 
@@ -1424,9 +1321,6 @@
                                             <!-- STATUS + PRIORIDADE + PRAZO -->
 
                                             <div class="mt-2">
-
-
-                                                <!-- STATUS -->
 
                                                 {% if status_item == 'pendente' %}
 
@@ -1526,9 +1420,7 @@
                                         </div>
 
 
-                                        <!-- =================================================
-                                             AÇÕES
-                                        ================================================== -->
+                                        <!-- AÇÕES -->
 
                                         <div class="text-end">
 
@@ -1542,16 +1434,6 @@
                                                 >
 
                                                     <i class="fa-solid fa-check"></i>
-
-                                                </a>
-
-                                                <a
-                                                    href="{{ url_for('editar', id=item.id) }}"
-                                                    class="btn btn-sm btn-outline-primary ms-1"
-                                                    title="Editar atividade"
-                                                >
-
-                                                    <i class="fa-solid fa-pen"></i>
 
                                                 </a>
 
@@ -1616,9 +1498,7 @@
         </div>
 
 
-        <!-- ====================================================
-             CHAT
-        ===================================================== -->
+        <!-- CHAT -->
 
         <div class="col-lg-4">
 
@@ -1638,8 +1518,6 @@
                         Comunicação rápida entre a equipe
                     </small>
 
-
-                    <!-- MENSAGENS -->
 
                     <div class="chat-box mt-3 mb-3">
 
@@ -1763,67 +1641,12 @@
 
 
     /* =========================================================
-       DATA E HORA DO BRASIL
-       
-       Preenche automaticamente o prazo com o horário atual
-       de America/Sao_Paulo.
-    ========================================================= */
-
-    function obterDataHoraBrasil() {
-
-        const agora = new Date();
-
-        const partes = new Intl.DateTimeFormat(
-            "en-CA",
-            {
-                timeZone: "America/Sao_Paulo",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hourCycle: "h23"
-            }
-        ).formatToParts(agora);
-
-
-        const valores = {};
-
-        partes.forEach(function (parte) {
-
-            if (parte.type !== "literal") {
-                valores[parte.type] = parte.value;
-            }
-
-        });
-
-
-        return (
-            valores.year +
-            "-" +
-            valores.month +
-            "-" +
-            valores.day +
-            "T" +
-            valores.hour +
-            ":" +
-            valores.minute
-        );
-
-    }
-
-
-    /* =========================================================
-       INICIALIZAÇÃO DA PÁGINA
+       VALIDAÇÃO DA REQUISIÇÃO
     ========================================================= */
 
     document.addEventListener(
         "DOMContentLoaded",
         function () {
-
-            /* =================================================
-               ELEMENTOS
-            ================================================= */
 
             const categoria =
                 document.getElementById("categoria");
@@ -1834,94 +1657,6 @@
             const requisicaoHelp =
                 document.getElementById("requisicaoHelp");
 
-            const prazo =
-                document.getElementById("prazo");
-
-            const prazoHelp =
-                document.getElementById("prazoHelp");
-
-
-            /* =================================================
-               PRAZO
-            ================================================= */
-
-            if (prazo) {
-
-                const agoraBrasil =
-                    obterDataHoraBrasil();
-
-
-                /*
-                 * Define o menor prazo permitido como
-                 * o momento atual no Brasil.
-                 */
-                prazo.min = agoraBrasil;
-
-
-                /*
-                 * Se o campo estiver vazio, inicia
-                 * automaticamente com o horário atual.
-                 */
-                if (!prazo.value) {
-
-                    prazo.value = agoraBrasil;
-
-                }
-
-
-                /*
-                 * Quando o usuário alterar o prazo,
-                 * evita datas anteriores ao momento atual.
-                 */
-                prazo.addEventListener(
-                    "change",
-                    function () {
-
-                        const agoraAtual =
-                            obterDataHoraBrasil();
-
-
-                        if (
-                            prazo.value &&
-                            prazo.value < agoraAtual
-                        ) {
-
-                            prazo.value = agoraAtual;
-
-
-                            if (prazoHelp) {
-
-                                prazoHelp.textContent =
-                                    "O prazo não pode ser anterior ao horário atual.";
-
-                                prazoHelp.className =
-                                    "form-text text-danger";
-
-                            }
-
-                        } else {
-
-                            if (prazoHelp) {
-
-                                prazoHelp.textContent =
-                                    "Prazo válido.";
-
-                                prazoHelp.className =
-                                    "form-text text-success";
-
-                            }
-
-                        }
-
-                    }
-                );
-
-            }
-
-
-            /* =================================================
-               VALIDAÇÃO DA REQUISIÇÃO
-            ================================================= */
 
             function validarRequisicao() {
 
@@ -1981,34 +1716,6 @@
                 validarRequisicao();
 
             }
-
-
-            /* =================================================
-               ATUALIZA O MINUTO DO PRAZO
-               
-               Isso evita que a página fique aberta por muito
-               tempo e continue permitindo um horário que já
-               passou.
-            ================================================= */
-
-            setInterval(
-                function () {
-
-                    if (!prazo) {
-                        return;
-                    }
-
-
-                    const agoraBrasil =
-                        obterDataHoraBrasil();
-
-
-                    prazo.min =
-                        agoraBrasil;
-
-                },
-                60000
-            );
 
         }
     );

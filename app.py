@@ -57,77 +57,57 @@ def usando_postgresql():
 
 
 def get_db():
+    if "db" not in g:
 
-    if hasattr(g, "db"):
-        return g.db
-
-    if usando_postgresql():
-
-        g.db = psycopg2.connect(
-            DATABASE_URL,
-            cursor_factory=psycopg2.extras.RealDictCursor
-        )
-
-    else:
-
-        g.db = sqlite3.connect(
-            "database.db"
-        )
-
-        g.db.row_factory = sqlite3.Row
+        if usando_postgresql():
+            g.db = psycopg2.connect(
+                DATABASE_URL,
+                cursor_factory=psycopg2.extras.RealDictCursor
+            )
+        else:
+            g.db = sqlite3.connect(
+                "database.db",
+                check_same_thread=False
+            )
+            g.db.row_factory = sqlite3.Row
 
     return g.db
 
 
 @app.teardown_appcontext
 def fechar_db(exception=None):
-
     db = g.pop("db", None)
 
     if db is not None:
         db.close()
 
 
-def executar(sql, parametros=(), commit=False):
-
+def executar(sql, parametros=(), fetchone=False, fetchall=False, commit=False):
     db = get_db()
-
-    if not usando_postgresql():
-        sql = sql.replace("%s", "?")
 
     cursor = db.cursor()
 
     try:
-
-        cursor.execute(
-            sql,
-            parametros
-        )
+        cursor.execute(sql, parametros)
 
         if commit:
             db.commit()
 
+        if fetchone:
+            return cursor.fetchone()
+
+        if fetchall:
+            return cursor.fetchall()
+
         return cursor
 
     except Exception:
-
-        try:
-            cursor.close()
-        except Exception:
-            pass
-
         if commit:
-
-            try:
-                db.rollback()
-            except Exception:
-                pass
-
+            db.rollback()
         raise
 
 
 def fechar_cursor(cursor):
-
     try:
         cursor.close()
     except Exception:
@@ -135,7 +115,6 @@ def fechar_cursor(cursor):
 
 
 def linha_para_dict(linha):
-
     if linha is None:
         return None
 
@@ -146,15 +125,10 @@ def linha_para_dict(linha):
 
 
 def linhas_para_dict(linhas):
-
-    return [
-        linha_para_dict(linha)
-        for linha in linhas
-    ]
+    return [linha_para_dict(linha) for linha in linhas]
 
 
 def obter_valor(linha, campo, padrao=None):
-
     if linha is None:
         return padrao
 
@@ -168,26 +142,21 @@ def obter_valor(linha, campo, padrao=None):
 
 
 def contar(sql, parametros=()):
-
-    cursor = executar(
+    resultado = executar(
         sql,
-        parametros
+        parametros,
+        fetchone=True
     )
 
-    linha = cursor.fetchone()
-
-    fechar_cursor(cursor)
-
-    if linha is None:
+    if resultado is None:
         return 0
 
-    return int(
-        obter_valor(
-            linha,
-            "total",
-            0
-        ) or 0
-    )
+    valor = obter_valor(resultado, "total", 0)
+
+    try:
+        return int(valor or 0)
+    except Exception:
+        return 0
 
 
 # ============================================================
@@ -199,159 +168,119 @@ def agora_utc():
 
 
 def agora_brasil():
-    return agora_utc().astimezone(
-        FUSO_BRASIL
-    )
+    return datetime.now(FUSO_BRASIL)
 
 
 def agora_utc_naive():
-    return agora_utc().replace(
-        tzinfo=None
-    )
+    return agora_utc().replace(tzinfo=None)
 
 
 def agora_sqlite():
-
-    return agora_utc_naive().isoformat(
-        timespec="seconds"
-    )
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def converter_para_brasil(valor):
-
     if not valor:
         return None
 
     if isinstance(valor, datetime):
 
-        dt = valor
+        if valor.tzinfo is None:
+            valor = valor.replace(tzinfo=timezone.utc)
 
-    else:
+        return valor.astimezone(FUSO_BRASIL)
 
-        texto = str(valor).strip()
+    texto = str(valor).strip()
 
-        formatos = [
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
-            "%Y-%m-%dT%H:%M",
-            "%Y-%m-%dT%H:%M:%S",
-            "%d/%m/%Y %H:%M:%S",
-            "%d/%m/%Y %H:%M",
-        ]
+    if not texto:
+        return None
 
-        dt = None
+    texto = texto.replace("Z", "+00:00")
 
+    formatos = [
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S.%f",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%Y-%m-%d %H:%M:%S%z",
+    ]
+
+    dt = None
+
+    try:
+        dt = datetime.fromisoformat(texto)
+    except Exception:
+        pass
+
+    if dt is None:
         for formato in formatos:
-
             try:
-
-                dt = datetime.strptime(
-                    texto,
-                    formato
-                )
-
+                dt = datetime.strptime(texto, formato)
                 break
-
             except Exception:
-                pass
+                continue
 
-        if dt is None:
-
-            try:
-
-                dt = datetime.fromisoformat(
-                    texto.replace(
-                        "Z",
-                        "+00:00"
-                    )
-                )
-
-            except Exception:
-                return None
+    if dt is None:
+        return None
 
     if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
 
-        dt = dt.replace(
-            tzinfo=timezone.utc
-        )
-
-    return dt.astimezone(
-        FUSO_BRASIL
-    )
+    return dt.astimezone(FUSO_BRASIL)
 
 
 def formatar_data_hora(valor):
-
     dt = converter_para_brasil(valor)
 
     if not dt:
-        return ""
+        return "-"
 
-    return dt.strftime(
-        "%d/%m/%Y %H:%M"
-    )
+    return dt.strftime("%d/%m/%Y %H:%M")
 
 
 def formatar_hora(valor):
-
     dt = converter_para_brasil(valor)
 
     if not dt:
-        return ""
+        return "-"
 
-    return dt.strftime(
-        "%H:%M"
-    )
+    return dt.strftime("%H:%M")
 
 
 def calcular_duracao(inicio, fim=None):
+    inicio_dt = converter_para_brasil(inicio)
 
-    if not inicio:
-        return ""
+    if not inicio_dt:
+        return "-"
 
-    dt_inicio = converter_para_brasil(
-        inicio
-    )
+    if fim:
+        fim_dt = converter_para_brasil(fim)
+    else:
+        fim_dt = agora_brasil()
 
-    if not dt_inicio:
-        return ""
+    if not fim_dt:
+        return "-"
 
-    dt_fim = (
-        converter_para_brasil(fim)
-        if fim
-        else agora_brasil()
-    )
-
-    if not dt_fim:
-        return ""
-
-    segundos = int(
-        (
-            dt_fim - dt_inicio
-        ).total_seconds()
-    )
+    segundos = int((fim_dt - inicio_dt).total_seconds())
 
     if segundos < 0:
         segundos = 0
 
     horas = segundos // 3600
+    minutos = (segundos % 3600) // 60
 
-    minutos = (
-        segundos % 3600
-    ) // 60
-
-    if horas:
-
-        return (
-            f"{horas}h "
-            f"{minutos}min"
-        )
+    if horas > 0:
+        return f"{horas}h {minutos}min"
 
     return f"{minutos}min"
 
 
-def normalizar_requisicao(valor):
+# ============================================================
+# REQUISIÇÕES / PRAZOS
+# ============================================================
 
+def normalizar_requisicao(valor):
     if valor is None:
         return ""
 
@@ -359,334 +288,184 @@ def normalizar_requisicao(valor):
 
 
 def prazo_em_datetime(valor):
-
     if not valor:
         return None
 
     if isinstance(valor, datetime):
-
         dt = valor
 
-    else:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=FUSO_BRASIL)
 
-        texto = str(valor).strip()
+        return dt.astimezone(FUSO_BRASIL)
 
-        formatos = [
-            "%Y-%m-%dT%H:%M",
-            "%Y-%m-%dT%H:%M:%S",
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d %H:%M",
-            "%d/%m/%Y %H:%M:%S",
-            "%d/%m/%Y %H:%M",
-        ]
+    texto = str(valor).strip()
 
-        dt = None
+    if not texto:
+        return None
 
-        for formato in formatos:
+    formatos = [
+        "%Y-%m-%dT%H:%M",
+        "%Y-%m-%dT%H:%M:%S",
+        "%Y-%m-%d %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+    ]
 
-            try:
+    for formato in formatos:
+        try:
+            return datetime.strptime(
+                texto,
+                formato
+            ).replace(
+                tzinfo=FUSO_BRASIL
+            )
+        except Exception:
+            continue
 
-                dt = datetime.strptime(
-                    texto,
-                    formato
-                )
+    try:
+        dt = datetime.fromisoformat(texto)
 
-                break
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=FUSO_BRASIL)
 
-            except Exception:
-                pass
+        return dt.astimezone(FUSO_BRASIL)
 
-        if dt is None:
-
-            try:
-
-                dt = datetime.fromisoformat(
-                    texto.replace(
-                        "Z",
-                        "+00:00"
-                    )
-                )
-
-            except Exception:
-                return None
-
-    if dt.tzinfo is None:
-
-        # Prazo vindo do formulário é horário de Brasília.
-        dt = dt.replace(
-            tzinfo=FUSO_BRASIL
-        )
-
-    return dt.astimezone(
-        FUSO_BRASIL
-    )
+    except Exception:
+        return None
 
 
-def prazo_atrasado(valor, referencia=None):
-
-    dt = prazo_em_datetime(valor)
+def prazo_atrasado(prazo):
+    dt = prazo_em_datetime(prazo)
 
     if not dt:
         return False
 
-    if referencia:
-
-        dt_referencia = prazo_em_datetime(
-            referencia
-        )
-
-        if dt_referencia:
-            return dt_referencia > dt
-
-    return dt < agora_brasil()
+    return agora_brasil() > dt
 
 
-def registro_foi_atrasado(atividade):
-
-    if not atividade:
-        return False
-
-    prazo = atividade.get("prazo")
+def registro_foi_atrasado(item):
+    prazo = obter_valor(item, "prazo")
 
     if not prazo:
         return False
 
-    status = (
-        atividade.get("status")
-        or ""
-    )
-
-    status_normalizado = (
-        str(status)
-        .strip()
-        .lower()
-    )
-
-    concluido_em = atividade.get(
-        "concluido_em"
-    )
-
-    prazo_dt = prazo_em_datetime(
-        prazo
-    )
+    prazo_dt = prazo_em_datetime(prazo)
 
     if not prazo_dt:
         return False
 
-    # --------------------------------------------------------
-    # Se foi concluído ou arquivado:
-    # verificamos se terminou depois do prazo.
-    # --------------------------------------------------------
+    concluido = obter_valor(item, "concluido_em")
 
-    if status_normalizado in {
-        "concluído",
-        "concluido",
-        "arquivado",
-        "arquivada",
-    }:
+    if concluido:
+        fim = converter_para_brasil(concluido)
 
-        if concluido_em:
+        if fim:
+            return fim > prazo_dt
 
-            conclusao_dt = prazo_em_datetime(
-                concluido_em
-            )
-
-            if conclusao_dt:
-
-                return conclusao_dt > prazo_dt
-
-        # Registro arquivado sem conclusão registrada.
-        if status_normalizado in {
-            "arquivado",
-            "arquivada"
-        }:
-
-            return prazo_dt < agora_brasil()
-
-        return False
-
-    # --------------------------------------------------------
-    # Registro ainda aberto.
-    # --------------------------------------------------------
-
-    return prazo_dt < agora_brasil()
+    return agora_brasil() > prazo_dt
 
 
-def texto_atraso(valor, referencia=None):
+def texto_atraso(item):
+    prazo = obter_valor(item, "prazo")
 
-    dt = prazo_em_datetime(valor)
-
-    if not dt:
+    if not prazo:
         return ""
 
-    if referencia:
+    prazo_dt = prazo_em_datetime(prazo)
 
-        referencia_dt = prazo_em_datetime(
-            referencia
-        )
+    if not prazo_dt:
+        return ""
 
-        if referencia_dt:
+    concluido = obter_valor(item, "concluido_em")
 
-            diferenca = (
-                referencia_dt - dt
-            )
-
-        else:
-
-            diferenca = (
-                agora_brasil() - dt
-            )
-
+    if concluido:
+        fim = converter_para_brasil(concluido)
     else:
+        fim = agora_brasil()
 
-        diferenca = (
-            agora_brasil() - dt
-        )
-
-    minutos = int(
-        diferenca.total_seconds()
-        // 60
-    )
-
-    if minutos <= 0:
+    if not fim:
         return ""
+
+    diferenca = fim - prazo_dt
+
+    if diferenca.total_seconds() <= 0:
+        return ""
+
+    minutos = int(diferenca.total_seconds() // 60)
 
     dias = minutos // 1440
-
-    horas = (
-        minutos % 1440
-    ) // 60
-
+    horas = (minutos % 1440) // 60
     mins = minutos % 60
 
-    if dias:
+    if dias > 0:
+        return f"{dias}d {horas}h {mins}min de atraso"
 
-        return (
-            f"{dias}d "
-            f"{horas}h atrasado"
-        )
+    if horas > 0:
+        return f"{horas}h {mins}min de atraso"
 
-    if horas:
-
-        return (
-            f"{horas}h "
-            f"{mins}min atrasado"
-        )
-
-    return f"{mins}min atrasado"
+    return f"{mins}min de atraso"
 
 
 # ============================================================
-# PREPARAÇÃO DOS DADOS
+# PREPARAÇÃO DOS REGISTROS
 # ============================================================
 
-def preparar_atividade(atividade):
+def preparar_atividade(item):
+    item = linha_para_dict(item)
 
-    atividade = linha_para_dict(
-        atividade
+    if not item:
+        return item
+
+    item["inicio_formatado"] = formatar_data_hora(
+        item.get("inicio_em")
     )
 
-    if not atividade:
-        return atividade
-
-    atividade["prazo_formatado"] = (
-        formatar_data_hora(
-            atividade.get("prazo")
-        )
+    item["concluido_formatado"] = formatar_data_hora(
+        item.get("concluido_em")
     )
 
-    atividade["inicio_formatado"] = (
-        formatar_data_hora(
-            atividade.get("inicio_em")
-        )
+    item["criado_formatado"] = formatar_data_hora(
+        item.get("criado_em")
     )
 
-    atividade["concluido_formatado"] = (
-        formatar_data_hora(
-            atividade.get("concluido_em")
-        )
+    item["prazo_formatado"] = formatar_data_hora(
+        item.get("prazo")
     )
 
-    atividade["criado_formatado"] = (
-        formatar_data_hora(
-            atividade.get("criado_em")
-        )
+    item["foi_atrasada"] = registro_foi_atrasado(item)
+
+    item["texto_atraso"] = texto_atraso(item)
+
+    item["duracao"] = calcular_duracao(
+        item.get("inicio_em"),
+        item.get("concluido_em")
     )
 
-    atividade["prazo_atrasado"] = (
-        prazo_atrasado(
-            atividade.get("prazo")
-        )
-    )
+    if not item.get("status"):
+        item["status"] = "Pendente"
 
-    atividade["foi_atrasada"] = (
-        registro_foi_atrasado(
-            atividade
-        )
-    )
+    if not item.get("prioridade"):
+        item["prioridade"] = "Baixa"
 
-    atividade["texto_atraso"] = (
-        texto_atraso(
-            atividade.get("prazo"),
-            atividade.get("concluido_em")
-        )
-    )
-
-    atividade["duracao"] = calcular_duracao(
-        atividade.get("inicio_em"),
-        atividade.get("concluido_em")
-    )
-
-    atividade["num_requisicao"] = (
-        atividade.get("num_requisicao")
-        or ""
-    )
-
-    atividade["status"] = (
-        atividade.get("status")
-        or "Pendente"
-    )
-
-    atividade["categoria"] = (
-        atividade.get("categoria")
-        or ""
-    )
-
-    atividade["responsavel"] = (
-        atividade.get("responsavel")
-        or ""
-    )
-
-    atividade["prioridade"] = (
-        atividade.get("prioridade")
-        or "Baixa"
-    )
-
-    return atividade
+    return item
 
 
-def preparar_lista_atividades(lista):
-
+def preparar_lista_atividades(itens):
     return [
         preparar_atividade(item)
-        for item in lista
+        for item in itens
     ]
 
 
-def preparar_chat(lista):
-
+def preparar_chat(itens):
     resultado = []
 
-    for item in lista:
-
+    for item in itens:
         item = linha_para_dict(item)
 
         if item:
-
-            item["data_formatada"] = (
-                formatar_data_hora(
-                    item.get("criado_em")
-                )
+            item["data_formatada"] = formatar_data_hora(
+                item.get("criado_em")
             )
 
             resultado.append(item)
@@ -695,70 +474,49 @@ def preparar_chat(lista):
 
 
 # ============================================================
-# REQUISIÇÃO DUPLICADA
+# DUPLICIDADE DE REQUISIÇÃO
 # ============================================================
 
-def requisicao_duplicada(
-    num_requisicao,
-    ignorar_id=None
-):
+def requisicao_duplicada(num_requisicao, ignorar_id=None):
+    num_requisicao = normalizar_requisicao(num_requisicao)
 
-    numero = normalizar_requisicao(
-        num_requisicao
-    )
-
-    if not numero:
+    if not num_requisicao:
         return False
 
+    sql = """
+        SELECT id
+        FROM atividades
+        WHERE UPPER(TRIM(num_requisicao)) = %s
+          AND COALESCE(status, '') NOT IN ('Concluído', 'Arquivado')
+    """
+
+    parametros = [num_requisicao]
+
     if ignorar_id:
+        sql += " AND id <> %s"
+        parametros.append(ignorar_id)
 
-        cursor = executar(
-            """
-            SELECT id
-            FROM atividades
-            WHERE UPPER(TRIM(num_requisicao)) = %s
-              AND status NOT IN (
-                  'Concluído',
-                  'Concluido',
-                  'Arquivado',
-                  'Arquivada'
-              )
-              AND id <> %s
-            LIMIT 1
-            """,
-            (
-                numero,
-                ignorar_id
-            )
+    sql += " LIMIT 1"
+
+    if usando_postgresql():
+        resultado = executar(
+            sql,
+            tuple(parametros),
+            fetchone=True
         )
-
     else:
-
-        cursor = executar(
-            """
-            SELECT id
-            FROM atividades
-            WHERE UPPER(TRIM(num_requisicao)) = %s
-              AND status NOT IN (
-                  'Concluído',
-                  'Concluido',
-                  'Arquivado',
-                  'Arquivada'
-              )
-            LIMIT 1
-            """,
-            (numero,)
+        sql_sqlite = sql.replace("%s", "?")
+        resultado = executar(
+            sql_sqlite,
+            tuple(parametros),
+            fetchone=True
         )
-
-    resultado = cursor.fetchone()
-
-    fechar_cursor(cursor)
 
     return resultado is not None
 
 
 # ============================================================
-# INICIALIZAÇÃO DO BANCO
+# BANCO - INICIALIZAÇÃO
 # ============================================================
 
 def init_db():
@@ -769,429 +527,260 @@ def init_db():
 
         cursor = db.cursor()
 
-        # ----------------------------------------------------
-        # USUÁRIOS
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
                 nome TEXT NOT NULL,
-                senha TEXT NOT NULL
+                senha TEXT NOT NULL,
+                criado_em TIMESTAMP
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # ATIVIDADES
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
                 id SERIAL PRIMARY KEY,
                 num_requisicao TEXT,
-                prioridade TEXT DEFAULT 'Baixa',
                 atividade TEXT NOT NULL,
                 descricao TEXT,
-                categoria TEXT DEFAULT 'Separação',
+                categoria TEXT NOT NULL,
                 responsavel TEXT,
+                prioridade TEXT,
                 prazo TEXT,
-                status TEXT DEFAULT 'Pendente',
+                status TEXT,
                 inicio_em TIMESTAMP,
                 concluido_em TIMESTAMP,
                 encerrado_por TEXT,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                criado_em TIMESTAMP
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # CHAT
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id SERIAL PRIMARY KEY,
-                usuario TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                usuario TEXT,
+                mensagem TEXT,
+                criado_em TIMESTAMP
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # MELHORIAS
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
                 id SERIAL PRIMARY KEY,
                 titulo TEXT NOT NULL,
                 descricao TEXT,
-                status TEXT DEFAULT 'A Fazer',
-                responsavel TEXT,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                etapa TEXT DEFAULT 'PDCA',
-                autor TEXT
+                etapa TEXT,
+                autor TEXT,
+                status TEXT,
+                criado_em TIMESTAMP
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # ESTOQUE
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id SERIAL PRIMARY KEY,
                 codigo TEXT,
                 descricao TEXT,
-                categoria TEXT,
-                quantidade NUMERIC DEFAULT 0,
-                localizacao TEXT,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                quantidade INTEGER DEFAULT 0,
+                criado_em TIMESTAMP
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # MIGRAÇÃO ATIVIDADES
-        # ----------------------------------------------------
+        # Migrações
+        cursor.execute("""
+            ALTER TABLE melhorias
+            ADD COLUMN IF NOT EXISTS etapa TEXT
+        """)
 
-        cursor.execute(
-            """
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'atividades'
-            """
-        )
+        cursor.execute("""
+            ALTER TABLE melhorias
+            ADD COLUMN IF NOT EXISTS autor TEXT
+        """)
 
-        colunas_existentes = {
-            linha["column_name"]
-            for linha in cursor.fetchall()
-        }
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS encerrado_por TEXT
+        """)
 
-        novas_colunas = {
-            "num_requisicao": "TEXT",
-            "prioridade": "TEXT DEFAULT 'Baixa'",
-            "descricao": "TEXT",
-            "categoria": "TEXT DEFAULT 'Separação'",
-            "responsavel": "TEXT",
-            "prazo": "TEXT",
-            "status": "TEXT DEFAULT 'Pendente'",
-            "inicio_em": "TIMESTAMP",
-            "concluido_em": "TIMESTAMP",
-            "encerrado_por": "TEXT",
-            "criado_em": "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-        }
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
+        """)
 
-        for coluna, tipo in novas_colunas.items():
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
+        """)
 
-            if coluna not in colunas_existentes:
-
-                cursor.execute(
-                    f"""
-                    ALTER TABLE atividades
-                    ADD COLUMN {coluna} {tipo}
-                    """
-                )
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO MELHORIAS
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'melhorias'
-            """
-        )
-
-        colunas_melhorias = {
-            linha["column_name"]
-            for linha in cursor.fetchall()
-        }
-
-        novas_colunas_melhorias = {
-            "etapa": "TEXT DEFAULT 'PDCA'",
-            "autor": "TEXT",
-        }
-
-        for coluna, tipo in novas_colunas_melhorias.items():
-
-            if coluna not in colunas_melhorias:
-
-                cursor.execute(
-                    f"""
-                    ALTER TABLE melhorias
-                    ADD COLUMN {coluna} {tipo}
-                    """
-                )
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_atividades_req_busca
+            ON atividades (num_requisicao)
+        """)
 
         db.commit()
-
-        # ----------------------------------------------------
-        # ÍNDICE NORMAL DE REQUISIÇÃO
-        #
-        # Não é UNIQUE.
-        #
-        # Isso evita que registros históricos antigos
-        # impeçam o sistema de iniciar.
-        # ----------------------------------------------------
-
-        try:
-
-            cursor.execute(
-                """
-                CREATE INDEX IF NOT EXISTS
-                idx_atividades_req_busca
-                ON atividades (
-                    num_requisicao
-                )
-                """
-            )
-
-            db.commit()
-
-        except Exception as erro:
-
-            db.rollback()
-
-            print(
-                "AVISO: índice de requisição não criado:",
-                erro
-            )
 
         cursor.close()
 
     else:
 
-        cursor = db.cursor()
-
-        # ----------------------------------------------------
-        # USUÁRIOS
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT NOT NULL,
-                senha TEXT NOT NULL
+                senha TEXT NOT NULL,
+                criado_em TEXT
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # ATIVIDADES
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 num_requisicao TEXT,
-                prioridade TEXT DEFAULT 'Baixa',
                 atividade TEXT NOT NULL,
                 descricao TEXT,
-                categoria TEXT DEFAULT 'Separação',
+                categoria TEXT NOT NULL,
                 responsavel TEXT,
+                prioridade TEXT,
                 prazo TEXT,
-                status TEXT DEFAULT 'Pendente',
+                status TEXT,
                 inicio_em TEXT,
                 concluido_em TEXT,
                 encerrado_por TEXT,
-                criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                criado_em TEXT
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # CHAT
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario TEXT NOT NULL,
-                mensagem TEXT NOT NULL,
-                criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                usuario TEXT,
+                mensagem TEXT,
+                criado_em TEXT
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # MELHORIAS
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 titulo TEXT NOT NULL,
                 descricao TEXT,
-                status TEXT DEFAULT 'A Fazer',
-                responsavel TEXT,
-                criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
-                etapa TEXT DEFAULT 'PDCA',
-                autor TEXT
+                etapa TEXT,
+                autor TEXT,
+                status TEXT,
+                criado_em TEXT
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # ESTOQUE
-        # ----------------------------------------------------
-
-        cursor.execute(
-            """
+        db.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 codigo TEXT,
                 descricao TEXT,
-                categoria TEXT,
-                quantidade REAL DEFAULT 0,
-                localizacao TEXT,
-                criado_em TEXT DEFAULT CURRENT_TIMESTAMP
+                quantidade INTEGER DEFAULT 0,
+                criado_em TEXT
             )
-            """
-        )
+        """)
 
-        # ----------------------------------------------------
-        # MIGRAÇÃO ATIVIDADES
-        # ----------------------------------------------------
-
-        cursor.execute(
-            "PRAGMA table_info(atividades)"
-        )
-
-        colunas_existentes = {
-            linha["name"]
-            for linha in cursor.fetchall()
-        }
-
-        novas_colunas = {
-            "num_requisicao": "TEXT",
-            "prioridade": "TEXT DEFAULT 'Baixa'",
-            "descricao": "TEXT",
-            "categoria": "TEXT DEFAULT 'Separação'",
-            "responsavel": "TEXT",
-            "prazo": "TEXT",
-            "status": "TEXT DEFAULT 'Pendente'",
-            "inicio_em": "TEXT",
-            "concluido_em": "TEXT",
-            "encerrado_por": "TEXT",
-            "criado_em": "TEXT",
-        }
-
-        for coluna, tipo in novas_colunas.items():
-
-            if coluna not in colunas_existentes:
-
-                cursor.execute(
-                    f"""
-                    ALTER TABLE atividades
-                    ADD COLUMN {coluna} {tipo}
-                    """
-                )
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO MELHORIAS
-        # ----------------------------------------------------
-
-        cursor.execute(
+        # Migração SQLite
+        colunas_melhorias = db.execute(
             "PRAGMA table_info(melhorias)"
-        )
+        ).fetchall()
 
-        colunas_melhorias = {
-            linha["name"]
-            for linha in cursor.fetchall()
-        }
+        nomes_melhorias = [
+            coluna["name"]
+            for coluna in colunas_melhorias
+        ]
 
-        novas_colunas_melhorias = {
-            "etapa": "TEXT",
-            "autor": "TEXT",
-        }
+        if "etapa" not in nomes_melhorias:
+            db.execute(
+                "ALTER TABLE melhorias ADD COLUMN etapa TEXT"
+            )
 
-        for coluna, tipo in novas_colunas_melhorias.items():
+        if "autor" not in nomes_melhorias:
+            db.execute(
+                "ALTER TABLE melhorias ADD COLUMN autor TEXT"
+            )
 
-            if coluna not in colunas_melhorias:
+        colunas_atividades = db.execute(
+            "PRAGMA table_info(atividades)"
+        ).fetchall()
 
-                cursor.execute(
-                    f"""
-                    ALTER TABLE melhorias
-                    ADD COLUMN {coluna} {tipo}
-                    """
-                )
+        nomes_atividades = [
+            coluna["name"]
+            for coluna in colunas_atividades
+        ]
+
+        if "encerrado_por" not in nomes_atividades:
+            db.execute(
+                "ALTER TABLE atividades ADD COLUMN encerrado_por TEXT"
+            )
+
+        if "inicio_em" not in nomes_atividades:
+            db.execute(
+                "ALTER TABLE atividades ADD COLUMN inicio_em TEXT"
+            )
+
+        if "concluido_em" not in nomes_atividades:
+            db.execute(
+                "ALTER TABLE atividades ADD COLUMN concluido_em TEXT"
+            )
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS idx_atividades_req_busca
+            ON atividades (num_requisicao)
+        """)
 
         db.commit()
 
-        try:
-
-            cursor.execute(
-                """
-                CREATE INDEX IF NOT EXISTS
-                idx_atividades_req_busca
-                ON atividades (
-                    num_requisicao
-                )
-                """
-            )
-
-            db.commit()
-
-        except Exception as erro:
-
-            db.rollback()
-
-            print(
-                "AVISO: índice SQLite não criado:",
-                erro
-            )
-
-        cursor.close()
-
-    # ========================================================
-    # USUÁRIO PADRÃO
-    # ========================================================
-
-    cursor = executar(
+    # Usuário inicial
+    usuario = executar(
         """
         SELECT id
         FROM usuarios
         WHERE nome = %s
         LIMIT 1
+        """ if usando_postgresql() else """
+        SELECT id
+        FROM usuarios
+        WHERE nome = ?
+        LIMIT 1
         """,
-        ("Wanderson Fernandes",)
+        ("Wanderson Fernandes",),
+        fetchone=True
     )
-
-    usuario = cursor.fetchone()
-
-    fechar_cursor(cursor)
 
     if usuario is None:
 
-        executar(
-            """
-            INSERT INTO usuarios (
-                nome,
-                senha
+        if usando_postgresql():
+            executar(
+                """
+                INSERT INTO usuarios
+                    (nome, senha, criado_em)
+                VALUES
+                    (%s, %s, %s)
+                """,
+                (
+                    "Wanderson Fernandes",
+                    "1234",
+                    agora_utc_naive()
+                ),
+                commit=True
             )
-            VALUES (%s, %s)
-            """,
-            (
-                "Wanderson Fernandes",
-                "1234"
-            ),
-            commit=True
-        )
+
+        else:
+            executar(
+                """
+                INSERT INTO usuarios
+                    (nome, senha, criado_em)
+                VALUES
+                    (?, ?, ?)
+                """,
+                (
+                    "Wanderson Fernandes",
+                    "1234",
+                    agora_sqlite()
+                ),
+                commit=True
+            )
 
 
 # ============================================================
@@ -1199,114 +788,99 @@ def init_db():
 # ============================================================
 
 def arquivar_atividades_expiradas():
-
-    limite = (
-        agora_utc()
-        - timedelta(hours=24)
-    )
+    limite = agora_utc() - timedelta(hours=24)
 
     if usando_postgresql():
 
-        limite_valor = limite.replace(
-            tzinfo=None
+        executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE status = 'Concluído'
+              AND concluido_em IS NOT NULL
+              AND concluido_em <= %s
+            """,
+            (limite.replace(tzinfo=None),),
+            commit=True
         )
 
     else:
 
-        limite_valor = (
-            limite.replace(
-                tzinfo=None
-            ).isoformat(
-                timespec="seconds"
-            )
+        limite_texto = limite.strftime(
+            "%Y-%m-%d %H:%M:%S"
         )
 
-    executar(
-        """
-        UPDATE atividades
-        SET status = 'Arquivado'
-        WHERE status IN (
-            'Concluído',
-            'Concluido'
+        executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE status = 'Concluído'
+              AND concluido_em IS NOT NULL
+              AND concluido_em <= ?
+            """,
+            (limite_texto,),
+            commit=True
         )
-          AND concluido_em IS NOT NULL
-          AND concluido_em < %s
-        """,
-        (limite_valor,),
-        commit=True
-    )
 
 
 # ============================================================
 # LOGIN
 # ============================================================
 
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
+@app.route("/login", methods=["GET", "POST"])
 def login():
 
     if request.method == "POST":
 
-        nome = request.form.get(
-            "usuario",
-            ""
-        ).strip()
+        nome = request.form.get("usuario", "").strip()
+        senha = request.form.get("senha", "").strip()
 
-        senha = request.form.get(
-            "senha",
-            ""
-        ).strip()
+        if usando_postgresql():
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            WHERE nome = %s
-              AND senha = %s
-            LIMIT 1
-            """,
-            (
-                nome,
-                senha
+            usuario = executar(
+                """
+                SELECT *
+                FROM usuarios
+                WHERE nome = %s
+                  AND senha = %s
+                LIMIT 1
+                """,
+                (nome, senha),
+                fetchone=True
             )
-        )
 
-        usuario = linha_para_dict(
-            cursor.fetchone()
-        )
+        else:
 
-        fechar_cursor(cursor)
+            usuario = executar(
+                """
+                SELECT *
+                FROM usuarios
+                WHERE nome = ?
+                  AND senha = ?
+                LIMIT 1
+                """,
+                (nome, senha),
+                fetchone=True
+            )
 
         if usuario:
 
-            session["usuario_atual"] = (
-                usuario["nome"]
+            session["usuario_atual"] = obter_valor(
+                usuario,
+                "nome"
             )
 
-            return redirect(
-                url_for("index")
-            )
+            return redirect(url_for("index"))
 
         flash(
             "Usuário ou senha inválidos.",
             "danger"
         )
 
-    return render_template(
-        "login.html"
-    )
+    return render_template("login.html")
 
 
-# ============================================================
-# CADASTRO DE USUÁRIO
-# ============================================================
-
-@app.route(
-    "/cadastro_usuario",
-    methods=["GET", "POST"]
-)
+@app.route("/cadastro_usuario", methods=["GET", "POST"])
 def cadastro_usuario():
 
     if request.method == "POST":
@@ -1321,6 +895,11 @@ def cadastro_usuario():
             ""
         ).strip()
 
+        confirmar = request.form.get(
+            "confirmar_senha",
+            ""
+        ).strip()
+
         if not nome or not senha:
 
             flash(
@@ -1329,52 +908,90 @@ def cadastro_usuario():
             )
 
             return redirect(
-                url_for(
-                    "cadastro_usuario"
-                )
+                url_for("cadastro_usuario")
             )
 
-        cursor = executar(
-            """
-            SELECT id
-            FROM usuarios
-            WHERE nome = %s
-            LIMIT 1
-            """,
-            (nome,)
-        )
-
-        existe = cursor.fetchone()
-
-        fechar_cursor(cursor)
-
-        if existe:
+        if senha != confirmar:
 
             flash(
-                "Usuário já cadastrado.",
+                "As senhas não conferem.",
                 "warning"
             )
 
             return redirect(
-                url_for(
-                    "cadastro_usuario"
-                )
+                url_for("cadastro_usuario")
             )
 
-        executar(
-            """
-            INSERT INTO usuarios (
-                nome,
-                senha
+        if usando_postgresql():
+
+            existe = executar(
+                """
+                SELECT id
+                FROM usuarios
+                WHERE LOWER(nome) = LOWER(%s)
+                LIMIT 1
+                """,
+                (nome,),
+                fetchone=True
             )
-            VALUES (%s, %s)
-            """,
-            (
-                nome,
-                senha
-            ),
-            commit=True
-        )
+
+        else:
+
+            existe = executar(
+                """
+                SELECT id
+                FROM usuarios
+                WHERE LOWER(nome) = LOWER(?)
+                LIMIT 1
+                """,
+                (nome,),
+                fetchone=True
+            )
+
+        if existe:
+
+            flash(
+                "Esse usuário já existe.",
+                "warning"
+            )
+
+            return redirect(
+                url_for("cadastro_usuario")
+            )
+
+        if usando_postgresql():
+
+            executar(
+                """
+                INSERT INTO usuarios
+                    (nome, senha, criado_em)
+                VALUES
+                    (%s, %s, %s)
+                """,
+                (
+                    nome,
+                    senha,
+                    agora_utc_naive()
+                ),
+                commit=True
+            )
+
+        else:
+
+            executar(
+                """
+                INSERT INTO usuarios
+                    (nome, senha, criado_em)
+                VALUES
+                    (?, ?, ?)
+                """,
+                (
+                    nome,
+                    senha,
+                    agora_sqlite()
+                ),
+                commit=True
+            )
 
         flash(
             "Usuário cadastrado com sucesso.",
@@ -1385,14 +1002,8 @@ def cadastro_usuario():
             url_for("login")
         )
 
-    return render_template(
-        "cadastro.html"
-    )
+    return render_template("cadastro.html")
 
-
-# ============================================================
-# LOGOUT
-# ============================================================
 
 @app.route("/logout")
 def logout():
@@ -1405,45 +1016,24 @@ def logout():
 
 
 # ============================================================
-# DASHBOARD / INÍCIO
+# DASHBOARD
 # ============================================================
 
-@app.route(
-    "/",
-    methods=["GET", "POST"]
-)
+@app.route("/", methods=["GET", "POST"])
 def index():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
+    arquivar_atividades_expiradas()
 
-    try:
+    usuario_atual = session["usuario_atual"]
 
-        arquivar_atividades_expiradas()
-
-    except Exception as erro:
-
-        print(
-            "AVISO no arquivamento automático:",
-            erro
-        )
-
-    usuario_atual = (
-        session["usuario_atual"]
-    )
-
-    # ========================================================
-    # POST
-    # ========================================================
+    # --------------------------------------------------------
+    # CHAT
+    # --------------------------------------------------------
 
     if request.method == "POST":
-
-        # ----------------------------------------------------
-        # CHAT
-        # ----------------------------------------------------
 
         acao_chat = request.form.get(
             "acao_chat"
@@ -1458,28 +1048,49 @@ def index():
 
             if mensagem:
 
-                executar(
-                    """
-                    INSERT INTO chat (
-                        usuario,
-                        mensagem
-                    )
-                    VALUES (%s, %s)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem
-                    ),
-                    commit=True
-                )
+                if usando_postgresql():
 
-            return redirect(
-                url_for("index")
-            )
+                    executar(
+                        """
+                        INSERT INTO chat
+                            (usuario, mensagem, criado_em)
+                        VALUES
+                            (%s, %s, %s)
+                        """,
+                        (
+                            usuario_atual,
+                            mensagem,
+                            agora_utc_naive()
+                        ),
+                        commit=True
+                    )
+
+                else:
+
+                    executar(
+                        """
+                        INSERT INTO chat
+                            (usuario, mensagem, criado_em)
+                        VALUES
+                            (?, ?, ?)
+                        """,
+                        (
+                            usuario_atual,
+                            mensagem,
+                            agora_sqlite()
+                        ),
+                        commit=True
+                    )
+
+            return redirect(url_for("index"))
 
         # ----------------------------------------------------
         # NOVA ATIVIDADE
         # ----------------------------------------------------
+
+        num_requisicao = normalizar_requisicao(
+            request.form.get("num_requisicao")
+        )
 
         atividade = request.form.get(
             "atividade",
@@ -1496,14 +1107,14 @@ def index():
             "Separação"
         ).strip()
 
+        responsavel = request.form.get(
+            "responsavel",
+            usuario_atual
+        ).strip()
+
         prioridade = request.form.get(
             "prioridade",
             "Baixa"
-        ).strip()
-
-        responsavel = request.form.get(
-            "responsavel",
-            ""
         ).strip()
 
         prazo = request.form.get(
@@ -1511,27 +1122,20 @@ def index():
             ""
         ).strip()
 
-        num_requisicao = normalizar_requisicao(
-            request.form.get(
-                "num_requisicao",
-                ""
-            )
-        )
-
-        categorias_validas = {
+        categorias_validas = [
             "Separação",
             "Inventário",
             "Expedição",
             "Recebimento",
             "Logística Reversa",
-            "Estoque",
-        }
+            "Estoque"
+        ]
 
-        prioridades_validas = {
+        prioridades_validas = [
             "Baixa",
             "Média",
-            "Alta",
-        }
+            "Alta"
+        ]
 
         if categoria not in categorias_validas:
             categoria = "Separação"
@@ -1546,102 +1150,120 @@ def index():
                 "warning"
             )
 
-            return redirect(
-                url_for("index")
-            )
+            return redirect(url_for("index"))
 
-        if (
-            categoria == "Separação"
-            and not num_requisicao
-        ):
+        if categoria == "Separação" and not num_requisicao:
 
             flash(
-                "Informe o número da requisição para uma atividade de Separação.",
+                "A Separação precisa de um número de requisição.",
                 "warning"
             )
 
-            return redirect(
-                url_for("index")
+            return redirect(url_for("index"))
+
+        if num_requisicao and requisicao_duplicada(
+            num_requisicao
+        ):
+
+            flash(
+                f"A requisição {num_requisicao} já possui uma atividade ativa.",
+                "warning"
             )
 
-        if num_requisicao:
-
-            if requisicao_duplicada(
-                num_requisicao
-            ):
-
-                flash(
-                    f"A requisição {num_requisicao} já possui uma atividade ativa.",
-                    "warning"
-                )
-
-                return redirect(
-                    url_for("index")
-                )
+            return redirect(url_for("index"))
 
         inicio_em = None
 
         if categoria == "Separação":
 
-            if usando_postgresql():
-
-                inicio_em = agora_utc_naive()
-
-            else:
-
-                inicio_em = agora_sqlite()
-
-        executar(
-            """
-            INSERT INTO atividades (
-                num_requisicao,
-                prioridade,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prazo,
-                status,
-                inicio_em
+            inicio_em = (
+                agora_utc_naive()
+                if usando_postgresql()
+                else agora_sqlite()
             )
-            VALUES (
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s,
-                %s
+
+        status = "Pendente"
+
+        if usando_postgresql():
+
+            executar(
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo,
+                    status,
+                    inicio_em,
+                    criado_em
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """,
+                (
+                    num_requisicao or None,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo or None,
+                    status,
+                    inicio_em,
+                    agora_utc_naive()
+                ),
+                commit=True
             )
-            """,
-            (
-                num_requisicao or None,
-                prioridade,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prazo or None,
-                "Pendente",
-                inicio_em
-            ),
-            commit=True
-        )
+
+        else:
+
+            executar(
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo,
+                    status,
+                    inicio_em,
+                    criado_em
+                )
+                VALUES
+                (?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    num_requisicao or None,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo or None,
+                    status,
+                    inicio_em,
+                    agora_sqlite()
+                ),
+                commit=True
+            )
 
         flash(
-            "Atividade cadastrada com sucesso.",
+            "Atividade criada com sucesso.",
             "success"
         )
 
-        return redirect(
-            url_for("index")
-        )
+        return redirect(url_for("index"))
 
-    # ========================================================
+    # --------------------------------------------------------
     # BUSCA
-    # ========================================================
+    # --------------------------------------------------------
 
     busca = request.args.get(
         "q",
@@ -1652,350 +1274,319 @@ def index():
 
         termo = f"%{busca}%"
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE atividade LIKE %s
-               OR descricao LIKE %s
-               OR num_requisicao LIKE %s
-               OR responsavel LIKE %s
-               OR categoria LIKE %s
-            ORDER BY id DESC
-            """,
-            (
-                termo,
-                termo,
-                termo,
-                termo,
-                termo
+        if usando_postgresql():
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE
+                    COALESCE(num_requisicao,'') ILIKE %s
+                    OR COALESCE(atividade,'') ILIKE %s
+                    OR COALESCE(descricao,'') ILIKE %s
+                    OR COALESCE(responsavel,'') ILIKE %s
+                ORDER BY id DESC
+                """,
+                (
+                    termo,
+                    termo,
+                    termo,
+                    termo
+                ),
+                fetchall=True
             )
-        )
+
+        else:
+
+            termo = f"%{busca.lower()}%"
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE
+                    LOWER(COALESCE(num_requisicao,'')) LIKE ?
+                    OR LOWER(COALESCE(atividade,'')) LIKE ?
+                    OR LOWER(COALESCE(descricao,'')) LIKE ?
+                    OR LOWER(COALESCE(responsavel,'')) LIKE ?
+                ORDER BY id DESC
+                """,
+                (
+                    termo,
+                    termo,
+                    termo,
+                    termo
+                ),
+                fetchall=True
+            )
 
     else:
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE status NOT IN (
-                'Concluído',
-                'Concluido',
-                'Arquivado',
-                'Arquivada'
+        if usando_postgresql():
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE COALESCE(status,'') NOT IN
+                    ('Concluído','Arquivado')
+                ORDER BY id DESC
+                """,
+                fetchall=True
             )
-            ORDER BY
-                CASE prioridade
-                    WHEN 'Alta' THEN 1
-                    WHEN 'Média' THEN 2
-                    ELSE 3
-                END,
-                id DESC
-            """
-        )
 
-    atividades = linhas_para_dict(
-        cursor.fetchall()
+        else:
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE COALESCE(status,'') NOT IN
+                    ('Concluído','Arquivado')
+                ORDER BY id DESC
+                """,
+                fetchall=True
+            )
+
+    itens = preparar_lista_atividades(itens)
+
+    # --------------------------------------------------------
+    # USUÁRIOS
+    # --------------------------------------------------------
+
+    usuarios = executar(
+        """
+        SELECT *
+        FROM usuarios
+        ORDER BY nome
+        """,
+        fetchall=True
     )
 
-    fechar_cursor(cursor)
+    usuarios = linhas_para_dict(usuarios)
 
-    atividades = preparar_lista_atividades(
-        atividades
-    )
-
-    # ========================================================
+    # --------------------------------------------------------
     # CHAT
-    # ========================================================
+    # --------------------------------------------------------
 
-    cursor = executar(
+    mensagens = executar(
         """
         SELECT *
         FROM chat
         ORDER BY id DESC
         LIMIT 30
-        """
+        """,
+        fetchall=True
     )
 
-    chat = preparar_chat(
-        cursor.fetchall()
-    )
+    mensagens = preparar_chat(mensagens)
 
-    fechar_cursor(cursor)
+    mensagens.reverse()
 
-    chat.reverse()
-
-    # ========================================================
-    # USUÁRIOS
-    # ========================================================
-
-    cursor = executar(
-        """
-        SELECT *
-        FROM usuarios
-        ORDER BY nome
-        """
-    )
-
-    usuarios = linhas_para_dict(
-        cursor.fetchall()
-    )
-
-    fechar_cursor(cursor)
-
-    # ========================================================
+    # --------------------------------------------------------
     # INDICADORES
-    # ========================================================
+    # --------------------------------------------------------
 
     total_req = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE status NOT IN (
-            'Arquivado',
-            'Arquivada'
-        )
+        WHERE categoria = %s
+          AND COALESCE(status,'') NOT IN ('Arquivado')
+        """,
+        ("Separação",)
+    ) if usando_postgresql() else contar(
         """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = ?
+          AND COALESCE(status,'') NOT IN ('Arquivado')
+        """,
+        ("Separação",)
     )
 
     inv_total = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = 'Inventário'
+        WHERE categoria = %s
+        """,
+        ("Inventário",)
+    ) if usando_postgresql() else contar(
         """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = ?
+        """,
+        ("Inventário",)
     )
 
     inv_conc = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = 'Inventário'
-          AND status IN (
-              'Concluído',
-              'Concluido'
-          )
-        """
-    )
-
-    exp_total = contar(
+        WHERE categoria = %s
+          AND status = %s
+        """,
+        ("Inventário", "Concluído")
+    ) if usando_postgresql() else contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = 'Expedição'
-        """
-    )
-
-    exp_concluido = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = 'Expedição'
-          AND status IN (
-              'Concluído',
-              'Concluido'
-          )
-        """
+        WHERE categoria = ?
+          AND status = ?
+        """,
+        ("Inventário", "Concluído")
     )
 
     exp_pend = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = 'Expedição'
-          AND status NOT IN (
-              'Concluído',
-              'Concluido',
-              'Arquivado',
-              'Arquivada'
-          )
+        WHERE categoria = %s
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Expedição",)
+    ) if usando_postgresql() else contar(
         """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = ?
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Expedição",)
     )
 
     rec_pend = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = 'Recebimento'
-          AND status NOT IN (
-              'Concluído',
-              'Concluido',
-              'Arquivado',
-              'Arquivada'
-          )
+        WHERE categoria = %s
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Recebimento",)
+    ) if usando_postgresql() else contar(
         """
+        SELECT COUNT(*) AS total
+        FROM atividades
+        WHERE categoria = ?
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Recebimento",)
     )
 
     total_oco = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE prioridade = 'Alta'
-          AND status NOT IN (
-              'Concluído',
-              'Concluido',
-              'Arquivado',
-              'Arquivada'
-          )
-        """
-    )
-
-    total_atividades = contar(
+        WHERE prioridade = %s
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Alta",)
+    ) if usando_postgresql() else contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        """
+        WHERE prioridade = ?
+          AND status NOT IN ('Concluído','Arquivado')
+        """,
+        ("Alta",)
     )
 
-    atividades_concluidas = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE status IN (
-            'Concluído',
-            'Concluido'
-        )
-        """
+    todas = executar(
+        "SELECT * FROM atividades",
+        fetchall=True
     )
 
-    atividades_arquivadas = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE status IN (
-            'Arquivado',
-            'Arquivada'
-        )
-        """
-    )
-
-    # ========================================================
-    # ATRASADOS
-    #
-    # Não existe módulo separado.
-    #
-    # O histórico permanece em Relatórios.
-    # ========================================================
-
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE prazo IS NOT NULL
-        """
-    )
-
-    registros_prazo = linhas_para_dict(
-        cursor.fetchall()
-    )
-
-    fechar_cursor(cursor)
-
-    registros_prazo = preparar_lista_atividades(
-        registros_prazo
+    todas_preparadas = preparar_lista_atividades(
+        todas
     )
 
     total_atrasados = sum(
         1
-        for item in registros_prazo
+        for item in todas_preparadas
         if item.get("foi_atrasada")
     )
 
-    # ========================================================
-    # PERCENTUAIS
-    # ========================================================
+    total_geral = len(todas_preparadas)
 
-    if total_atividades > 0:
+    total_concluidas = sum(
+        1
+        for item in todas_preparadas
+        if item.get("status") == "Concluído"
+    )
 
-        perc_atendidas = round(
+    total_expedicao = sum(
+        1
+        for item in todas_preparadas
+        if item.get("categoria") == "Expedição"
+    )
+
+    perc_atendidas = (
+        round(
+            (total_concluidas / total_geral) * 100
+        )
+        if total_geral
+        else 0
+    )
+
+    perc_inventario = (
+        round(
+            (inv_conc / inv_total) * 100
+        )
+        if inv_total
+        else 0
+    )
+
+    perc_expedicao = (
+        round(
             (
-                atividades_concluidas
-                / total_atividades
+                sum(
+                    1
+                    for item in todas_preparadas
+                    if item.get("categoria") == "Expedição"
+                    and item.get("status") == "Concluído"
+                )
+                / total_expedicao
             ) * 100
         )
-
-    else:
-
-        perc_atendidas = 0
-
-    if inv_total > 0:
-
-        perc_inventario = round(
-            (
-                inv_conc
-                / inv_total
-            ) * 100
-        )
-
-    else:
-
-        perc_inventario = 0
-
-    if exp_total > 0:
-
-        perc_expedicao = round(
-            (
-                exp_concluido
-                / exp_total
-            ) * 100
-        )
-
-    else:
-
-        perc_expedicao = 0
-
-    # ========================================================
-    # DASHBOARD
-    # ========================================================
+        if total_expedicao
+        else 0
+    )
 
     return render_template(
         "dashboard.html",
         usuario_atual=usuario_atual,
-        atividades=atividades,
-        chat=chat,
+        itens=itens,
         usuarios=usuarios,
-        busca=busca,
-
+        mensagens=mensagens,
         total_req=total_req,
-        total_atrasados=total_atrasados,
-
-        inv_conc=inv_conc,
         inv_total=inv_total,
-
+        inv_conc=inv_conc,
         exp_pend=exp_pend,
-        exp_concluido=exp_concluido,
-        exp_total=exp_total,
-
         rec_pend=rec_pend,
         total_oco=total_oco,
-
-        total_atividades=total_atividades,
-        atividades_concluidas=atividades_concluidas,
-        atividades_arquivadas=atividades_arquivadas,
-
+        total_atrasados=total_atrasados,
+        total_geral=total_geral,
+        concluidas=total_concluidas,
         perc_atendidas=perc_atendidas,
         perc_inventario=perc_inventario,
-        perc_expedicao=perc_expedicao
+        perc_expedicao=perc_expedicao,
+        busca=busca
     )
 
 
 # ============================================================
 # ATRASADOS
-#
-# COMPATIBILIDADE
-#
+# Compatibilidade somente.
 # Não existe atrasados.html.
-# O link antigo simplesmente abre Relatórios filtrado.
 # ============================================================
 
 @app.route("/atrasados")
 def atrasados():
 
     if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
     return redirect(
         url_for(
@@ -2013,118 +1604,75 @@ def atrasados():
 def indicadores():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
-
-    total_geral = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE status NOT IN (
-            'Arquivado',
-            'Arquivada'
-        )
-        """
+    itens = executar(
+        "SELECT * FROM atividades",
+        fetchall=True
     )
 
-    concluidas = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE status IN (
-            'Concluído',
-            'Concluido'
-        )
-        """
+    itens = preparar_lista_atividades(itens)
+
+    total_geral = len(itens)
+
+    concluidas = sum(
+        1
+        for item in itens
+        if item.get("status") == "Concluído"
     )
 
-    pendentes = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE status NOT IN (
-            'Concluído',
-            'Concluido',
-            'Arquivado',
-            'Arquivada'
-        )
-        """
+    inventario_total = sum(
+        1
+        for item in itens
+        if item.get("categoria") == "Inventário"
     )
 
-    inv_total = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = 'Inventário'
-        """
+    inventario_concluido = sum(
+        1
+        for item in itens
+        if item.get("categoria") == "Inventário"
+        and item.get("status") == "Concluído"
     )
 
-    inv_concluido = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = 'Inventário'
-          AND status IN (
-              'Concluído',
-              'Concluido'
-          )
-        """
+    expedicao_total = sum(
+        1
+        for item in itens
+        if item.get("categoria") == "Expedição"
     )
 
-    exp_total = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = 'Expedição'
-        """
-    )
-
-    exp_concluido = contar(
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = 'Expedição'
-          AND status IN (
-              'Concluído',
-              'Concluido'
-          )
-        """
+    expedicao_concluido = sum(
+        1
+        for item in itens
+        if item.get("categoria") == "Expedição"
+        and item.get("status") == "Concluído"
     )
 
     perc_atendidas = (
-        round(
-            concluidas / total_geral * 100
-        )
-        if total_geral > 0
+        round((concluidas / total_geral) * 100)
+        if total_geral
         else 0
     )
 
     perc_inventario = (
         round(
-            inv_concluido / inv_total * 100
+            (inventario_concluido / inventario_total) * 100
         )
-        if inv_total > 0
+        if inventario_total
         else 0
     )
 
     perc_expedicao = (
         round(
-            exp_concluido / exp_total * 100
+            (expedicao_concluido / expedicao_total) * 100
         )
-        if exp_total > 0
+        if expedicao_total
         else 0
     )
 
     return render_template(
         "indicadores.html",
-        usuario_atual=session[
-            "usuario_atual"
-        ],
         total_geral=total_geral,
         concluidas=concluidas,
-        pendentes=pendentes,
         perc_atendidas=perc_atendidas,
         perc_inventario=perc_inventario,
         perc_expedicao=perc_expedicao
@@ -2132,155 +1680,84 @@ def indicadores():
 
 
 # ============================================================
-# RELATÓRIOS / HISTÓRICO
-#
-# Aqui ficam as atividades antigas, concluídas e arquivadas.
-#
-# Filtros:
-# - todos
-# - pendentes
-# - andamento
-# - concluidos
-# - arquivados
-# - atrasados
+# RELATÓRIOS
 # ============================================================
 
 @app.route("/relatorios")
 def relatorios():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
+    arquivar_atividades_expiradas()
 
-    filtro = (
-        request.args.get(
-            "filtro",
-            "todos"
-        )
-        .strip()
-        .lower()
+    filtro = request.args.get(
+        "filtro",
+        "todos"
     )
 
-    filtros_validos = {
-        "todos",
-        "pendentes",
-        "andamento",
-        "concluidos",
-        "arquivados",
-        "atrasados",
-    }
-
-    if filtro not in filtros_validos:
-        filtro = "todos"
-
-    cursor = executar(
+    todas = executar(
         """
         SELECT *
         FROM atividades
         ORDER BY id DESC
-        """
+        """,
+        fetchall=True
     )
 
-    itens = preparar_lista_atividades(
-        cursor.fetchall()
+    todas = preparar_lista_atividades(
+        todas
     )
-
-    fechar_cursor(cursor)
-
-    # --------------------------------------------------------
-    # FILTRO PENDENTES
-    # --------------------------------------------------------
 
     if filtro == "pendentes":
 
         itens = [
             item
-            for item in itens
-            if str(
-                item.get("status", "")
-            ).strip().lower()
-            == "pendente"
+            for item in todas
+            if item.get("status") == "Pendente"
         ]
-
-    # --------------------------------------------------------
-    # FILTRO EM ANDAMENTO
-    # --------------------------------------------------------
 
     elif filtro == "andamento":
 
         itens = [
             item
-            for item in itens
-            if str(
-                item.get("status", "")
-            ).strip().lower()
-            == "em andamento"
+            for item in todas
+            if item.get("status") == "Em andamento"
         ]
-
-    # --------------------------------------------------------
-    # FILTRO CONCLUÍDOS
-    # --------------------------------------------------------
 
     elif filtro == "concluidos":
 
         itens = [
             item
-            for item in itens
-            if str(
-                item.get("status", "")
-            ).strip().lower()
-            in {
-                "concluído",
-                "concluido"
-            }
+            for item in todas
+            if item.get("status") == "Concluído"
         ]
-
-    # --------------------------------------------------------
-    # FILTRO ARQUIVADOS
-    # --------------------------------------------------------
 
     elif filtro == "arquivados":
 
         itens = [
             item
-            for item in itens
-            if str(
-                item.get("status", "")
-            ).strip().lower()
-            in {
-                "arquivado",
-                "arquivada"
-            }
+            for item in todas
+            if item.get("status") == "Arquivado"
         ]
-
-    # --------------------------------------------------------
-    # FILTRO ATRASADOS
-    #
-    # IMPORTANTE:
-    # Não criamos uma página separada.
-    #
-    # Um registro pode aparecer aqui mesmo se já estiver
-    # concluído ou arquivado, desde que tenha sido finalizado
-    # depois do prazo.
-    # --------------------------------------------------------
 
     elif filtro == "atrasados":
 
         itens = [
             item
-            for item in itens
+            for item in todas
             if item.get("foi_atrasada")
         ]
 
+    else:
+
+        itens = todas
+
     return render_template(
         "relatorios.html",
-        usuario_atual=session[
-            "usuario_atual"
-        ],
         itens=itens,
-        filtro=filtro
+        filtro=filtro,
+        usuario_atual=session["usuario_atual"]
     )
 
 
@@ -2295,124 +1772,41 @@ def relatorios():
 def modulo(nome):
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
-
-    nome_original = nome.strip()
+    nome_original = nome
 
     nome_normalizado = (
-        nome_original
+        nome.strip()
         .lower()
-        .strip()
+        .replace("á", "a")
+        .replace("ã", "a")
+        .replace("â", "a")
+        .replace("é", "e")
+        .replace("ê", "e")
+        .replace("í", "i")
+        .replace("ó", "o")
+        .replace("ô", "o")
+        .replace("õ", "o")
+        .replace("ú", "u")
     )
-
-    mapa = {
-
-        "inicio":
-            "Início",
-
-        "início":
-            "Início",
-
-        "dashboard":
-            "Início",
-
-        "configuracoes":
-            "Configurações",
-
-        "configurações":
-            "Configurações",
-
-        "indicadores":
-            "Indicadores",
-
-        "melhorias":
-            "Melhorias / PDCA",
-
-        "melhorias / pdca":
-            "Melhorias / PDCA",
-
-        "melhorias/pdca":
-            "Melhorias / PDCA",
-
-        "pdca":
-            "Melhorias / PDCA",
-
-        "relatorios":
-            "Relatórios",
-
-        "relatórios":
-            "Relatórios",
-
-        "cadastros":
-            "Cadastros",
-
-        "estoque":
-            "Estoque",
-
-        "requisicoes":
-            "Requisições",
-
-        "requisições":
-            "Requisições",
-
-        "inventario":
-            "Inventário",
-
-        "inventário":
-            "Inventário",
-
-        "expedicao":
-            "Expedição",
-
-        "expedição":
-            "Expedição",
-
-        "recebimento":
-            "Recebimento",
-
-        "logistica reversa":
-            "Logística Reversa",
-
-        "logística reversa":
-            "Logística Reversa",
-    }
-
-    titulo = mapa.get(
-        nome_normalizado,
-        nome_original.title()
-    )
-
-    # --------------------------------------------------------
-    # INÍCIO
-    # --------------------------------------------------------
-
-    if titulo == "Início":
-
-        return redirect(
-            url_for("index")
-        )
 
     # --------------------------------------------------------
     # CONFIGURAÇÕES
     # --------------------------------------------------------
 
-    if titulo == "Configurações":
+    if nome_normalizado == "configuracoes":
 
         return render_template(
             "configuracoes.html",
-            usuario_atual=session[
-                "usuario_atual"
-            ]
+            usuario_atual=session["usuario_atual"]
         )
 
     # --------------------------------------------------------
     # INDICADORES
     # --------------------------------------------------------
 
-    if titulo == "Indicadores":
+    if nome_normalizado == "indicadores":
 
         return redirect(
             url_for("indicadores")
@@ -2422,7 +1816,7 @@ def modulo(nome):
     # RELATÓRIOS
     # --------------------------------------------------------
 
-    if titulo == "Relatórios":
+    if nome_normalizado == "relatorios":
 
         return redirect(
             url_for("relatorios")
@@ -2432,43 +1826,25 @@ def modulo(nome):
     # CADASTROS
     # --------------------------------------------------------
 
-    if titulo == "Cadastros":
-
-        cursor = executar(
-            """
-            SELECT *
-            FROM usuarios
-            ORDER BY nome
-            """
-        )
-
-        usuarios = linhas_para_dict(
-            cursor.fetchall()
-        )
-
-        fechar_cursor(cursor)
+    if nome_normalizado == "cadastros":
 
         return render_template(
             "cadastros.html",
-            usuarios=usuarios,
-            usuario_atual=session[
-                "usuario_atual"
-            ]
+            usuario_atual=session["usuario_atual"]
         )
 
     # --------------------------------------------------------
     # MELHORIAS / PDCA
     # --------------------------------------------------------
 
-    if titulo == "Melhorias / PDCA":
-
-        # ----------------------------------------------------
-        # SALVAR NOVA MELHORIA
-        # ----------------------------------------------------
+    if (
+        "melhoria" in nome_normalizado
+        or "pdca" in nome_normalizado
+    ):
 
         if request.method == "POST":
 
-            titulo_melhoria = request.form.get(
+            titulo = request.form.get(
                 "titulo",
                 ""
             ).strip()
@@ -2483,12 +1859,12 @@ def modulo(nome):
                 "PDCA"
             ).strip()
 
-            responsavel = request.form.get(
-                "responsavel",
-                session["usuario_atual"]
+            status = request.form.get(
+                "status",
+                "A Fazer"
             ).strip()
 
-            if not titulo_melhoria:
+            if not titulo:
 
                 flash(
                     "Informe o título da melhoria.",
@@ -2498,166 +1874,845 @@ def modulo(nome):
                 return redirect(
                     url_for(
                         "modulo",
-                        nome="melhorias"
+                        nome="Melhorias / PDCA"
                     )
                 )
 
-            executar(
-                """
-                INSERT INTO melhorias (
-                    titulo,
-                    descricao,
-                    status,
-                    responsavel,
-                    etapa,
-                    autor
+            if usando_postgresql():
+
+                executar(
+                    """
+                    INSERT INTO melhorias
+                    (
+                        titulo,
+                        descricao,
+                        etapa,
+                        autor,
+                        status,
+                        criado_em
+                    )
+                    VALUES
+                    (%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        titulo,
+                        descricao,
+                        etapa,
+                        session["usuario_atual"],
+                        status,
+                        agora_utc_naive()
+                    ),
+                    commit=True
                 )
-                VALUES (
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s,
-                    %s
+
+            else:
+
+                executar(
+                    """
+                    INSERT INTO melhorias
+                    (
+                        titulo,
+                        descricao,
+                        etapa,
+                        autor,
+                        status,
+                        criado_em
+                    )
+                    VALUES
+                    (?,?,?,?,?,?)
+                    """,
+                    (
+                        titulo,
+                        descricao,
+                        etapa,
+                        session["usuario_atual"],
+                        status,
+                        agora_sqlite()
+                    ),
+                    commit=True
                 )
-                """,
-                (
-                    titulo_melhoria,
-                    descricao,
-                    "A Fazer",
-                    responsavel,
-                    etapa or "PDCA",
-                    session["usuario_atual"]
-                ),
-                commit=True
-            )
 
             flash(
-                "Melhoria registrada com sucesso.",
+                "Melhoria cadastrada com sucesso.",
                 "success"
             )
 
             return redirect(
                 url_for(
                     "modulo",
-                    nome="melhorias"
+                    nome="Melhorias / PDCA"
                 )
             )
 
-        # ----------------------------------------------------
-        # LISTAR MELHORIAS
-        # ----------------------------------------------------
-
-        cursor = executar(
+        melhorias = executar(
             """
             SELECT *
             FROM melhorias
+            WHERE COALESCE(status,'') <> 'Arquivado'
             ORDER BY id DESC
-            """
+            """,
+            fetchall=True
         )
 
         melhorias = linhas_para_dict(
-            cursor.fetchall()
+            melhorias
         )
-
-        fechar_cursor(cursor)
 
         return render_template(
             "melhorias.html",
             melhorias=melhorias,
-            usuario_atual=session[
-                "usuario_atual"
-            ]
+            usuario_atual=session["usuario_atual"]
         )
 
     # --------------------------------------------------------
     # ESTOQUE
     # --------------------------------------------------------
 
-    if titulo == "Estoque":
+    if nome_normalizado == "estoque":
 
-        cursor = executar(
+        itens = executar(
             """
             SELECT *
             FROM estoque
             ORDER BY id DESC
-            """
+            """,
+            fetchall=True
         )
-
-        estoque = linhas_para_dict(
-            cursor.fetchall()
-        )
-
-        fechar_cursor(cursor)
 
         return render_template(
             "modulo.html",
-            titulo=titulo,
-            modulo=nome_normalizado,
-            usuario_atual=session[
-                "usuario_atual"
-            ],
-            itens=estoque
+            titulo="Estoque",
+            modulo="Estoque",
+            itens=linhas_para_dict(itens),
+            usuario_atual=session["usuario_atual"]
         )
 
     # --------------------------------------------------------
-    # CORREÇÃO DOS MÓDULOS
-    #
-    # "Requisições" é o módulo visual.
-    # A categoria gravada no banco é "Separação".
+    # MAPA CORRETO DAS CATEGORIAS
     # --------------------------------------------------------
 
-    categorias_modulo = {
+    mapa_modulos = {
 
-        "Requisições": "Separação",
+        "requisicoes": {
+            "titulo": "Requisições",
+            "categoria": "Separação"
+        },
 
-        "Inventário": "Inventário",
+        "inventario": {
+            "titulo": "Inventário",
+            "categoria": "Inventário"
+        },
 
-        "Expedição": "Expedição",
+        "expedicao": {
+            "titulo": "Expedição",
+            "categoria": "Expedição"
+        },
 
-        "Recebimento": "Recebimento",
+        "recebimento": {
+            "titulo": "Recebimento",
+            "categoria": "Recebimento"
+        },
 
-        "Logística Reversa": "Logística Reversa",
+        "logistica reversa": {
+            "titulo": "Logística Reversa",
+            "categoria": "Logística Reversa"
+        },
+
+        "reversa": {
+            "titulo": "Logística Reversa",
+            "categoria": "Logística Reversa"
+        },
     }
 
-    categoria_filtro = categorias_modulo.get(
-        titulo
+    configuracao = mapa_modulos.get(
+        nome_normalizado
     )
 
-    if categoria_filtro:
+    if configuracao:
 
-        cursor = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = %s
-            ORDER BY id DESC
-            """,
-            (categoria_filtro,)
-        )
+        categoria = configuracao["categoria"]
+
+        if usando_postgresql():
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE categoria = %s
+                ORDER BY id DESC
+                """,
+                (categoria,),
+                fetchall=True
+            )
+
+        else:
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE categoria = ?
+                ORDER BY id DESC
+                """,
+                (categoria,),
+                fetchall=True
+            )
 
         itens = preparar_lista_atividades(
-            cursor.fetchall()
+            itens
         )
-
-        fechar_cursor(cursor)
 
         return render_template(
             "modulo.html",
-            titulo=titulo,
-            modulo=nome_normalizado,
-            usuario_atual=session[
-                "usuario_atual"
-            ],
-            itens=itens
+            titulo=configuracao["titulo"],
+            modulo=configuracao["titulo"],
+            itens=itens,
+            usuario_atual=session["usuario_atual"]
         )
 
-    # --------------------------------------------------------
-    # FALLBACK
-    # --------------------------------------------------------
+    # Fallback
+    return redirect(
+        url_for("index")
+    )
+
+
+# ============================================================
+# EDITAR
+# ============================================================
+#
+# NÃO USA editar.html.
+#
+# O GET volta para o dashboard.
+# O POST salva a alteração.
+#
+# Caso o dashboard já envie POST para esta rota, funciona
+# diretamente.
+# ============================================================
+
+@app.route(
+    "/editar/<int:id>",
+    methods=["GET", "POST"]
+)
+def editar(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    atividade = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = %s
+        """ if usando_postgresql() else """
+        SELECT *
+        FROM atividades
+        WHERE id = ?
+        """,
+        (id,),
+        fetchone=True
+    )
+
+    if atividade is None:
+
+        flash(
+            "Atividade não encontrada.",
+            "warning"
+        )
+
+        return redirect(
+            url_for("index")
+        )
+
+    if request.method == "GET":
+
+        # Não existe editar.html.
+        # O dashboard continua sendo a tela principal.
+        return redirect(
+            url_for(
+                "index",
+                editar=id
+            )
+        )
+
+    num_requisicao = normalizar_requisicao(
+        request.form.get("num_requisicao")
+    )
+
+    atividade_texto = request.form.get(
+        "atividade",
+        ""
+    ).strip()
+
+    descricao = request.form.get(
+        "descricao",
+        ""
+    ).strip()
+
+    categoria = request.form.get(
+        "categoria",
+        ""
+    ).strip()
+
+    responsavel = request.form.get(
+        "responsavel",
+        ""
+    ).strip()
+
+    prioridade = request.form.get(
+        "prioridade",
+        "Baixa"
+    ).strip()
+
+    prazo = request.form.get(
+        "prazo",
+        ""
+    ).strip()
+
+    status = request.form.get(
+        "status",
+        obter_valor(atividade, "status", "Pendente")
+    ).strip()
+
+    categorias_validas = [
+        "Separação",
+        "Inventário",
+        "Expedição",
+        "Recebimento",
+        "Logística Reversa",
+        "Estoque"
+    ]
+
+    prioridades_validas = [
+        "Baixa",
+        "Média",
+        "Alta"
+    ]
+
+    status_validos = [
+        "Pendente",
+        "Em andamento",
+        "Concluído",
+        "Arquivado"
+    ]
+
+    if categoria not in categorias_validas:
+
+        flash(
+            "Categoria inválida.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "index",
+                editar=id
+            )
+        )
+
+    if prioridade not in prioridades_validas:
+        prioridade = "Baixa"
+
+    if status not in status_validos:
+        status = "Pendente"
+
+    if categoria == "Separação" and not num_requisicao:
+
+        flash(
+            "A Separação precisa de um número de requisição.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "index",
+                editar=id
+            )
+        )
+
+    if num_requisicao and requisicao_duplicada(
+        num_requisicao,
+        ignorar_id=id
+    ):
+
+        flash(
+            f"A requisição {num_requisicao} já está sendo utilizada.",
+            "warning"
+        )
+
+        return redirect(
+            url_for(
+                "index",
+                editar=id
+            )
+        )
+
+    if usando_postgresql():
+
+        executar(
+            """
+            UPDATE atividades
+            SET
+                num_requisicao = %s,
+                atividade = %s,
+                descricao = %s,
+                categoria = %s,
+                responsavel = %s,
+                prioridade = %s,
+                prazo = %s,
+                status = %s
+            WHERE id = %s
+            """,
+            (
+                num_requisicao or None,
+                atividade_texto,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo or None,
+                status,
+                id
+            ),
+            commit=True
+        )
+
+    else:
+
+        executar(
+            """
+            UPDATE atividades
+            SET
+                num_requisicao = ?,
+                atividade = ?,
+                descricao = ?,
+                categoria = ?,
+                responsavel = ?,
+                prioridade = ?,
+                prazo = ?,
+                status = ?
+            WHERE id = ?
+            """,
+            (
+                num_requisicao or None,
+                atividade_texto,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo or None,
+                status,
+                id
+            ),
+            commit=True
+        )
+
+    flash(
+        "Atividade atualizada com sucesso.",
+        "success"
+    )
 
     return redirect(
         url_for("index")
+    )
+
+
+# ============================================================
+# CONCLUIR
+# ============================================================
+
+@app.route("/concluir/<int:id>", methods=["POST", "GET"])
+def concluir(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    atividade = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = %s
+        """ if usando_postgresql() else """
+        SELECT *
+        FROM atividades
+        WHERE id = ?
+        """,
+        (id,),
+        fetchone=True
+    )
+
+    if atividade is None:
+
+        flash(
+            "Atividade não encontrada.",
+            "warning"
+        )
+
+        return redirect(url_for("index"))
+
+    agora = (
+        agora_utc_naive()
+        if usando_postgresql()
+        else agora_sqlite()
+    )
+
+    if usando_postgresql():
+
+        executar(
+            """
+            UPDATE atividades
+            SET
+                status = 'Concluído',
+                concluido_em = %s,
+                encerrado_por = %s
+            WHERE id = %s
+            """,
+            (
+                agora,
+                session["usuario_atual"],
+                id
+            ),
+            commit=True
+        )
+
+    else:
+
+        executar(
+            """
+            UPDATE atividades
+            SET
+                status = 'Concluído',
+                concluido_em = ?,
+                encerrado_por = ?
+            WHERE id = ?
+            """,
+            (
+                agora,
+                session["usuario_atual"],
+                id
+            ),
+            commit=True
+        )
+
+    # --------------------------------------------------------
+    # SEPARAÇÃO CONCLUÍDA -> EXPEDIÇÃO AUTOMÁTICA
+    # --------------------------------------------------------
+
+    categoria = obter_valor(
+        atividade,
+        "categoria"
+    )
+
+    num_requisicao = normalizar_requisicao(
+        obter_valor(
+            atividade,
+            "num_requisicao"
+        )
+    )
+
+    if (
+        categoria == "Separação"
+        and num_requisicao
+    ):
+
+        if usando_postgresql():
+
+            expedicao_existente = executar(
+                """
+                SELECT id
+                FROM atividades
+                WHERE categoria = %s
+                  AND UPPER(TRIM(num_requisicao)) = %s
+                  AND status NOT IN
+                      ('Concluído','Arquivado')
+                LIMIT 1
+                """,
+                (
+                    "Expedição",
+                    num_requisicao
+                ),
+                fetchone=True
+            )
+
+        else:
+
+            expedicao_existente = executar(
+                """
+                SELECT id
+                FROM atividades
+                WHERE categoria = ?
+                  AND UPPER(TRIM(num_requisicao)) = ?
+                  AND status NOT IN
+                      ('Concluído','Arquivado')
+                LIMIT 1
+                """,
+                (
+                    "Expedição",
+                    num_requisicao
+                ),
+                fetchone=True
+            )
+
+        if expedicao_existente is None:
+
+            descricao = (
+                f"Expedição gerada automaticamente "
+                f"após conclusão da Separação "
+                f"da requisição {num_requisicao}."
+            )
+
+            if usando_postgresql():
+
+                executar(
+                    """
+                    INSERT INTO atividades
+                    (
+                        num_requisicao,
+                        atividade,
+                        descricao,
+                        categoria,
+                        responsavel,
+                        prioridade,
+                        prazo,
+                        status,
+                        inicio_em,
+                        criado_em
+                    )
+                    VALUES
+                    (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    """,
+                    (
+                        num_requisicao,
+                        "Expedição",
+                        descricao,
+                        "Expedição",
+                        obter_valor(
+                            atividade,
+                            "responsavel",
+                            session["usuario_atual"]
+                        ),
+                        obter_valor(
+                            atividade,
+                            "prioridade",
+                            "Baixa"
+                        ),
+                        obter_valor(
+                            atividade,
+                            "prazo"
+                        ),
+                        "Pendente",
+                        agora,
+                        agora
+                    ),
+                    commit=True
+                )
+
+            else:
+
+                executar(
+                    """
+                    INSERT INTO atividades
+                    (
+                        num_requisicao,
+                        atividade,
+                        descricao,
+                        categoria,
+                        responsavel,
+                        prioridade,
+                        prazo,
+                        status,
+                        inicio_em,
+                        criado_em
+                    )
+                    VALUES
+                    (?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        num_requisicao,
+                        "Expedição",
+                        descricao,
+                        "Expedição",
+                        obter_valor(
+                            atividade,
+                            "responsavel",
+                            session["usuario_atual"]
+                        ),
+                        obter_valor(
+                            atividade,
+                            "prioridade",
+                            "Baixa"
+                        ),
+                        obter_valor(
+                            atividade,
+                            "prazo"
+                        ),
+                        "Pendente",
+                        agora,
+                        agora
+                    ),
+                    commit=True
+                )
+
+    flash(
+        "Atividade concluída com sucesso.",
+        "success"
+    )
+
+    return redirect(
+        request.referrer or url_for("index")
+    )
+
+
+# ============================================================
+# ARQUIVAR
+# ============================================================
+
+@app.route("/arquivar/<int:id>", methods=["POST", "GET"])
+def arquivar(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    if usando_postgresql():
+
+        executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE id = %s
+            """,
+            (id,),
+            commit=True
+        )
+
+    else:
+
+        executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE id = ?
+            """,
+            (id,),
+            commit=True
+        )
+
+    flash(
+        "Registro arquivado. Ele continua disponível em Relatórios > Arquivados.",
+        "success"
+    )
+
+    return redirect(
+        request.referrer or url_for("index")
+    )
+
+
+# ============================================================
+# DELETAR
+# Mantido apenas por compatibilidade.
+# Não exclui atividade.
+# ============================================================
+
+@app.route("/deletar/<int:id>", methods=["POST", "GET"])
+def deletar(id):
+
+    return arquivar(id)
+
+
+# ============================================================
+# ESTOQUE - EXCLUSÃO
+# ============================================================
+
+@app.route(
+    "/deletar_estoque/<int:id>",
+    methods=["POST", "GET"]
+)
+def deletar_estoque(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    if usando_postgresql():
+
+        executar(
+            """
+            DELETE FROM estoque
+            WHERE id = %s
+            """,
+            (id,),
+            commit=True
+        )
+
+    else:
+
+        executar(
+            """
+            DELETE FROM estoque
+            WHERE id = ?
+            """,
+            (id,),
+            commit=True
+        )
+
+    flash(
+        "Item do estoque removido.",
+        "success"
+    )
+
+    return redirect(
+        url_for(
+            "modulo",
+            nome="Estoque"
+        )
+    )
+
+
+# ============================================================
+# MELHORIAS - ARQUIVAR
+# ============================================================
+
+@app.route(
+    "/deletar_melhoria/<int:id>",
+    methods=["POST", "GET"]
+)
+def deletar_melhoria(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    if usando_postgresql():
+
+        executar(
+            """
+            UPDATE melhorias
+            SET status = 'Arquivado'
+            WHERE id = %s
+            """,
+            (id,),
+            commit=True
+        )
+
+    else:
+
+        executar(
+            """
+            UPDATE melhorias
+            SET status = 'Arquivado'
+            WHERE id = ?
+            """,
+            (id,),
+            commit=True
+        )
+
+    flash(
+        "Melhoria arquivada.",
+        "success"
+    )
+
+    return redirect(
+        url_for(
+            "modulo",
+            nome="Melhorias / PDCA"
+        )
     )
 
 
@@ -2669,142 +2724,94 @@ def modulo(nome):
 def relatorio_pdf():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
-
-    cursor = executar(
+    itens = executar(
         """
         SELECT *
         FROM atividades
         ORDER BY id DESC
-        """
+        """,
+        fetchall=True
     )
 
-    atividades = preparar_lista_atividades(
-        cursor.fetchall()
+    itens = preparar_lista_atividades(
+        itens
     )
-
-    fechar_cursor(cursor)
 
     buffer = BytesIO()
 
     documento = SimpleDocTemplate(
         buffer,
         pagesize=landscape(A4),
-        rightMargin=20,
-        leftMargin=20,
-        topMargin=20,
-        bottomMargin=20
+        rightMargin=25,
+        leftMargin=25,
+        topMargin=25,
+        bottomMargin=25
     )
 
     estilos = getSampleStyleSheet()
 
     elementos = []
 
-    elementos.append(
-        Paragraph(
-            "Relatório do Almoxarifado",
-            estilos["Title"]
-        )
+    titulo = Paragraph(
+        "Relatório do Almoxarifado",
+        estilos["Title"]
     )
+
+    elementos.append(titulo)
 
     elementos.append(
         Spacer(1, 15)
     )
 
-    dados = [
-        [
-            "ID",
-            "Requisição",
-            "Atividade",
-            "Categoria",
-            "Responsável",
-            "Prioridade",
-            "Status",
-            "Prazo",
-            "Conclusão",
-            "Atrasada"
-        ]
-    ]
+    dados = [[
+        "Req.",
+        "Atividade",
+        "Categoria",
+        "Responsável",
+        "Início",
+        "Prazo",
+        "Conclusão",
+        "Status"
+    ]]
 
-    for item in atividades:
+    for item in itens:
 
-        dados.append(
-            [
-                str(
-                    item.get(
-                        "id",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "num_requisicao",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "atividade",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "categoria",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "responsavel",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "prioridade",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "status",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "prazo_formatado",
-                        ""
-                    )
-                ),
-
-                str(
-                    item.get(
-                        "concluido_formatado",
-                        ""
-                    )
-                ),
-
-                (
-                    "SIM"
-                    if item.get(
-                        "foi_atrasada"
-                    )
-                    else "NÃO"
-                )
-            ]
-        )
+        dados.append([
+            str(
+                item.get("num_requisicao")
+                or "-"
+            ),
+            str(
+                item.get("atividade")
+                or "-"
+            ),
+            str(
+                item.get("categoria")
+                or "-"
+            ),
+            str(
+                item.get("responsavel")
+                or "-"
+            ),
+            str(
+                item.get("inicio_formatado")
+                or "-"
+            ),
+            str(
+                item.get("prazo_formatado")
+                or "-"
+            ),
+            str(
+                item.get("concluido_formatado")
+                or "-"
+            ),
+            str(
+                item.get("status")
+                or "-"
+            )
+        ])
 
     tabela = Table(
         dados,
@@ -2812,50 +2819,59 @@ def relatorio_pdf():
     )
 
     tabela.setStyle(
-        TableStyle(
-            [
-                (
-                    "BACKGROUND",
-                    (0, 0),
-                    (-1, 0),
-                    colors.HexColor("#212529")
-                ),
-                (
-                    "TEXTCOLOR",
-                    (0, 0),
-                    (-1, 0),
-                    colors.white
-                ),
-                (
-                    "GRID",
-                    (0, 0),
-                    (-1, -1),
-                    0.5,
-                    colors.grey
-                ),
-                (
-                    "FONTSIZE",
-                    (0, 0),
-                    (-1, -1),
-                    7
-                ),
-                (
-                    "VALIGN",
-                    (0, 0),
-                    (-1, -1),
-                    "MIDDLE"
-                )
-            ]
-        )
+        TableStyle([
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.HexColor("#212529")
+            ),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.white
+            ),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                0.5,
+                colors.grey
+            ),
+            (
+                "FONTNAME",
+                (0, 0),
+                (-1, 0),
+                "Helvetica-Bold"
+            ),
+            (
+                "FONTSIZE",
+                (0, 0),
+                (-1, -1),
+                7
+            ),
+            (
+                "VALIGN",
+                (0, 0),
+                (-1, -1),
+                "MIDDLE"
+            ),
+            (
+                "ROWBACKGROUNDS",
+                (0, 1),
+                (-1, -1),
+                [
+                    colors.white,
+                    colors.HexColor("#f4f4f4")
+                ]
+            )
+        ])
     )
 
-    elementos.append(
-        tabela
-    )
+    elementos.append(tabela)
 
-    documento.build(
-        elementos
-    )
+    documento.build(elementos)
 
     buffer.seek(0)
 
@@ -2868,581 +2884,204 @@ def relatorio_pdf():
 
 
 # ============================================================
-# EDITAR
+# IMPORTAÇÃO DE ESTOQUE
 # ============================================================
 
 @app.route(
-    "/editar/<int:id>",
-    methods=["GET", "POST"]
+    "/importar_estoque",
+    methods=["POST"]
 )
-def editar(id):
+def importar_estoque():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
+    arquivo = request.files.get("arquivo")
 
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE id = %s
-        LIMIT 1
-        """,
-        (id,)
-    )
-
-    atividade = linha_para_dict(
-        cursor.fetchone()
-    )
-
-    fechar_cursor(cursor)
-
-    if not atividade:
+    if not arquivo or not arquivo.filename:
 
         flash(
-            "Atividade não encontrada.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("index")
-        )
-
-    cursor = executar(
-        """
-        SELECT *
-        FROM usuarios
-        ORDER BY nome
-        """
-    )
-
-    usuarios = linhas_para_dict(
-        cursor.fetchall()
-    )
-
-    fechar_cursor(cursor)
-
-    if request.method == "POST":
-
-        num_requisicao = normalizar_requisicao(
-            request.form.get(
-                "num_requisicao",
-                ""
-            )
-        )
-
-        prioridade = request.form.get(
-            "prioridade",
-            "Baixa"
-        ).strip()
-
-        atividade_nome = request.form.get(
-            "atividade",
-            ""
-        ).strip()
-
-        descricao = request.form.get(
-            "descricao",
-            ""
-        ).strip()
-
-        categoria = request.form.get(
-            "categoria",
-            "Separação"
-        ).strip()
-
-        responsavel = request.form.get(
-            "responsavel",
-            ""
-        ).strip()
-
-        prazo = request.form.get(
-            "prazo",
-            ""
-        ).strip()
-
-        status = request.form.get(
-            "status",
-            atividade.get(
-                "status",
-                "Pendente"
-            )
-        ).strip()
-
-        prioridades_validas = {
-            "Baixa",
-            "Média",
-            "Alta"
-        }
-
-        categorias_validas = {
-            "Separação",
-            "Inventário",
-            "Expedição",
-            "Recebimento",
-            "Logística Reversa",
-            "Estoque"
-        }
-
-        status_validos = {
-            "Pendente",
-            "Em andamento",
-            "Concluído",
-            "Concluido",
-            "Arquivado",
-            "Arquivada"
-        }
-
-        if prioridade not in prioridades_validas:
-            prioridade = "Baixa"
-
-        if categoria not in categorias_validas:
-            categoria = "Separação"
-
-        if status not in status_validos:
-            status = "Pendente"
-
-        if (
-            categoria == "Separação"
-            and not num_requisicao
-        ):
-
-            flash(
-                "Informe o número da requisição para Separação.",
-                "warning"
-            )
-
-            return render_template(
-                "editar.html",
-                atividade=atividade,
-                usuarios=usuarios,
-                prazo_form=prazo
-            )
-
-        if not atividade_nome:
-
-            flash(
-                "Informe a atividade.",
-                "warning"
-            )
-
-            return render_template(
-                "editar.html",
-                atividade=atividade,
-                usuarios=usuarios,
-                prazo_form=prazo
-            )
-
-        if num_requisicao:
-
-            if requisicao_duplicada(
-                num_requisicao,
-                ignorar_id=id
-            ):
-
-                flash(
-                    f"A requisição {num_requisicao} já está em outra atividade ativa.",
-                    "warning"
-                )
-
-                return render_template(
-                    "editar.html",
-                    atividade=atividade,
-                    usuarios=usuarios,
-                    prazo_form=prazo
-                )
-
-        # ----------------------------------------------------
-        # Se mudou para Separação e ainda não tinha início,
-        # registramos o início.
-        # ----------------------------------------------------
-
-        inicio_em = atividade.get(
-            "inicio_em"
-        )
-
-        if (
-            categoria == "Separação"
-            and not inicio_em
-        ):
-
-            if usando_postgresql():
-
-                inicio_em = agora_utc_naive()
-
-            else:
-
-                inicio_em = agora_sqlite()
-
-        executar(
-            """
-            UPDATE atividades
-            SET
-                num_requisicao = %s,
-                prioridade = %s,
-                atividade = %s,
-                descricao = %s,
-                categoria = %s,
-                responsavel = %s,
-                prazo = %s,
-                status = %s,
-                inicio_em = %s
-            WHERE id = %s
-            """,
-            (
-                num_requisicao or None,
-                prioridade,
-                atividade_nome,
-                descricao,
-                categoria,
-                responsavel,
-                prazo or None,
-                status,
-                inicio_em,
-                id
-            ),
-            commit=True
-        )
-
-        flash(
-            "Atividade atualizada com sucesso.",
-            "success"
-        )
-
-        return redirect(
-            url_for("index")
-        )
-
-    prazo_form = (
-        atividade.get("prazo")
-        or ""
-    )
-
-    if prazo_form and "T" not in str(
-        prazo_form
-    ):
-
-        try:
-
-            dt = prazo_em_datetime(
-                prazo_form
-            )
-
-            if dt:
-
-                prazo_form = dt.strftime(
-                    "%Y-%m-%dT%H:%M"
-                )
-
-        except Exception:
-            pass
-
-    return render_template(
-        "editar.html",
-        atividade=atividade,
-        usuarios=usuarios,
-        prazo_form=prazo_form
-    )
-
-
-# ============================================================
-# CONCLUIR
-# ============================================================
-
-@app.route("/concluir/<int:id>")
-def concluir(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    cursor = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE id = %s
-        LIMIT 1
-        """,
-        (id,)
-    )
-
-    atividade = linha_para_dict(
-        cursor.fetchone()
-    )
-
-    fechar_cursor(cursor)
-
-    if not atividade:
-
-        flash(
-            "Atividade não encontrada.",
-            "danger"
-        )
-
-        return redirect(
-            url_for("index")
-        )
-
-    if atividade.get("status") not in {
-        "Pendente",
-        "Em andamento"
-    }:
-
-        flash(
-            "Essa atividade não pode ser concluída.",
+            "Selecione um arquivo.",
             "warning"
         )
 
         return redirect(
-            url_for("index")
+            url_for(
+                "modulo",
+                nome="Estoque"
+            )
         )
 
-    if usando_postgresql():
+    nome = arquivo.filename.lower()
 
-        agora = agora_utc_naive()
+    try:
 
-    else:
+        if nome.endswith(".csv"):
 
-        agora = agora_sqlite()
-
-    executar(
-        """
-        UPDATE atividades
-        SET
-            status = 'Concluído',
-            concluido_em = %s,
-            encerrado_por = %s
-        WHERE id = %s
-        """,
-        (
-            agora,
-            session["usuario_atual"],
-            id
-        ),
-        commit=True
-    )
-
-    # ========================================================
-    # EXPEDIÇÃO AUTOMÁTICA
-    # ========================================================
-
-    if atividade.get("categoria") == "Separação":
-
-        requisicao = normalizar_requisicao(
-            atividade.get("num_requisicao")
-        )
-
-        if requisicao:
-
-            cursor = executar(
-                """
-                SELECT id
-                FROM atividades
-                WHERE UPPER(TRIM(num_requisicao)) = %s
-                  AND categoria = 'Expedição'
-                  AND status NOT IN (
-                      'Concluído',
-                      'Concluido',
-                      'Arquivado',
-                      'Arquivada'
-                  )
-                LIMIT 1
-                """,
-                (requisicao,)
+            df = pd.read_csv(
+                arquivo
             )
 
-            expedicao_existente = (
-                cursor.fetchone()
+        elif nome.endswith(
+            (".xlsx", ".xls")
+        ):
+
+            df = pd.read_excel(
+                arquivo
             )
 
-            fechar_cursor(cursor)
+        else:
 
-            if not expedicao_existente:
+            flash(
+                "Formato não suportado. Use XLSX, XLS ou CSV.",
+                "danger"
+            )
+
+            return redirect(
+                url_for(
+                    "modulo",
+                    nome="Estoque"
+                )
+            )
+
+        df.columns = [
+            str(coluna).strip().lower()
+            for coluna in df.columns
+        ]
+
+        # Tenta localizar as colunas mais comuns
+        coluna_codigo = None
+        coluna_descricao = None
+        coluna_quantidade = None
+
+        for coluna in df.columns:
+
+            if coluna in [
+                "codigo",
+                "código",
+                "cod",
+                "item"
+            ]:
+                coluna_codigo = coluna
+
+            if coluna in [
+                "descricao",
+                "descrição",
+                "produto",
+                "material"
+            ]:
+                coluna_descricao = coluna
+
+            if coluna in [
+                "quantidade",
+                "qtd",
+                "qtde",
+                "saldo"
+            ]:
+                coluna_quantidade = coluna
+
+        if coluna_codigo is None:
+            coluna_codigo = df.columns[0]
+
+        if coluna_descricao is None:
+
+            if len(df.columns) > 1:
+                coluna_descricao = df.columns[1]
+
+        if coluna_quantidade is None:
+
+            if len(df.columns) > 2:
+                coluna_quantidade = df.columns[2]
+
+        for _, linha in df.iterrows():
+
+            codigo = (
+                str(linha[coluna_codigo]).strip()
+                if coluna_codigo
+                else ""
+            )
+
+            descricao = (
+                str(linha[coluna_descricao]).strip()
+                if coluna_descricao
+                else ""
+            )
+
+            quantidade = 0
+
+            if coluna_quantidade:
+
+                try:
+                    quantidade = int(
+                        float(
+                            linha[coluna_quantidade]
+                        )
+                    )
+                except Exception:
+                    quantidade = 0
+
+            if usando_postgresql():
 
                 executar(
                     """
-                    INSERT INTO atividades (
-                        num_requisicao,
-                        prioridade,
-                        atividade,
+                    INSERT INTO estoque
+                    (
+                        codigo,
                         descricao,
-                        categoria,
-                        responsavel,
-                        prazo,
-                        status,
-                        inicio_em
+                        quantidade,
+                        criado_em
                     )
-                    VALUES (
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
+                    VALUES
+                    (%s,%s,%s,%s)
                     """,
                     (
-                        requisicao,
-                        atividade.get(
-                            "prioridade",
-                            "Baixa"
-                        ),
-                        (
-                            "Expedição da "
-                            f"requisição {requisicao}"
-                        ),
-                        (
-                            "Expedição criada "
-                            "automaticamente após "
-                            "conclusão da separação."
-                        ),
-                        "Expedição",
-                        "",
-                        None,
-                        "Pendente",
-                        agora
+                        codigo,
+                        descricao,
+                        quantidade,
+                        agora_utc_naive()
                     ),
                     commit=True
                 )
 
-    flash(
-        "Atividade concluída com sucesso.",
-        "success"
-    )
+            else:
 
-    return redirect(
-        url_for("index")
-    )
+                executar(
+                    """
+                    INSERT INTO estoque
+                    (
+                        codigo,
+                        descricao,
+                        quantidade,
+                        criado_em
+                    )
+                    VALUES
+                    (?,?,?,?)
+                    """,
+                    (
+                        codigo,
+                        descricao,
+                        quantidade,
+                        agora_sqlite()
+                    ),
+                    commit=True
+                )
 
-
-# ============================================================
-# ARQUIVAR
-# ============================================================
-
-@app.route("/arquivar/<int:id>")
-def arquivar(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
+        flash(
+            "Estoque importado com sucesso.",
+            "success"
         )
 
-    executar(
-        """
-        UPDATE atividades
-        SET
-            status = 'Arquivado',
-            encerrado_por = %s
-        WHERE id = %s
-        """,
-        (
-            session["usuario_atual"],
-            id
-        ),
-        commit=True
-    )
+    except Exception as erro:
 
-    flash(
-        "Registro arquivado com sucesso.",
-        "success"
-    )
-
-    return redirect(
-        url_for("index")
-    )
-
-
-# ============================================================
-# DELETAR ANTIGO = ARQUIVAR
-# ============================================================
-
-@app.route("/deletar/<int:id>")
-def deletar(id):
-
-    return arquivar(id)
-
-
-# ============================================================
-# ESTOQUE
-# ============================================================
-
-@app.route(
-    "/deletar_estoque/<int:id>"
-)
-def deletar_estoque(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
+        flash(
+            f"Erro ao importar estoque: {erro}",
+            "danger"
         )
-
-    executar(
-        """
-        DELETE FROM estoque
-        WHERE id = %s
-        """,
-        (id,),
-        commit=True
-    )
-
-    flash(
-        "Item removido do estoque.",
-        "success"
-    )
 
     return redirect(
         url_for(
             "modulo",
-            nome="estoque"
-        )
-    )
-
-
-# ============================================================
-# MELHORIAS / PDCA
-# ============================================================
-
-@app.route(
-    "/deletar_melhoria/<int:id>"
-)
-def deletar_melhoria(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    # Não apagamos a melhoria.
-    # Ela fica preservada no banco.
-    executar(
-        """
-        UPDATE melhorias
-        SET status = 'Arquivado'
-        WHERE id = %s
-        """,
-        (id,),
-        commit=True
-    )
-
-    flash(
-        "Melhoria arquivada com sucesso.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="melhorias"
+            nome="Estoque"
         )
     )
 
@@ -3451,25 +3090,13 @@ def deletar_melhoria(id):
 # INICIALIZAÇÃO
 # ============================================================
 
-try:
-
-    with app.app_context():
-
+with app.app_context():
+    try:
         init_db()
-
-    print(
-        "Banco de dados inicializado com sucesso."
-    )
-
-except Exception as erro:
-
-    print(
-        "ERRO AO INICIALIZAR O BANCO:"
-    )
-
-    print(
-        repr(erro)
-    )
+    except Exception as erro:
+        print(
+            f"ERRO AO INICIALIZAR BANCO: {erro}"
+        )
 
 
 # ============================================================
@@ -3478,15 +3105,13 @@ except Exception as erro:
 
 if __name__ == "__main__":
 
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
     app.run(
         host="0.0.0.0",
-        port=port,
-        debug=False
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
+        debug=True
     )

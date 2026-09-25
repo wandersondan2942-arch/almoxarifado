@@ -415,13 +415,6 @@ def converter_para_brasil(valor):
 
         dt = valor
 
-        # PostgreSQL:
-        # timestamps armazenados pelo sistema são UTC naive.
-        #
-        # SQLite:
-        # timestamps gravados pelo sistema são horário local
-        # do servidor/computador.
-
         if dt.tzinfo is None:
 
             if usando_postgresql():
@@ -612,6 +605,8 @@ def prazo_em_datetime(valor):
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%d %H:%M",
         "%Y-%m-%d %H:%M:%S",
+        "%d/%m/%Y %H:%M",
+        "%d/%m/%Y %H:%M:%S",
     ]
 
     for formato in formatos:
@@ -647,6 +642,35 @@ def prazo_em_datetime(valor):
     except Exception:
 
         return None
+
+
+def prazo_formulario_valido(valor):
+
+    """
+    Valida o prazo enviado pelo formulário.
+
+    Retorna:
+        (True, datetime)  -> prazo válido
+        (False, None)     -> prazo inválido
+
+    O backend usa o horário oficial de America/Sao_Paulo,
+    evitando depender do relógio do navegador ou do servidor.
+    """
+
+    if not valor:
+        return False, None
+
+    prazo_dt = prazo_em_datetime(valor)
+
+    if not prazo_dt:
+        return False, None
+
+    agora = agora_brasil()
+
+    if prazo_dt < agora:
+        return False, prazo_dt
+
+    return True, prazo_dt
 
 
 # ============================================================
@@ -811,6 +835,12 @@ def preparar_chat(itens):
         item = linha_para_dict(item)
 
         if item:
+
+            # Segurança adicional:
+            # mensagens antigas que eventualmente tenham
+            # usuario NULL não quebram o template.
+            if not item.get("usuario"):
+                item["usuario"] = "Usuário"
 
             item["data_formatada"] = formatar_data_hora(
                 item.get("criado_em")
@@ -1083,24 +1113,12 @@ def calcular_indicadores(atividades):
 
     return {
         "total_geral": total_geral,
-
-        "atividades_pendentes":
-            atividades_pendentes,
-
-        "atividades_andamento":
-            atividades_andamento,
-
-        "atividades_concluidas":
-            atividades_concluidas,
-
-        "atividades_arquivadas":
-            atividades_arquivadas,
-
-        "atividades_finalizadas":
-            atividades_finalizadas,
-
-        "atividades_ativas":
-            atividades_ativas,
+        "atividades_pendentes": atividades_pendentes,
+        "atividades_andamento": atividades_andamento,
+        "atividades_concluidas": atividades_concluidas,
+        "atividades_arquivadas": atividades_arquivadas,
+        "atividades_finalizadas": atividades_finalizadas,
+        "atividades_ativas": atividades_ativas,
 
         "perc_atendidas":
             max(0, min(100, perc_atendidas)),
@@ -1418,10 +1436,6 @@ def init_db():
 
         cursor = db.cursor()
 
-        # ----------------------------------------------------
-        # USUÁRIOS
-        # ----------------------------------------------------
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
@@ -1430,10 +1444,6 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
-
-        # ----------------------------------------------------
-        # ATIVIDADES
-        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -1452,14 +1462,6 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
-
-        # ----------------------------------------------------
-        # CHAT
-        #
-        # IMPORTANTE:
-        # Mesmo que a tabela já exista no Render, as colunas
-        # necessárias serão verificadas.
-        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
@@ -1485,10 +1487,6 @@ def init_db():
                 """
             )
 
-        # ----------------------------------------------------
-        # MELHORIAS
-        # ----------------------------------------------------
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
                 id SERIAL PRIMARY KEY,
@@ -1501,10 +1499,6 @@ def init_db():
             )
         """)
 
-        # ----------------------------------------------------
-        # ESTOQUE
-        # ----------------------------------------------------
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id SERIAL PRIMARY KEY,
@@ -1514,10 +1508,6 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO ATIVIDADES
-        # ----------------------------------------------------
 
         colunas_atividades = [
             ("num_requisicao", "TEXT"),
@@ -1542,18 +1532,10 @@ def init_db():
                 """
             )
 
-        # ----------------------------------------------------
-        # MIGRAÇÃO USUÁRIOS
-        # ----------------------------------------------------
-
         cursor.execute("""
             ALTER TABLE usuarios
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO MELHORIAS
-        # ----------------------------------------------------
 
         cursor.execute("""
             ALTER TABLE melhorias
@@ -1575,10 +1557,6 @@ def init_db():
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
 
-        # ----------------------------------------------------
-        # MIGRAÇÃO ESTOQUE
-        # ----------------------------------------------------
-
         cursor.execute("""
             ALTER TABLE estoque
             ADD COLUMN IF NOT EXISTS codigo TEXT
@@ -1598,10 +1576,6 @@ def init_db():
             ALTER TABLE estoque
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
-
-        # ----------------------------------------------------
-        # ÍNDICES
-        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1637,10 +1611,6 @@ def init_db():
         cursor.close()
 
     else:
-
-        # ----------------------------------------------------
-        # SQLITE
-        # ----------------------------------------------------
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -1720,10 +1690,6 @@ def init_db():
                 ("criado_em", "TEXT"),
             ],
 
-            # ------------------------------------------------
-            # CHAT TAMBÉM ENTRA NA MIGRAÇÃO
-            # ------------------------------------------------
-
             "chat": [
                 ("usuario", "TEXT"),
                 ("mensagem", "TEXT"),
@@ -1766,10 +1732,6 @@ def init_db():
                         ADD COLUMN {coluna} {tipo}
                         """
                     )
-
-        # ----------------------------------------------------
-        # ÍNDICES
-        # ----------------------------------------------------
 
         db.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1982,14 +1944,20 @@ def login():
 
         if usuario:
 
-            session["usuario_atual"] = obter_valor(
+            nome_usuario = obter_valor(
                 usuario,
                 "nome"
             )
 
-            return redirect(
-                url_for("index")
-            )
+            if nome_usuario:
+
+                session["usuario_atual"] = str(
+                    nome_usuario
+                ).strip()
+
+                return redirect(
+                    url_for("index")
+                )
 
         flash(
             "Usuário ou senha inválidos.",
@@ -2185,10 +2153,6 @@ def obter_dados_dashboard():
 
     arquivar_atividades_expiradas()
 
-    # --------------------------------------------------------
-    # ATIVIDADES ATIVAS
-    # --------------------------------------------------------
-
     atividades_brutas = buscar_atividades_ativas()
 
     busca = request.args.get(
@@ -2250,10 +2214,6 @@ def obter_dados_dashboard():
         itens
     )
 
-    # --------------------------------------------------------
-    # USUÁRIOS
-    # --------------------------------------------------------
-
     usuarios = executar(
         """
         SELECT id, nome
@@ -2266,10 +2226,6 @@ def obter_dados_dashboard():
     usuarios = linhas_para_dict(
         usuarios
     )
-
-    # --------------------------------------------------------
-    # CHAT
-    # --------------------------------------------------------
 
     mensagens = executar(
         """
@@ -2287,10 +2243,6 @@ def obter_dados_dashboard():
 
     mensagens.reverse()
 
-    # --------------------------------------------------------
-    # TODAS AS ATIVIDADES
-    # --------------------------------------------------------
-
     atividades_todas = buscar_atividades_historico()
 
     atividades_todas = [
@@ -2298,33 +2250,17 @@ def obter_dados_dashboard():
         for item in atividades_todas
     ]
 
-    # --------------------------------------------------------
-    # INDICADORES GERAIS
-    # --------------------------------------------------------
-
     indicadores = calcular_indicadores(
         atividades_todas
     )
-
-    # --------------------------------------------------------
-    # INDICADORES DO DIA
-    # --------------------------------------------------------
 
     indicadores_dia = calcular_indicadores_do_dia(
         atividades_todas
     )
 
-    # --------------------------------------------------------
-    # HISTÓRICO
-    # --------------------------------------------------------
-
     todas_preparadas = preparar_lista_atividades(
         atividades_todas
     )
-
-    # --------------------------------------------------------
-    # GRÁFICOS
-    # --------------------------------------------------------
 
     atendidas_pizza = indicadores_dia[
         "perc_atendidas"
@@ -2579,11 +2515,32 @@ def index():
                     url_for("index")
                 )
 
-            # Limite de segurança para evitar mensagens
-            # absurdamente grandes no banco.
             mensagem = mensagem[:2000]
 
             try:
+
+                # Revalida o usuário pela sessão.
+                # Se por algum motivo a sessão estiver vazia,
+                # não grava None no banco.
+                nome_chat = str(
+                    session.get(
+                        "usuario_atual",
+                        ""
+                    )
+                ).strip()
+
+                if not nome_chat:
+
+                    session.clear()
+
+                    flash(
+                        "Sua sessão expirou. Faça login novamente.",
+                        "warning"
+                    )
+
+                    return redirect(
+                        url_for("login")
+                    )
 
                 executar(
                     """
@@ -2601,7 +2558,7 @@ def index():
                         (?,?,?)
                     """,
                     (
-                        usuario_atual,
+                        nome_chat,
                         mensagem,
                         (
                             agora_utc_naive()
@@ -2610,6 +2567,12 @@ def index():
                         )
                     ),
                     commit=True
+                )
+
+                print(
+                    "CHAT ENVIADO:",
+                    nome_chat,
+                    mensagem
                 )
 
                 flash(
@@ -2705,6 +2668,40 @@ def index():
                 url_for("index")
             )
 
+        # ====================================================
+        # VALIDAÇÃO DO PRAZO NO BACKEND
+        # ====================================================
+
+        prazo_valido, prazo_dt = prazo_formulario_valido(
+            prazo
+        )
+
+        if not prazo_valido:
+
+            if prazo_dt:
+
+                flash(
+                    "O prazo informado já passou. "
+                    "Escolha uma data e horário futuros.",
+                    "warning"
+                )
+
+            else:
+
+                flash(
+                    "Informe um prazo válido com data e horário.",
+                    "warning"
+                )
+
+            return redirect(
+                url_for("index")
+            )
+
+        # Mantém o formato que o banco já utiliza.
+        prazo = prazo_dt.strftime(
+            "%Y-%m-%d %H:%M"
+        )
+
         if (
             num_requisicao
             and requisicao_duplicada(
@@ -2781,12 +2778,19 @@ def index():
                 categoria,
                 responsavel,
                 prioridade,
-                prazo or None,
+                prazo,
                 STATUS_PENDENTE,
                 inicio_em,
                 agora_criacao
             ),
             commit=True
+        )
+
+        print(
+            "ATIVIDADE CRIADA:",
+            num_requisicao,
+            categoria,
+            prazo
         )
 
         flash(
@@ -3672,6 +3676,48 @@ def editar(id):
             url_for("relatorios")
         )
 
+    # ========================================================
+    # VALIDAÇÃO DO PRAZO NA EDIÇÃO
+    # ========================================================
+
+    if prazo:
+
+        prazo_valido, prazo_dt = prazo_formulario_valido(
+            prazo
+        )
+
+        # Permite manter um prazo antigo em uma atividade
+        # já concluída/arquivada, pois ela não está mais ativa.
+        if not prazo_valido:
+
+            status_atual = obter_valor(
+                atividade,
+                "status",
+                ""
+            )
+
+            if status_eh_ativo(status):
+
+                flash(
+                    "O prazo informado já passou. "
+                    "Escolha uma data e horário futuros.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for("relatorios")
+                )
+
+        else:
+
+            prazo = prazo_dt.strftime(
+                "%Y-%m-%d %H:%M"
+            )
+
+    else:
+
+        prazo = None
+
     status_anterior = obter_valor(
         atividade,
         "status",
@@ -3769,7 +3815,7 @@ def editar(id):
             categoria,
             responsavel,
             prioridade,
-            prazo or None,
+            prazo,
             status,
             concluido_em,
             encerrado_por,
@@ -3957,6 +4003,25 @@ def concluir(id):
                 f"da requisição {num_requisicao}."
             )
 
+            # ------------------------------------------------
+            # NOVA REGRA:
+            # A expedição automática recebe um prazo baseado
+            # no momento em que ela foi criada.
+            #
+            # Assim, uma Separação concluída hoje não gera
+            # automaticamente uma Expedição já atrasada por
+            # causa de um prazo antigo da Separação.
+            #
+            # Prazo padrão: 1 hora após a criação.
+            # ------------------------------------------------
+
+            prazo_expedicao = (
+                agora_brasil()
+                + timedelta(hours=1)
+            ).strftime(
+                "%Y-%m-%d %H:%M"
+            )
+
             executar(
                 """
                 INSERT INTO atividades
@@ -4011,10 +4076,7 @@ def concluir(id):
                         "prioridade",
                         "Baixa"
                     ),
-                    obter_valor(
-                        atividade,
-                        "prazo"
-                    ),
+                    prazo_expedicao,
                     STATUS_PENDENTE,
                     agora,
                     agora
@@ -4022,8 +4084,15 @@ def concluir(id):
                 commit=True
             )
 
+            print(
+                "EXPEDIÇÃO AUTOMÁTICA CRIADA:",
+                num_requisicao,
+                prazo_expedicao
+            )
+
             flash(
-                "Separação concluída e Expedição criada automaticamente.",
+                "Separação concluída e Expedição criada automaticamente. "
+                f"Prazo da Expedição: {formatar_data_hora(prazo_expedicao)}.",
                 "success"
             )
 
@@ -4952,10 +5021,6 @@ def importar_estoque():
                     nome="Estoque"
                 )
             )
-
-        # ----------------------------------------------------
-        # NORMALIZAÇÃO DAS COLUNAS
-        # ----------------------------------------------------
 
         df.columns = [
             normalizar_texto(

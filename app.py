@@ -289,35 +289,52 @@ def normalizar_status(valor):
     return normalizar_texto(valor)
 
 
+def normalizar_categoria(valor):
+    return normalizar_texto(valor)
+
+
 def status_eh_pendente(valor):
+
     return normalizar_status(valor) == "pendente"
 
 
 def status_eh_andamento(valor):
-    return normalizar_status(valor) == "em andamento"
+
+    return normalizar_status(valor) in (
+        "em andamento",
+        "andamento",
+        "em processo"
+    )
 
 
 def status_eh_concluido(valor):
-    return normalizar_status(valor) == "concluido"
+
+    return normalizar_status(valor) in (
+        "concluido",
+        "concluida",
+        "finalizado",
+        "finalizada"
+    )
 
 
 def status_eh_arquivado(valor):
+
     return normalizar_status(valor) == "arquivado"
 
 
 def status_eh_finalizado(valor):
 
-    return normalizar_status(valor) in (
-        "concluido",
-        "arquivado"
+    return (
+        status_eh_concluido(valor)
+        or status_eh_arquivado(valor)
     )
 
 
 def status_eh_ativo(valor):
 
-    return normalizar_status(valor) in (
-        "pendente",
-        "em andamento"
+    return (
+        status_eh_pendente(valor)
+        or status_eh_andamento(valor)
     )
 
 
@@ -350,14 +367,14 @@ def normalizar_requisicao(valor):
 def categoria_eh(item, categoria):
 
     return (
-        normalizar_texto(
+        normalizar_categoria(
             obter_valor(
                 item,
                 "categoria",
                 ""
             )
         )
-        == normalizar_texto(categoria)
+        == normalizar_categoria(categoria)
     )
 
 
@@ -827,16 +844,26 @@ def preparar_chat(itens):
 
 def buscar_atividades_ativas():
 
-    return executar(
+    registros = executar(
         """
         SELECT *
         FROM atividades
-        WHERE LOWER(COALESCE(status,'')) IN
-              ('pendente','em andamento')
         ORDER BY id DESC
         """,
         fetchall=True
     )
+
+    return [
+        item
+        for item in registros
+        if status_eh_ativo(
+            obter_valor(
+                item,
+                "status",
+                ""
+            )
+        )
+    ]
 
 
 def buscar_atividades_historico():
@@ -852,10 +879,9 @@ def buscar_atividades_historico():
 
 
 # ============================================================
-# INDICADORES - CÁLCULO CENTRALIZADO
+# INDICADORES
 #
-# Tudo aqui é calculado diretamente dos registros da tabela
-# atividades.
+# ESTA É A FONTE CENTRAL DOS NÚMEROS DO DASHBOARD.
 # ============================================================
 
 def calcular_indicadores(atividades):
@@ -866,43 +892,38 @@ def calcular_indicadores(atividades):
         if linha_para_dict(item)
     ]
 
-    total_geral = len(atividades)
-
-    # --------------------------------------------------------
+    # ========================================================
     # STATUS
-    # --------------------------------------------------------
+    # ========================================================
 
-    atividades_pendentes = sum(
-        1
-        for item in atividades
-        if status_eh_pendente(
-            obter_valor(item, "status")
-        )
-    )
+    atividades_pendentes = 0
+    atividades_andamento = 0
+    atividades_concluidas = 0
+    atividades_arquivadas = 0
 
-    atividades_andamento = sum(
-        1
-        for item in atividades
-        if status_eh_andamento(
-            obter_valor(item, "status")
-        )
-    )
+    for item in atividades:
 
-    atividades_concluidas = sum(
-        1
-        for item in atividades
-        if status_eh_concluido(
-            obter_valor(item, "status")
+        status = obter_valor(
+            item,
+            "status",
+            ""
         )
-    )
 
-    atividades_arquivadas = sum(
-        1
-        for item in atividades
-        if status_eh_arquivado(
-            obter_valor(item, "status")
-        )
-    )
+        if status_eh_pendente(status):
+
+            atividades_pendentes += 1
+
+        elif status_eh_andamento(status):
+
+            atividades_andamento += 1
+
+        elif status_eh_concluido(status):
+
+            atividades_concluidas += 1
+
+        elif status_eh_arquivado(status):
+
+            atividades_arquivadas += 1
 
     atividades_finalizadas = (
         atividades_concluidas
@@ -914,49 +935,51 @@ def calcular_indicadores(atividades):
         + atividades_andamento
     )
 
-    # --------------------------------------------------------
+    total_geral = len(atividades)
+
+    # ========================================================
     # ATENDIDAS
     #
-    # Finalizadas / total de atividades.
-    # --------------------------------------------------------
+    # Considera concluídas + arquivadas.
+    # ========================================================
 
-    perc_atendidas = (
-        round(
+    if total_geral > 0:
+
+        perc_atendidas = round(
             (
                 atividades_finalizadas
                 / total_geral
             ) * 100
         )
-        if total_geral > 0
-        else 0
-    )
 
-    # --------------------------------------------------------
+    else:
+
+        perc_atendidas = 0
+
+    # ========================================================
     # INVENTÁRIO
-    # --------------------------------------------------------
+    # ========================================================
 
-    inventario_total = sum(
-        1
+    inventarios = [
+        item
         for item in atividades
         if categoria_eh(
             item,
             "Inventário"
         )
+    ]
+
+    inventario_total = len(
+        inventarios
     )
 
     inventario_concluido = sum(
         1
-        for item in atividades
-        if (
-            categoria_eh(
+        for item in inventarios
+        if status_eh_finalizado(
+            obter_valor(
                 item,
-                "Inventário"
-            )
-            and status_eh_finalizado(
-                obter_valor(
-                    item,
-                    "status"
-                )
+                "status"
             )
         )
     )
@@ -967,43 +990,43 @@ def calcular_indicadores(atividades):
         - inventario_concluido
     )
 
-    perc_inventario = (
-        round(
+    if inventario_total > 0:
+
+        perc_inventario = round(
             (
                 inventario_concluido
                 / inventario_total
             ) * 100
         )
-        if inventario_total > 0
-        else 0
-    )
 
-    # --------------------------------------------------------
+    else:
+
+        perc_inventario = 0
+
+    # ========================================================
     # EXPEDIÇÃO
-    # --------------------------------------------------------
+    # ========================================================
 
-    expedicao_total = sum(
-        1
+    expedicoes = [
+        item
         for item in atividades
         if categoria_eh(
             item,
             "Expedição"
         )
+    ]
+
+    expedicao_total = len(
+        expedicoes
     )
 
     expedicao_concluida = sum(
         1
-        for item in atividades
-        if (
-            categoria_eh(
+        for item in expedicoes
+        if status_eh_finalizado(
+            obter_valor(
                 item,
-                "Expedição"
-            )
-            and status_eh_finalizado(
-                obter_valor(
-                    item,
-                    "status"
-                )
+                "status"
             )
         )
     )
@@ -1014,52 +1037,61 @@ def calcular_indicadores(atividades):
         - expedicao_concluida
     )
 
-    perc_expedicao = (
-        round(
+    if expedicao_total > 0:
+
+        perc_expedicao = round(
             (
                 expedicao_concluida
                 / expedicao_total
             ) * 100
         )
-        if expedicao_total > 0
-        else 0
-    )
 
-    # --------------------------------------------------------
+    else:
+
+        perc_expedicao = 0
+
+    # ========================================================
     # REQUISIÇÕES
-    # --------------------------------------------------------
+    #
+    # Conta números de requisição distintos que ainda possuem
+    # Separação ativa.
+    # ========================================================
 
-    requisicoes_pendentes = {
-        normalizar_requisicao(
+    requisicoes_pendentes = set()
+
+    for item in atividades:
+
+        if not categoria_eh(
+            item,
+            "Separação"
+        ):
+            continue
+
+        if not status_eh_ativo(
+            obter_valor(
+                item,
+                "status",
+                ""
+            )
+        ):
+            continue
+
+        numero = normalizar_requisicao(
             obter_valor(
                 item,
                 "num_requisicao"
             )
         )
-        for item in atividades
-        if (
-            categoria_eh(
-                item,
-                "Separação"
-            )
-            and status_eh_ativo(
-                obter_valor(
-                    item,
-                    "status"
-                )
-            )
-            and normalizar_requisicao(
-                obter_valor(
-                    item,
-                    "num_requisicao"
-                )
-            )
-        )
-    }
 
-    # --------------------------------------------------------
-    # RECEBIMENTO
-    # --------------------------------------------------------
+        if numero:
+
+            requisicoes_pendentes.add(
+                numero
+            )
+
+    # ========================================================
+    # RECEBIMENTOS
+    # ========================================================
 
     recebimento_pendente = sum(
         1
@@ -1078,10 +1110,11 @@ def calcular_indicadores(atividades):
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # OCORRÊNCIAS
-    # Alta prioridade + ativa.
-    # --------------------------------------------------------
+    #
+    # Alta prioridade + atividade ativa.
+    # ========================================================
 
     ocorrencias = sum(
         1
@@ -1103,9 +1136,9 @@ def calcular_indicadores(atividades):
         )
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # ATRASADOS
-    # --------------------------------------------------------
+    # ========================================================
 
     atrasados = sum(
         1
@@ -1113,57 +1146,99 @@ def calcular_indicadores(atividades):
         if registro_foi_atrasado(item)
     )
 
+    # ========================================================
+    # GARANTE 0 - 100
+    # ========================================================
+
+    perc_atendidas = max(
+        0,
+        min(
+            100,
+            perc_atendidas
+        )
+    )
+
+    perc_inventario = max(
+        0,
+        min(
+            100,
+            perc_inventario
+        )
+    )
+
+    perc_expedicao = max(
+        0,
+        min(
+            100,
+            perc_expedicao
+        )
+    )
+
+    # ========================================================
+    # RESULTADO
+    # ========================================================
+
     return {
-        "total_geral": total_geral,
 
-        "atividades_pendentes": atividades_pendentes,
-        "atividades_andamento": atividades_andamento,
-        "atividades_concluidas": atividades_concluidas,
-        "atividades_arquivadas": atividades_arquivadas,
-        "atividades_finalizadas": atividades_finalizadas,
-        "atividades_ativas": atividades_ativas,
+        "total_geral":
+            total_geral,
 
-        "perc_atendidas": max(
-            0,
-            min(
-                100,
-                perc_atendidas
-            )
-        ),
+        "atividades_pendentes":
+            atividades_pendentes,
 
-        "inventario_total": inventario_total,
-        "inventario_concluido": inventario_concluido,
-        "inventario_pendente": inventario_pendente,
+        "atividades_andamento":
+            atividades_andamento,
 
-        "perc_inventario": max(
-            0,
-            min(
-                100,
-                perc_inventario
-            )
-        ),
+        "atividades_concluidas":
+            atividades_concluidas,
 
-        "expedicao_total": expedicao_total,
-        "expedicao_concluida": expedicao_concluida,
-        "expedicao_pendente": expedicao_pendente,
+        "atividades_arquivadas":
+            atividades_arquivadas,
 
-        "perc_expedicao": max(
-            0,
-            min(
-                100,
-                perc_expedicao
-            )
-        ),
+        "atividades_finalizadas":
+            atividades_finalizadas,
 
-        "requisicoes_pendentes": len(
-            requisicoes_pendentes
-        ),
+        "atividades_ativas":
+            atividades_ativas,
 
-        "recebimento_pendente": recebimento_pendente,
+        "perc_atendidas":
+            perc_atendidas,
 
-        "ocorrencias": ocorrencias,
+        "inventario_total":
+            inventario_total,
 
-        "atrasados": atrasados,
+        "inventario_concluido":
+            inventario_concluido,
+
+        "inventario_pendente":
+            inventario_pendente,
+
+        "perc_inventario":
+            perc_inventario,
+
+        "expedicao_total":
+            expedicao_total,
+
+        "expedicao_concluida":
+            expedicao_concluida,
+
+        "expedicao_pendente":
+            expedicao_pendente,
+
+        "perc_expedicao":
+            perc_expedicao,
+
+        "requisicoes_pendentes":
+            len(requisicoes_pendentes),
+
+        "recebimento_pendente":
+            recebimento_pendente,
+
+        "ocorrencias":
+            ocorrencias,
+
+        "atrasados":
+            atrasados,
     }
 
 
@@ -1183,52 +1258,47 @@ def requisicao_duplicada(
     if not num_requisicao:
         return False
 
-    if usando_postgresql():
-
-        sql = """
-            SELECT id
-            FROM atividades
-            WHERE UPPER(TRIM(COALESCE(num_requisicao,''))) = %s
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
+    registros = executar(
         """
-
-    else:
-
-        sql = """
-            SELECT id
-            FROM atividades
-            WHERE UPPER(TRIM(COALESCE(num_requisicao,''))) = ?
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
-        """
-
-    parametros = [
-        num_requisicao
-    ]
-
-    if ignorar_id:
-
-        sql += (
-            " AND id <> %s"
-            if usando_postgresql()
-            else
-            " AND id <> ?"
-        )
-
-        parametros.append(
-            ignorar_id
-        )
-
-    sql += " LIMIT 1"
-
-    resultado = executar(
-        sql,
-        tuple(parametros),
-        fetchone=True
+        SELECT id, num_requisicao, status
+        FROM atividades
+        """,
+        fetchall=True
     )
 
-    return resultado is not None
+    for item in registros:
+
+        item_id = obter_valor(
+            item,
+            "id"
+        )
+
+        if (
+            ignorar_id is not None
+            and int(item_id) == int(ignorar_id)
+        ):
+            continue
+
+        numero = normalizar_requisicao(
+            obter_valor(
+                item,
+                "num_requisicao"
+            )
+        )
+
+        if numero != num_requisicao:
+            continue
+
+        if status_eh_ativo(
+            obter_valor(
+                item,
+                "status"
+            )
+        ):
+
+            return True
+
+    return False
 
 
 # ============================================================
@@ -1607,26 +1677,103 @@ def arquivar_atividades_expiradas():
         tzinfo=None
     )
 
-    executar(
+    registros = executar(
         """
-        UPDATE atividades
-        SET status = 'Arquivado'
+        SELECT id, status, concluido_em
+        FROM atividades
         WHERE concluido_em IS NOT NULL
-          AND concluido_em <= %s
-          AND LOWER(COALESCE(status,'')) = 'concluído'
-        """
-        if usando_postgresql()
-        else
-        """
-        UPDATE atividades
-        SET status = 'Arquivado'
-        WHERE concluido_em IS NOT NULL
-          AND concluido_em <= ?
-          AND LOWER(COALESCE(status,'')) = 'concluído'
         """,
-        (limite_naive,),
-        commit=True
+        fetchall=True
     )
+
+    ids_para_arquivar = []
+
+    for item in registros:
+
+        if not status_eh_concluido(
+            obter_valor(
+                item,
+                "status"
+            )
+        ):
+            continue
+
+        concluido = obter_valor(
+            item,
+            "concluido_em"
+        )
+
+        if not concluido:
+            continue
+
+        try:
+
+            if isinstance(
+                concluido,
+                datetime
+            ):
+
+                dt = concluido
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(
+                        tzinfo=timezone.utc
+                    )
+
+                if dt <= limite:
+
+                    ids_para_arquivar.append(
+                        obter_valor(
+                            item,
+                            "id"
+                        )
+                    )
+
+            else:
+
+                texto = str(
+                    concluido
+                ).strip()
+
+                dt = datetime.fromisoformat(
+                    texto
+                )
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(
+                        tzinfo=timezone.utc
+                    )
+
+                if dt <= limite:
+
+                    ids_para_arquivar.append(
+                        obter_valor(
+                            item,
+                            "id"
+                        )
+                    )
+
+        except Exception:
+            continue
+
+    for item_id in ids_para_arquivar:
+
+        executar(
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE id = %s
+            """
+            if usando_postgresql()
+            else
+            """
+            UPDATE atividades
+            SET status = 'Arquivado'
+            WHERE id = ?
+            """,
+            (item_id,),
+            commit=True
+        )
 
 
 # ============================================================
@@ -1891,9 +2038,9 @@ def index():
             "acao_chat"
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # CHAT
-        # ----------------------------------------------------
+        # ====================================================
 
         if acao_chat == "enviar":
 
@@ -1935,9 +2082,9 @@ def index():
                 url_for("index")
             )
 
-        # ----------------------------------------------------
+        # ====================================================
         # NOVA ATIVIDADE
-        # ----------------------------------------------------
+        # ====================================================
 
         num_requisicao = normalizar_requisicao(
             request.form.get(
@@ -2103,65 +2250,60 @@ def index():
         ""
     ).strip()
 
+    atividades_brutas = buscar_atividades_ativas()
+
     if busca:
 
-        termo = f"%{busca}%"
+        busca_normalizada = normalizar_texto(
+            busca
+        )
 
-        if usando_postgresql():
+        itens_filtrados = []
 
-            itens = executar(
-                """
-                SELECT *
-                FROM atividades
-                WHERE LOWER(COALESCE(status,'')) IN
-                      ('pendente','em andamento')
-                  AND (
-                    COALESCE(num_requisicao,'') ILIKE %s
-                    OR COALESCE(atividade,'') ILIKE %s
-                    OR COALESCE(descricao,'') ILIKE %s
-                    OR COALESCE(responsavel,'') ILIKE %s
-                  )
-                ORDER BY id DESC
-                """,
-                (
-                    termo,
-                    termo,
-                    termo,
-                    termo
+        for item in atividades_brutas:
+
+            campos = [
+                obter_valor(
+                    item,
+                    "num_requisicao",
+                    ""
                 ),
-                fetchall=True
+                obter_valor(
+                    item,
+                    "atividade",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "descricao",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "responsavel",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "categoria",
+                    ""
+                ),
+            ]
+
+            encontrou = any(
+                busca_normalizada
+                in normalizar_texto(campo)
+                for campo in campos
             )
 
-        else:
+            if encontrou:
+                itens_filtrados.append(item)
 
-            termo_sqlite = termo.lower()
-
-            itens = executar(
-                """
-                SELECT *
-                FROM atividades
-                WHERE LOWER(COALESCE(status,'')) IN
-                      ('pendente','em andamento')
-                  AND (
-                    LOWER(COALESCE(num_requisicao,'')) LIKE ?
-                    OR LOWER(COALESCE(atividade,'')) LIKE ?
-                    OR LOWER(COALESCE(descricao,'')) LIKE ?
-                    OR LOWER(COALESCE(responsavel,'')) LIKE ?
-                  )
-                ORDER BY id DESC
-                """,
-                (
-                    termo_sqlite,
-                    termo_sqlite,
-                    termo_sqlite,
-                    termo_sqlite
-                ),
-                fetchall=True
-            )
+        itens = itens_filtrados
 
     else:
 
-        itens = buscar_atividades_ativas()
+        itens = atividades_brutas
 
     itens = preparar_lista_atividades(
         itens
@@ -2239,7 +2381,8 @@ def index():
         "perc_atendidas"
     ]
 
-    pendentes_pizza = (
+    pendentes_pizza = max(
+        0,
         100 - atendidas_pizza
     )
 
@@ -2247,7 +2390,8 @@ def index():
         "perc_inventario"
     ]
 
-    inventario_pendente_pizza = (
+    inventario_pendente_pizza = max(
+        0,
         100 - inventario_pizza
     )
 
@@ -2255,7 +2399,8 @@ def index():
         "perc_expedicao"
     ]
 
-    expedicao_pendente_pizza = (
+    expedicao_pendente_pizza = max(
+        0,
         100 - expedicao_pizza
     )
 
@@ -2269,31 +2414,48 @@ def index():
         usuario_atual=usuario_atual,
 
         itens=itens,
+
         atividades=itens,
 
         usuarios=usuarios,
 
         mensagens=mensagens,
+
         chat=mensagens,
 
-        # ----------------------------------------------------
+        # ====================================================
         # CARDS
-        # ----------------------------------------------------
+        # ====================================================
 
         total_req=indicadores[
             "requisicoes_pendentes"
         ],
 
+        # CORRIGIDO:
+        # antes estava usando inventario_pendente
+        # como se fosse inventario_total.
         inv_total=indicadores[
-            "inventario_pendente"
+            "inventario_total"
         ],
 
         inv_conc=indicadores[
             "inventario_concluido"
         ],
 
+        inv_pend=indicadores[
+            "inventario_pendente"
+        ],
+
         exp_pend=indicadores[
             "expedicao_pendente"
+        ],
+
+        exp_total=indicadores[
+            "expedicao_total"
+        ],
+
+        exp_conc=indicadores[
+            "expedicao_concluida"
         ],
 
         rec_pend=indicadores[
@@ -2312,9 +2474,9 @@ def index():
             "total_geral"
         ],
 
-        # ----------------------------------------------------
+        # ====================================================
         # ATIVIDADES
-        # ----------------------------------------------------
+        # ====================================================
 
         atividades_pendentes=indicadores[
             "atividades_pendentes"
@@ -2332,13 +2494,17 @@ def index():
             "atividades_arquivadas"
         ],
 
+        atividades_finalizadas=indicadores[
+            "atividades_finalizadas"
+        ],
+
         concluidas=indicadores[
             "atividades_finalizadas"
         ],
 
-        # ----------------------------------------------------
+        # ====================================================
         # INDICADORES DO DIA
-        # ----------------------------------------------------
+        # ====================================================
 
         perc_atendidas=indicadores[
             "perc_atendidas"
@@ -2352,9 +2518,9 @@ def index():
             "perc_expedicao"
         ],
 
-        # ----------------------------------------------------
+        # ====================================================
         # PIZZA
-        # ----------------------------------------------------
+        # ====================================================
 
         atendidas_pizza=atendidas_pizza,
 
@@ -2372,9 +2538,9 @@ def index():
             expedicao_pendente_pizza
         ),
 
-        # ----------------------------------------------------
+        # ====================================================
         # HISTÓRICO
-        # ----------------------------------------------------
+        # ====================================================
 
         todas_preparadas=todas_preparadas,
 
@@ -2447,6 +2613,10 @@ def indicadores():
             "atividades_concluidas"
         ],
 
+        atividades_arquivadas=indicadores[
+            "atividades_arquivadas"
+        ],
+
         perc_atendidas=indicadores[
             "perc_atendidas"
         ],
@@ -2457,6 +2627,22 @@ def indicadores():
 
         perc_expedicao=indicadores[
             "perc_expedicao"
+        ],
+
+        inventario_total=indicadores[
+            "inventario_total"
+        ],
+
+        inventario_concluido=indicadores[
+            "inventario_concluido"
+        ],
+
+        expedicao_total=indicadores[
+            "expedicao_total"
+        ],
+
+        expedicao_concluida=indicadores[
+            "expedicao_concluida"
         ]
     )
 
@@ -2981,36 +3167,18 @@ def modulo(nome):
             "categoria"
         ]
 
-        itens = executar(
+        registros = executar(
             """
             SELECT *
             FROM atividades
-            WHERE LOWER(COALESCE(categoria,'')) =
-                  LOWER(%s)
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
-            ORDER BY id DESC
-            """
-            if usando_postgresql()
-            else
-            """
-            SELECT *
-            FROM atividades
-            WHERE LOWER(COALESCE(categoria,'')) =
-                  LOWER(?)
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
             ORDER BY id DESC
             """,
-            (
-                categoria,
-            ),
             fetchall=True
         )
 
         itens = [
             item
-            for item in itens
+            for item in registros
             if (
                 categoria_eh(
                     item,
@@ -3178,7 +3346,32 @@ def editar(id):
     if prioridade not in PRIORIDADES_VALIDAS:
         prioridade = "Baixa"
 
-    if status not in STATUS_VALIDOS:
+    status_normalizado = normalizar_status(
+        status
+    )
+
+    if status_normalizado == "pendente":
+        status = STATUS_PENDENTE
+
+    elif status_normalizado in (
+        "em andamento",
+        "andamento",
+        "em processo"
+    ):
+        status = STATUS_ANDAMENTO
+
+    elif status_normalizado in (
+        "concluido",
+        "concluida",
+        "finalizado",
+        "finalizada"
+    ):
+        status = STATUS_CONCLUIDO
+
+    elif status_normalizado == "arquivado":
+        status = STATUS_ARQUIVADO
+
+    else:
         status = STATUS_PENDENTE
 
     if (
@@ -3382,6 +3575,7 @@ def concluir(id):
 
     if status_atual in (
         "concluido",
+        "concluida",
         "arquivado"
     ):
 
@@ -3449,34 +3643,44 @@ def concluir(id):
         and num_requisicao
     ):
 
-        expedicao_existente = executar(
+        registros = executar(
             """
-            SELECT id
+            SELECT *
             FROM atividades
-            WHERE UPPER(TRIM(COALESCE(num_requisicao,''))) = %s
-              AND LOWER(COALESCE(categoria,'')) IN
-                  ('expedição','expedicao')
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
-            LIMIT 1
-            """
-            if usando_postgresql()
-            else
-            """
-            SELECT id
-            FROM atividades
-            WHERE UPPER(TRIM(COALESCE(num_requisicao,''))) = ?
-              AND LOWER(COALESCE(categoria,'')) IN
-                  ('expedição','expedicao')
-              AND LOWER(COALESCE(status,'')) IN
-                  ('pendente','em andamento')
-            LIMIT 1
             """,
-            (
-                num_requisicao,
-            ),
-            fetchone=True
+            fetchall=True
         )
+
+        expedicao_existente = None
+
+        for item in registros:
+
+            numero = normalizar_requisicao(
+                obter_valor(
+                    item,
+                    "num_requisicao"
+                )
+            )
+
+            if numero != num_requisicao:
+                continue
+
+            if not categoria_eh(
+                item,
+                "Expedição"
+            ):
+                continue
+
+            if not status_eh_ativo(
+                obter_valor(
+                    item,
+                    "status"
+                )
+            ):
+                continue
+
+            expedicao_existente = item
+            break
 
         if expedicao_existente is None:
 

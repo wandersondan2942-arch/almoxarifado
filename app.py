@@ -2779,7 +2779,126 @@ def atrasados():
         )
     )
 
+@app.route("/editar/<int:id>", methods=["POST"])
+def editar(id):
 
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    num_requisicao = normalizar_requisicao(
+        request.form.get("num_requisicao")
+    )
+
+    atividade = request.form.get(
+        "atividade",
+        ""
+    ).strip()
+
+    descricao = request.form.get(
+        "descricao",
+        ""
+    ).strip()
+
+    categoria = request.form.get(
+        "categoria",
+        "Separação"
+    ).strip()
+
+    responsavel = request.form.get(
+        "responsavel",
+        session["usuario_atual"]
+    ).strip()
+
+    prioridade = request.form.get(
+        "prioridade",
+        "Baixa"
+    ).strip()
+
+    prazo = request.form.get(
+        "prazo",
+        ""
+    ).strip()
+
+    # =========================
+    # VALIDAÇÕES
+    # =========================
+
+    if not atividade:
+        flash(
+            "Informe a atividade.",
+            "warning"
+        )
+        return redirect(url_for("index"))
+
+    if categoria not in CATEGORIAS_VALIDAS:
+        categoria = "Separação"
+
+    if prioridade not in PRIORIDADES_VALIDAS:
+        prioridade = "Baixa"
+
+    if categoria == "Separação" and not num_requisicao:
+        flash(
+            "A Separação precisa de um número de requisição.",
+            "warning"
+        )
+        return redirect(url_for("index"))
+
+    # =========================
+    # ATUALIZA SOMENTE OS DADOS
+    # DA ATIVIDADE
+    #
+    # IMPORTANTE:
+    # inicio_em NÃO É ALTERADO.
+    # =========================
+
+    executar(
+        """
+        UPDATE atividades
+        SET
+            num_requisicao = %s,
+            atividade = %s,
+            descricao = %s,
+            categoria = %s,
+            responsavel = %s,
+            prioridade = %s,
+            prazo = %s
+        WHERE id = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        UPDATE atividades
+        SET
+            num_requisicao = ?,
+            atividade = ?,
+            descricao = ?,
+            categoria = ?,
+            responsavel = ?,
+            prioridade = ?,
+            prazo = ?
+        WHERE id = ?
+        """,
+        (
+            num_requisicao or None,
+            atividade,
+            descricao,
+            categoria,
+            responsavel,
+            prioridade,
+            prazo or None,
+            id
+        ),
+        commit=True
+    )
+
+    flash(
+        "Atividade atualizada com sucesso.",
+        "success"
+    )
+
+    return redirect(
+        url_for("index")
+    )
 # ============================================================
 # INDICADORES
 # ============================================================

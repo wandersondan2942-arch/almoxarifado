@@ -2063,16 +2063,26 @@ def logout():
 # ============================================================
 def obter_dados_dashboard():
     """
-    Centraliza todos os dados utilizados pelo
-    index.html e dashboard.html.
+    Centraliza os dados utilizados pelo index.html e dashboard.html.
 
-    Os dados das atividades são carregados uma única vez
-    e os indicadores são calculados em Python usando as
-    mesmas regras utilizadas pelos relatórios.
+    Cards superiores:
+        - mostram a situação operacional atual.
+
+    Indicadores do Dia:
+        - consideram somente as atividades do dia atual,
+          usando o horário de Brasília.
+
+    Não altera nem exclui dados do banco.
     """
 
     # ========================================================
-    # ATIVIDADES
+    # DATA DE HOJE
+    # ========================================================
+
+    hoje_brasilia = agora_brasil().date()
+
+    # ========================================================
+    # CARREGAR TODAS AS ATIVIDADES
     # ========================================================
 
     atividades_cursor = executar(
@@ -2089,11 +2099,50 @@ def obter_dados_dashboard():
     )
 
     # ========================================================
-    # ATIVIDADES DO PAINEL
-    #
-    # Mostra somente as atividades pendentes.
-    # Concluídas e arquivadas continuam preservadas no banco
-    # e aparecem nos relatórios/histórico.
+    # FUNÇÃO AUXILIAR
+    # IDENTIFICA SE A ATIVIDADE É DE HOJE
+    # ========================================================
+
+    def atividade_eh_de_hoje(item):
+        """
+        Verifica inicio_em primeiro.
+        Se não existir, utiliza criado_em.
+
+        Os horários armazenados no banco são convertidos
+        para o horário de Brasília antes da comparação.
+        """
+
+        valor = item.get("inicio_em")
+
+        if not valor:
+            valor = item.get("criado_em")
+
+        if not valor:
+            return False
+
+        try:
+            data_brasilia = converter_para_brasil(valor)
+
+            if data_brasilia:
+                return data_brasilia.date() == hoje_brasilia
+
+        except Exception:
+            pass
+
+        return False
+
+    # ========================================================
+    # ATIVIDADES DE HOJE
+    # ========================================================
+
+    atividades_hoje = [
+        item
+        for item in atividades_todas
+        if atividade_eh_de_hoje(item)
+    ]
+
+    # ========================================================
+    # ATIVIDADES EXIBIDAS NO PAINEL
     # ========================================================
 
     atividades = [
@@ -2105,7 +2154,7 @@ def obter_dados_dashboard():
     ]
 
     # ========================================================
-    # CONTADORES GERAIS
+    # REQUISIÇÕES PENDENTES
     # ========================================================
 
     total_req = sum(
@@ -2118,10 +2167,7 @@ def obter_dados_dashboard():
     )
 
     # ========================================================
-    # INVENTÁRIO
-    #
-    # Total = pendentes + concluídos
-    # Arquivados ficam fora do indicador.
+    # INVENTÁRIOS
     # ========================================================
 
     inventarios_ativos = [
@@ -2146,7 +2192,7 @@ def obter_dados_dashboard():
     )
 
     # ========================================================
-    # EXPEDIÇÃO
+    # EXPEDIÇÕES
     # ========================================================
 
     expedicoes_ativas = [
@@ -2179,7 +2225,7 @@ def obter_dados_dashboard():
     )
 
     # ========================================================
-    # RECEBIMENTO
+    # RECEBIMENTOS PENDENTES
     # ========================================================
 
     rec_pend = sum(
@@ -2193,8 +2239,6 @@ def obter_dados_dashboard():
 
     # ========================================================
     # OCORRÊNCIAS
-    #
-    # Prioridade Alta + atividade pendente.
     # ========================================================
 
     total_oco = sum(
@@ -2209,62 +2253,72 @@ def obter_dados_dashboard():
     )
 
     # ========================================================
-    # ATIVIDADES PENDENTES
+    # ATRASADOS
     # ========================================================
 
-    atividades_pendentes = sum(
+    total_atrasados = sum(
         1
         for item in atividades_todas
+        if registro_foi_atrasado(item)
+    )
+
+    # ========================================================
+    # ========================================================
+    # INDICADORES DO DIA
+    # ========================================================
+    # ========================================================
+
+    # --------------------------------------------------------
+    # ATIVIDADES DO DIA
+    # --------------------------------------------------------
+
+    atividades_pendentes_hoje = sum(
+        1
+        for item in atividades_hoje
         if status_eh_pendente(
             item.get("status")
         )
     )
 
-    # ========================================================
-    # ATIVIDADES CONCLUÍDAS
-    # ========================================================
-
-    atividades_concluidas = sum(
+    atividades_concluidas_hoje = sum(
         1
-        for item in atividades_todas
+        for item in atividades_hoje
         if status_eh_concluido(
             item.get("status")
         )
     )
 
-    # ========================================================
-    # ATIVIDADES ARQUIVADAS
-    # ========================================================
-
-    atividades_arquivadas = sum(
+    atividades_arquivadas_hoje = sum(
         1
-        for item in atividades_todas
+        for item in atividades_hoje
         if status_eh_arquivado(
             item.get("status")
         )
     )
 
-    # ========================================================
-    # TOTAL UTILIZADO NO INDICADOR DE ATENDIMENTO
+    # --------------------------------------------------------
+    # TOTAL DE ATIVIDADES DO DIA
     #
-    # Arquivadas não entram no percentual.
-    # ========================================================
+    # Arquivadas não entram no percentual porque são
+    # atividades que já foram concluídas e retiradas
+    # do acompanhamento operacional.
+    # --------------------------------------------------------
 
-    total_atividades = (
-        atividades_pendentes
-        + atividades_concluidas
+    total_atividades_hoje = (
+        atividades_pendentes_hoje
+        + atividades_concluidas_hoje
     )
 
-    # ========================================================
-    # INDICADOR DE ATENDIMENTO
-    # ========================================================
+    # --------------------------------------------------------
+    # INDICADOR DE ATENDIMENTO DO DIA
+    # --------------------------------------------------------
 
-    if total_atividades > 0:
+    if total_atividades_hoje > 0:
 
         perc_atendidas = round(
             (
-                atividades_concluidas
-                / total_atividades
+                atividades_concluidas_hoje
+                / total_atividades_hoje
             ) * 100
         )
 
@@ -2273,15 +2327,36 @@ def obter_dados_dashboard():
         perc_atendidas = 0
 
     # ========================================================
-    # INDICADOR DE INVENTÁRIO
+    # INVENTÁRIO DO DIA
     # ========================================================
 
-    if inv_total > 0:
+    inventarios_hoje = [
+        item
+        for item in atividades_hoje
+        if item.get("categoria") == "Inventário"
+        and not status_eh_arquivado(
+            item.get("status")
+        )
+    ]
+
+    inv_total_hoje = len(
+        inventarios_hoje
+    )
+
+    inv_conc_hoje = sum(
+        1
+        for item in inventarios_hoje
+        if status_eh_concluido(
+            item.get("status")
+        )
+    )
+
+    if inv_total_hoje > 0:
 
         perc_inventario = round(
             (
-                inv_conc
-                / inv_total
+                inv_conc_hoje
+                / inv_total_hoje
             ) * 100
         )
 
@@ -2290,33 +2365,42 @@ def obter_dados_dashboard():
         perc_inventario = 0
 
     # ========================================================
-    # INDICADOR DE EXPEDIÇÃO
+    # EXPEDIÇÃO DO DIA
     # ========================================================
 
-    if exp_total > 0:
+    expedicoes_hoje = [
+        item
+        for item in atividades_hoje
+        if item.get("categoria") == "Expedição"
+        and not status_eh_arquivado(
+            item.get("status")
+        )
+    ]
+
+    exp_total_hoje = len(
+        expedicoes_hoje
+    )
+
+    exp_conc_hoje = sum(
+        1
+        for item in expedicoes_hoje
+        if status_eh_concluido(
+            item.get("status")
+        )
+    )
+
+    if exp_total_hoje > 0:
 
         perc_expedicao = round(
             (
-                exp_conc
-                / exp_total
+                exp_conc_hoje
+                / exp_total_hoje
             ) * 100
         )
 
     else:
 
         perc_expedicao = 0
-
-    # ========================================================
-    # ATRASADOS
-    #
-    # Usa exatamente a mesma regra dos relatórios.
-    # ========================================================
-
-    total_atrasados = sum(
-        1
-        for item in atividades_todas
-        if registro_foi_atrasado(item)
-    )
 
     # ========================================================
     # USUÁRIOS
@@ -2332,9 +2416,7 @@ def obter_dados_dashboard():
     )
 
     usuarios = [
-        linha_para_dict(
-            item
-        )
+        linha_para_dict(item)
         for item in usuarios_cursor
     ]
 
@@ -2353,14 +2435,10 @@ def obter_dados_dashboard():
     )
 
     chat = [
-        linha_para_dict(
-            item
-        )
+        linha_para_dict(item)
         for item in chat_cursor
     ]
 
-    # O banco traz os mais recentes primeiro.
-    # Invertemos para mostrar os mais antigos primeiro.
     chat.reverse()
 
     # ========================================================
@@ -2368,25 +2446,26 @@ def obter_dados_dashboard():
     # ========================================================
 
     return {
-
         # ----------------------------------------------------
-        # Atividades
+        # ATIVIDADES DO PAINEL
         # ----------------------------------------------------
 
         "atividades": atividades,
 
-        "usuarios": usuarios,
+        # ----------------------------------------------------
+        # USUÁRIOS / CHAT
+        # ----------------------------------------------------
 
+        "usuarios": usuarios,
         "chat": chat,
 
         # ----------------------------------------------------
-        # Cards principais
+        # CARDS SUPERIORES
         # ----------------------------------------------------
 
         "total_req": total_req,
 
         "inv_conc": inv_conc,
-
         "inv_total": inv_total,
 
         "exp_pend": exp_pend,
@@ -2398,7 +2477,7 @@ def obter_dados_dashboard():
         "total_atrasados": total_atrasados,
 
         # ----------------------------------------------------
-        # Indicadores
+        # INDICADORES DO DIA
         # ----------------------------------------------------
 
         "perc_atendidas": perc_atendidas,
@@ -2408,284 +2487,27 @@ def obter_dados_dashboard():
         "perc_expedicao": perc_expedicao,
 
         # ----------------------------------------------------
-        # Atividades
+        # RESUMO DO DIA
         # ----------------------------------------------------
 
-        "atividades_concluidas": atividades_concluidas,
+        "atividades_concluidas": atividades_concluidas_hoje,
 
-        "atividades_pendentes": atividades_pendentes,
+        "atividades_pendentes": atividades_pendentes_hoje,
 
-        "atividades_arquivadas": atividades_arquivadas,
+        "atividades_arquivadas": atividades_arquivadas_hoje,
+
+        "total_atividades": total_atividades_hoje,
 
         # ----------------------------------------------------
-        # Compatibilidade com outros templates
+        # DADOS AUXILIARES DO DIA
         # ----------------------------------------------------
 
-        "total_atividades": total_atividades,
+        "inv_conc_hoje": inv_conc_hoje,
+        "inv_total_hoje": inv_total_hoje,
 
+        "exp_conc_hoje": exp_conc_hoje,
+        "exp_total_hoje": exp_total_hoje,
     }
-
-# ============================================================
-# DASHBOARD PRINCIPAL
-# ============================================================
-
-@app.route(
-    "/",
-    methods=["GET", "POST"]
-)
-def index():
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    # --------------------------------------------------------
-    # POST
-    # --------------------------------------------------------
-
-    if request.method == "POST":
-
-        usuario_atual = session[
-            "usuario_atual"
-        ]
-
-        acao_chat = request.form.get(
-            "acao_chat"
-        )
-
-        # ----------------------------------------------------
-        # CHAT
-        # ----------------------------------------------------
-
-        if acao_chat == "enviar":
-
-            mensagem = request.form.get(
-                "mensagem",
-                ""
-            ).strip()
-
-            if mensagem:
-
-                executar(
-                    """
-                    INSERT INTO chat
-                        (usuario, mensagem, criado_em)
-                    VALUES
-                        (%s,%s,%s)
-                    """
-                    if usando_postgresql()
-                    else
-                    """
-                    INSERT INTO chat
-                        (usuario, mensagem, criado_em)
-                    VALUES
-                        (?,?,?)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem,
-                        (
-                            agora_utc_naive()
-                            if usando_postgresql()
-                            else agora_sqlite()
-                        )
-                    ),
-                    commit=True
-                )
-
-            return redirect(
-                url_for("index")
-            )
-
-        # ----------------------------------------------------
-        # NOVA ATIVIDADE
-        # ----------------------------------------------------
-
-        num_requisicao = normalizar_requisicao(
-            request.form.get(
-                "num_requisicao"
-            )
-        )
-
-        atividade = request.form.get(
-            "atividade",
-            ""
-        ).strip()
-
-        descricao = request.form.get(
-            "descricao",
-            ""
-        ).strip()
-
-        categoria = request.form.get(
-            "categoria",
-            "Separação"
-        ).strip()
-
-        responsavel = request.form.get(
-            "responsavel",
-            usuario_atual
-        ).strip()
-
-        prioridade = request.form.get(
-            "prioridade",
-            "Baixa"
-        ).strip()
-
-        prazo = request.form.get(
-            "prazo",
-            ""
-        ).strip()
-
-        if categoria not in CATEGORIAS_VALIDAS:
-            categoria = "Separação"
-
-        if prioridade not in PRIORIDADES_VALIDAS:
-            prioridade = "Baixa"
-
-        if not atividade:
-
-            flash(
-                "Informe a atividade.",
-                "warning"
-            )
-
-            return redirect(
-                url_for("index")
-            )
-
-        if (
-            categoria == "Separação"
-            and not num_requisicao
-        ):
-
-            flash(
-                "A Separação precisa de um número de requisição.",
-                "warning"
-            )
-
-            return redirect(
-                url_for("index")
-            )
-
-        if (
-            num_requisicao
-            and requisicao_duplicada(
-                num_requisicao
-            )
-        ):
-
-            flash(
-                f"A requisição {num_requisicao} já possui uma atividade ativa.",
-                "warning"
-            )
-
-            return redirect(
-                url_for("index")
-            )
-
-        inicio_em = None
-
-        if categoria == "Separação":
-
-            inicio_em = (
-                agora_utc_naive()
-                if usando_postgresql()
-                else agora_sqlite()
-            )
-
-        agora_criacao = (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
-        )
-
-        executar(
-            """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            """
-            if usando_postgresql()
-            else
-            """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (?,?,?,?,?,?,?,?,?,?)
-            """,
-            (
-                num_requisicao or None,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo or None,
-                STATUS_PENDENTE,
-                inicio_em,
-                agora_criacao
-            ),
-            commit=True
-        )
-
-        flash(
-            "Atividade criada com sucesso.",
-            "success"
-        )
-
-        return redirect(
-            url_for("index")
-        )
-
-    # --------------------------------------------------------
-    # GET
-    # --------------------------------------------------------
-
-    dados = obter_dados_dashboard()
-
-    # --------------------------------------------------------
-    # INDEX.HTML
-    # --------------------------------------------------------
-
-    return render_template(
-        "index.html",
-        **dados
-    )
-
-
-# ============================================================
-# DASHBOARD.HTML
-#
-# Mantemos uma rota separada para o dashboard que você
-# mostrou anteriormente.
-# ============================================================
-
 @app.route(
     "/dashboard",
     methods=["GET"]

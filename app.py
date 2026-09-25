@@ -247,6 +247,35 @@ def normalizar_status(valor):
     return normalizar_texto(valor)
 
 
+def normalizar_nome_modulo(valor):
+
+    """
+    Normaliza nomes dos módulos removendo:
+    - maiúsculas/minúsculas
+    - acentos
+    - cedilha
+
+    Exemplo:
+    'Requisições' -> 'requisicoes'
+    'Expedição'   -> 'expedicao'
+    """
+
+    texto = str(valor or "")
+
+    texto = unicodedata.normalize(
+        "NFKD",
+        texto
+    )
+
+    texto = "".join(
+        caractere
+        for caractere in texto
+        if not unicodedata.combining(caractere)
+    )
+
+    return texto.strip().lower()
+
+
 def normalizar_requisicao(valor):
 
     if valor is None:
@@ -523,11 +552,7 @@ def registro_foi_atrasado(item):
         )
     )
 
-    # ========================================================
-    # REGRA:
-    # ARQUIVADO NUNCA É ATRASADO
-    # ========================================================
-
+    # Arquivado NUNCA é considerado atrasado.
     if status == "arquivado":
         return False
 
@@ -558,7 +583,6 @@ def registro_foi_atrasado(item):
         )
 
         if fim:
-
             return fim > prazo_dt
 
     return agora_brasil() > prazo_dt
@@ -1132,8 +1156,6 @@ def init_db():
 # ============================================================
 # ARQUIVAMENTO AUTOMÁTICO
 #
-# REGRA DEFINITIVA:
-#
 # SOMENTE EXPEDIÇÃO:
 #
 # Concluído
@@ -1142,8 +1164,7 @@ def init_db():
 #     ↓
 # Arquivado
 #
-# Separação, Inventário, Recebimento etc.
-# NÃO são arquivados automaticamente.
+# As demais categorias NÃO são arquivadas automaticamente.
 # ============================================================
 
 def arquivar_atividades_expiradas():
@@ -1422,7 +1443,6 @@ def index():
         )
 
     # Executa a regra das 24 horas.
-    # Somente Expedições concluídas são arquivadas.
     arquivar_atividades_expiradas()
 
     usuario_atual = session[
@@ -1659,6 +1679,8 @@ def index():
 
     # ========================================================
     # BUSCA
+    #
+    # CONCLUÍDOS E ARQUIVADOS NÃO APARECEM NO DASHBOARD.
     # ========================================================
 
     busca = request.args.get(
@@ -1676,15 +1698,14 @@ def index():
                 """
                 SELECT *
                 FROM atividades
-                WHERE
-                    COALESCE(status,'')
-                        NOT IN ('Concluído','Arquivado')
-                    AND (
-                        COALESCE(num_requisicao,'') ILIKE %s
-                        OR COALESCE(atividade,'') ILIKE %s
-                        OR COALESCE(descricao,'') ILIKE %s
-                        OR COALESCE(responsavel,'') ILIKE %s
-                    )
+                WHERE COALESCE(status,'')
+                    NOT IN ('Concluído','Arquivado')
+                  AND (
+                    COALESCE(num_requisicao,'') ILIKE %s
+                    OR COALESCE(atividade,'') ILIKE %s
+                    OR COALESCE(descricao,'') ILIKE %s
+                    OR COALESCE(responsavel,'') ILIKE %s
+                  )
                 ORDER BY id DESC
                 """,
                 (
@@ -1702,15 +1723,14 @@ def index():
                 """
                 SELECT *
                 FROM atividades
-                WHERE
-                    COALESCE(status,'')
-                        NOT IN ('Concluído','Arquivado')
-                    AND (
-                        LOWER(COALESCE(num_requisicao,'')) LIKE ?
-                        OR LOWER(COALESCE(atividade,'')) LIKE ?
-                        OR LOWER(COALESCE(descricao,'')) LIKE ?
-                        OR LOWER(COALESCE(responsavel,'')) LIKE ?
-                    )
+                WHERE COALESCE(status,'')
+                    NOT IN ('Concluído','Arquivado')
+                  AND (
+                    LOWER(COALESCE(num_requisicao,'')) LIKE ?
+                    OR LOWER(COALESCE(atividade,'')) LIKE ?
+                    OR LOWER(COALESCE(descricao,'')) LIKE ?
+                    OR LOWER(COALESCE(responsavel,'')) LIKE ?
+                  )
                 ORDER BY id DESC
                 """,
                 (
@@ -1846,8 +1866,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = %s
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """
         if usando_postgresql()
         else
@@ -1855,8 +1875,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = ?
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """,
         ("Expedição",)
     )
@@ -1866,8 +1886,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = %s
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """
         if usando_postgresql()
         else
@@ -1875,8 +1895,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE categoria = ?
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """,
         ("Recebimento",)
     )
@@ -1886,8 +1906,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE prioridade = %s
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """
         if usando_postgresql()
         else
@@ -1895,8 +1915,8 @@ def index():
         SELECT COUNT(*) AS total
         FROM atividades
         WHERE prioridade = ?
-          AND status NOT IN
-              ('Concluído','Arquivado')
+          AND status IN
+              ('Pendente','Em andamento')
         """,
         ("Alta",)
     )
@@ -1922,20 +1942,13 @@ def index():
     total_atrasados = sum(
         1
         for item in todas_preparadas
-        if (
-            item.get("foi_atrasada")
-            and normalizar_status(
-                item.get("status")
-            ) != "arquivado"
-        )
+        if item.get("foi_atrasada")
     )
 
     total_geral = len(
         todas_preparadas
     )
 
-    # Concluído + Arquivado contam como históricos
-    # concluídos para indicadores.
     total_concluidas = sum(
         1
         for item in todas_preparadas
@@ -2264,8 +2277,6 @@ def relatorios():
             url_for("login")
         )
 
-    # Verifica automaticamente as Expedições
-    # que já passaram de 24 horas após conclusão.
     arquivar_atividades_expiradas()
 
     filtro = request.args.get(
@@ -2312,8 +2323,6 @@ def relatorios():
 
     elif filtro == "concluidos":
 
-        # SOMENTE CONCLUÍDOS.
-        # ARQUIVADOS FICAM EM SUA PRÓPRIA ABA.
         itens = [
             item
             for item in todas
@@ -2324,7 +2333,6 @@ def relatorios():
 
     elif filtro == "arquivados":
 
-        # TODOS OS ARQUIVADOS.
         itens = [
             item
             for item in todas
@@ -2335,7 +2343,6 @@ def relatorios():
 
     elif filtro == "atrasados":
 
-        # ARQUIVADOS NUNCA APARECEM AQUI.
         itens = [
             item
             for item in todas
@@ -2447,7 +2454,9 @@ def modulo(nome):
             url_for("login")
         )
 
-    nome_normalizado = normalizar_texto(
+    # IMPORTANTE:
+    # remove acentos de "Expedição", "Requisições" etc.
+    nome_normalizado = normalizar_nome_modulo(
         nome
     )
 
@@ -2701,24 +2710,54 @@ def modulo(nome):
             configuracao["categoria"]
         )
 
-        itens = executar(
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = %s
-            ORDER BY id DESC
-            """
-            if usando_postgresql()
-            else
-            """
-            SELECT *
-            FROM atividades
-            WHERE categoria = ?
-            ORDER BY id DESC
-            """,
-            (categoria,),
-            fetchall=True
-        )
+        # ====================================================
+        # CORREÇÃO PRINCIPAL
+        #
+        # O módulo operacional mostra SOMENTE:
+        #
+        # Pendente
+        # Em andamento
+        #
+        # Concluído e Arquivado ficam fora daqui.
+        #
+        # Eles continuam no banco e aparecem em:
+        # Relatórios > Concluídos
+        # Relatórios > Arquivados
+        # ====================================================
+
+        if usando_postgresql():
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE categoria = %s
+                  AND status IN
+                      ('Pendente','Em andamento')
+                ORDER BY id DESC
+                """,
+                (
+                    categoria,
+                ),
+                fetchall=True
+            )
+
+        else:
+
+            itens = executar(
+                """
+                SELECT *
+                FROM atividades
+                WHERE categoria = ?
+                  AND status IN
+                      ('Pendente','Em andamento')
+                ORDER BY id DESC
+                """,
+                (
+                    categoria,
+                ),
+                fetchall=True
+            )
 
         return render_template(
             "modulo.html",
@@ -2981,8 +3020,9 @@ def editar(id):
         encerrado_por = None
 
     # ========================================================
-    # SE ARQUIVADO MANUALMENTE
-    # PRESERVA A DATA DE CONCLUSÃO
+    # ARQUIVADO
+    #
+    # PRESERVA DATA DE CONCLUSÃO.
     # ========================================================
 
     executar(
@@ -3174,8 +3214,8 @@ def concluir(id):
             FROM atividades
             WHERE categoria = %s
               AND UPPER(TRIM(num_requisicao)) = %s
-              AND status NOT IN
-                  ('Concluído','Arquivado')
+              AND status IN
+                  ('Pendente','Em andamento')
             LIMIT 1
             """
             if usando_postgresql()
@@ -3185,8 +3225,8 @@ def concluir(id):
             FROM atividades
             WHERE categoria = ?
               AND UPPER(TRIM(num_requisicao)) = ?
-              AND status NOT IN
-                  ('Concluído','Arquivado')
+              AND status IN
+                  ('Pendente','Em andamento')
             LIMIT 1
             """,
             (
@@ -3264,8 +3304,8 @@ def concluir(id):
                     ),
                     "Pendente",
 
-                    # A EXPEDIÇÃO COMEÇA NO MOMENTO
-                    # EM QUE A SEPARAÇÃO É CONCLUÍDA.
+                    # Expedição começa no momento
+                    # da conclusão da Separação.
                     agora,
 
                     agora
@@ -3396,7 +3436,6 @@ def arquivar(id):
 # ============================================================
 # DELETAR - COMPATIBILIDADE
 #
-# IMPORTANTE:
 # NÃO APAGA ATIVIDADES.
 # Apenas arquiva.
 # ============================================================

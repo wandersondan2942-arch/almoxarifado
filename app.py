@@ -2867,6 +2867,62 @@ def editar(id):
     return redirect(
         url_for("index")
     )
+
+@app.route("/editar/<int:id>", methods=["GET"])
+def editar_form(id):
+
+    if "usuario_atual" not in session:
+        return redirect(url_for("login"))
+
+    atividade = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = ?
+        """,
+        (id,),
+        fetchone=True
+    )
+
+    if not atividade:
+        flash(
+            "Atividade não encontrada.",
+            "warning"
+        )
+        return redirect(
+            url_for("index")
+        )
+
+    atividade = linha_para_dict(
+        atividade
+    )
+
+    usuarios_cursor = executar(
+        """
+        SELECT *
+        FROM usuarios
+        ORDER BY nome
+        """,
+        fetchall=True
+    )
+
+    usuarios = [
+        linha_para_dict(item)
+        for item in usuarios_cursor
+    ]
+
+    return render_template(
+        "editar.html",
+        atividade=atividade,
+        usuarios=usuarios
+    )
 @app.route(
     "/dashboard",
     methods=["GET"]

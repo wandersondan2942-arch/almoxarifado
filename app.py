@@ -1059,7 +1059,7 @@ def calcular_indicadores(atividades):
 
         perc_expedicao = 0
 
-    requisicoes_pendentes = set()
+    requisicao_pendentes = set()
 
     for item in atividades:
 
@@ -1086,7 +1086,7 @@ def calcular_indicadores(atividades):
         )
 
         if numero:
-            requisicoes_pendentes.add(
+            requisicao_pendentes.add(
                 numero
             )
 
@@ -1174,8 +1174,8 @@ def calcular_indicadores(atividades):
             )
         ),
 
-        "requisicoes_pendentes":
-            len(requisicoes_pendentes),
+        "requisicao_pendentes":
+            len(requisicao_pendentes),
 
         "recebimento_pendente":
             recebimento_pendente,
@@ -2328,7 +2328,7 @@ def obter_dados_dashboard():
 
         "total_req":
             indicadores[
-                "requisicoes_pendentes"
+                "requisicao_pendentes"
             ],
 
         "inv_total":
@@ -2714,7 +2714,7 @@ def index():
         ):
 
             flash(
-                f"A requisição {num_requisicao} já possui uma atividade ativa.",
+                f"A requisicao {num_requisicao} já possui uma atividade ativa.",
                 "warning"
             )
 
@@ -3417,8 +3417,8 @@ def modulo(nome):
 
     mapa_modulos = {
 
-        "requisicoes": {
-            "titulo": "Requisições",
+        "requisicao": {
+            "titulo": "Requisicao",
             "categoria": "Separação"
         },
 
@@ -3676,7 +3676,7 @@ def editar(id):
     ):
 
         flash(
-            "A Separação precisa de um número de requisição.",
+            "A Separação precisa de um número de requisicao.",
             "warning"
         )
 
@@ -3693,7 +3693,7 @@ def editar(id):
     ):
 
         flash(
-            f"A requisição {num_requisicao} já possui uma atividade ativa.",
+            f"A requisicao {num_requisicao} já possui uma atividade ativa.",
             "warning"
         )
 
@@ -4052,7 +4052,7 @@ def concluir(id):
             descricao = (
                 "Expedição gerada automaticamente "
                 "após conclusão da Separação "
-                f"da requisição {num_requisicao}."
+                f"da requisicao {num_requisicao}."
             )
 
             prazo_expedicao = (

@@ -2063,369 +2063,438 @@ def logout():
 # ============================================================
 
 def obter_dados_dashboard():
-
-    usuario_atual = session[
-        "usuario_atual"
-    ]
-
-    arquivar_atividades_expiradas()
+    """
+    Centraliza os dados utilizados pelo index.html e dashboard.html.
+    Mantém os dados vindos diretamente do banco.
+    """
 
     # --------------------------------------------------------
-    # ATIVIDADES ATIVAS
+    # REQUISIÇÕES / SEPARAÇÃO
     # --------------------------------------------------------
 
-    atividades_brutas = buscar_atividades_ativas()
-
-    busca = request.args.get(
-        "q",
-        ""
-    ).strip()
-
-    if busca:
-
-        busca_normalizada = normalizar_texto(
-            busca
-        )
-
-        itens = []
-
-        for item in atividades_brutas:
-
-            campos = [
-                obter_valor(
-                    item,
-                    "num_requisicao",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "atividade",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "descricao",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "responsavel",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "categoria",
-                    ""
-                ),
-            ]
-
-            if any(
-                busca_normalizada
-                in normalizar_texto(campo)
-                for campo in campos
-            ):
-
-                itens.append(item)
-
-    else:
-
-        itens = atividades_brutas
-
-    itens = preparar_lista_atividades(
-        itens
+    total_req = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND status = ?
+        """,
+        ("Separação", STATUS_PENDENTE)
     )
+
+    # --------------------------------------------------------
+    # INVENTÁRIO
+    # --------------------------------------------------------
+
+    inv_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND status NOT IN (%s)
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND status NOT IN (?)
+        """,
+        ("Inventário", STATUS_ARQUIVADA)
+    )
+
+    inv_conc = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND LOWER(
+                REPLACE(
+                    REPLACE(
+                        REPLACE(
+                            REPLACE(status, 'í', 'i'),
+                            'Í', 'I'
+                        ),
+                        'ó', 'o'
+                    ),
+                    'Ó', 'O'
+                )
+              ) IN ('concluido', 'concluida')
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND LOWER(status) IN ('concluído', 'concluido', 'concluída', 'concluida')
+        """,
+        ("Inventário",)
+    )
+
+    # --------------------------------------------------------
+    # EXPEDIÇÃO
+    # --------------------------------------------------------
+
+    exp_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND status = ?
+        """,
+        ("Expedição", STATUS_PENDENTE)
+    )
+
+    exp_total = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND status <> %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND status <> ?
+        """,
+        ("Expedição", STATUS_ARQUIVADA)
+    )
+
+    exp_conc = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND LOWER(status) IN ('concluído', 'concluido', 'concluída', 'concluida')
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND LOWER(status) IN ('concluído', 'concluido', 'concluída', 'concluida')
+        """,
+        ("Expedição",)
+    )
+
+    # --------------------------------------------------------
+    # RECEBIMENTO
+    # --------------------------------------------------------
+
+    rec_pend = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = %s
+          AND status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = ?
+          AND status = ?
+        """,
+        ("Recebimento", STATUS_PENDENTE)
+    )
+
+    # --------------------------------------------------------
+    # OCORRÊNCIAS
+    # --------------------------------------------------------
+
+    total_oco = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE prioridade = %s
+          AND status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE prioridade = ?
+          AND status = ?
+        """,
+        ("Alta", STATUS_PENDENTE)
+    )
+
+    # --------------------------------------------------------
+    # ATIVIDADES PENDENTES
+    # --------------------------------------------------------
+
+    atividades_pendentes = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = ?
+        """,
+        (STATUS_PENDENTE,)
+    )
+
+    # --------------------------------------------------------
+    # ATIVIDADES CONCLUÍDAS
+    # --------------------------------------------------------
+
+    atividades_concluidas = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE LOWER(status) IN
+            ('concluído', 'concluido', 'concluída', 'concluida')
+        """
+    )
+
+    # --------------------------------------------------------
+    # ATIVIDADES ARQUIVADAS
+    # --------------------------------------------------------
+
+    atividades_arquivadas = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = ?
+        """,
+        (STATUS_ARQUIVADA,)
+    )
+
+    # --------------------------------------------------------
+    # TOTAL DE ATIVIDADES PARA INDICADOR
+    # --------------------------------------------------------
+
+    total_atividades = (
+        atividades_pendentes
+        + atividades_concluidas
+    )
+
+    # --------------------------------------------------------
+    # INDICADOR DE ATENDIMENTO
+    # --------------------------------------------------------
+
+    if total_atividades > 0:
+        perc_atendidas = round(
+            (
+                atividades_concluidas
+                / total_atividades
+            ) * 100
+        )
+    else:
+        perc_atendidas = 0
+
+    # --------------------------------------------------------
+    # INDICADOR DE INVENTÁRIO
+    # --------------------------------------------------------
+
+    if inv_total > 0:
+        perc_inventario = round(
+            (
+                inv_conc
+                / inv_total
+            ) * 100
+        )
+    else:
+        perc_inventario = 0
+
+    # --------------------------------------------------------
+    # INDICADOR DE EXPEDIÇÃO
+    # --------------------------------------------------------
+
+    if exp_total > 0:
+        perc_expedicao = round(
+            (
+                exp_conc
+                / exp_total
+            ) * 100
+        )
+    else:
+        perc_expedicao = 0
+
+    # --------------------------------------------------------
+    # ATRASADOS
+    # --------------------------------------------------------
+
+    agora = (
+        agora_utc_naive()
+        if usando_postgresql()
+        else agora_sqlite()
+    )
+
+    total_atrasados = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = %s
+          AND prazo IS NOT NULL
+          AND prazo <> ''
+          AND prazo < %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE status = ?
+          AND prazo IS NOT NULL
+          AND prazo <> ''
+          AND prazo < ?
+        """,
+        (
+            STATUS_PENDENTE,
+            agora
+        )
+    )
+
+    # --------------------------------------------------------
+    # ATIVIDADES DO PAINEL
+    # --------------------------------------------------------
+
+    atividades_cursor = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE status = %s
+        ORDER BY id DESC
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT *
+        FROM atividades
+        WHERE status = ?
+        ORDER BY id DESC
+        """,
+        (STATUS_PENDENTE,)
+    )
+
+    atividades = linhas_para_dict(
+        atividades_cursor
+    )
+
+    fechar_cursor(
+        atividades_cursor
+    )
+
+    atividades = [
+        preparar_atividade(item)
+        for item in atividades
+    ]
 
     # --------------------------------------------------------
     # USUÁRIOS
     # --------------------------------------------------------
 
-    usuarios = executar(
+    usuarios_cursor = executar(
         """
-        SELECT id, nome
+        SELECT *
         FROM usuarios
-        ORDER BY nome ASC
-        """,
-        fetchall=True
+        ORDER BY nome
+        """
     )
 
     usuarios = linhas_para_dict(
-        usuarios
+        usuarios_cursor
+    )
+
+    fechar_cursor(
+        usuarios_cursor
     )
 
     # --------------------------------------------------------
     # CHAT
     # --------------------------------------------------------
 
-    mensagens = executar(
+    chat_cursor = executar(
         """
         SELECT *
         FROM chat
         ORDER BY id DESC
-        LIMIT 30
-        """,
-        fetchall=True
+        LIMIT 15
+        """
     )
 
-    mensagens = preparar_chat(
-        mensagens
+    chat = linhas_para_dict(
+        chat_cursor
     )
 
-    mensagens.reverse()
-
-    # --------------------------------------------------------
-    # TODAS AS ATIVIDADES
-    # --------------------------------------------------------
-
-    atividades_todas = buscar_atividades_historico()
-
-    atividades_todas = [
-        linha_para_dict(item)
-        for item in atividades_todas
-    ]
-
-    # --------------------------------------------------------
-    # INDICADORES GERAIS
-    # --------------------------------------------------------
-
-    indicadores = calcular_indicadores(
-        atividades_todas
+    fechar_cursor(
+        chat_cursor
     )
 
-    # --------------------------------------------------------
-    # INDICADORES DO DIA
-    #
-    # AQUI ESTÁ A PRINCIPAL CORREÇÃO.
-    # --------------------------------------------------------
-
-    indicadores_dia = calcular_indicadores_do_dia(
-        atividades_todas
-    )
+    # O banco traz do mais recente para o mais antigo.
+    # Invertemos para exibir na ordem cronológica.
+    chat.reverse()
 
     # --------------------------------------------------------
-    # HISTÓRICO
+    # RETORNO
     # --------------------------------------------------------
 
-    todas_preparadas = preparar_lista_atividades(
-        atividades_todas
-    )
+    return {
+        "atividades": atividades,
 
-    # --------------------------------------------------------
-    # GRÁFICOS
-    # --------------------------------------------------------
+        "usuarios": usuarios,
 
-    atendidas_pizza = indicadores_dia[
-        "perc_atendidas"
-    ]
+        "chat": chat,
 
-    pendentes_pizza = max(
-        0,
-        100 - atendidas_pizza
-    )
+        # Cards principais
+        "total_req": total_req,
+        "inv_conc": inv_conc,
+        "inv_total": inv_total,
+        "exp_pend": exp_pend,
+        "rec_pend": rec_pend,
+        "total_oco": total_oco,
+        "total_atrasados": total_atrasados,
 
-    inventario_pizza = indicadores_dia[
-        "perc_inventario"
-    ]
+        # Indicadores
+        "perc_atendidas": perc_atendidas,
+        "perc_inventario": perc_inventario,
+        "perc_expedicao": perc_expedicao,
 
-    inventario_pendente_pizza = max(
-        0,
-        100 - inventario_pizza
-    )
+        # Atividades
+        "atividades_concluidas": atividades_concluidas,
+        "atividades_pendentes": atividades_pendentes,
+        "atividades_arquivadas": atividades_arquivadas,
 
-    expedicao_pizza = indicadores_dia[
-        "perc_expedicao"
-    ]
-
-    expedicao_pendente_pizza = max(
-        0,
-        100 - expedicao_pizza
-    )
-
-    dados = {
-
-        "usuario_atual":
-            usuario_atual,
-
-        "itens":
-            itens,
-
-        "atividades":
-            itens,
-
-        "usuarios":
-            usuarios,
-
-        "mensagens":
-            mensagens,
-
-        "chat":
-            mensagens,
-
-        # ----------------------------------------------------
-        # CARDS GERAIS
-        # ----------------------------------------------------
-
-        "total_req":
-            indicadores[
-                "requisicoes_pendentes"
-            ],
-
-        "inv_total":
-            indicadores[
-                "inventario_total"
-            ],
-
-        "inv_conc":
-            indicadores[
-                "inventario_concluido"
-            ],
-
-        "inv_pend":
-            indicadores[
-                "inventario_pendente"
-            ],
-
-        "exp_pend":
-            indicadores[
-                "expedicao_pendente"
-            ],
-
-        "exp_total":
-            indicadores[
-                "expedicao_total"
-            ],
-
-        "exp_conc":
-            indicadores[
-                "expedicao_concluida"
-            ],
-
-        "rec_pend":
-            indicadores[
-                "recebimento_pendente"
-            ],
-
-        "total_oco":
-            indicadores[
-                "ocorrencias"
-            ],
-
-        "total_atrasados":
-            indicadores[
-                "atrasados"
-            ],
-
-        "total_geral":
-            indicadores[
-                "total_geral"
-            ],
-
-        # ----------------------------------------------------
-        # ATIVIDADES GERAIS
-        # ----------------------------------------------------
-
-        "atividades_pendentes":
-            indicadores[
-                "atividades_pendentes"
-            ],
-
-        "atividades_andamento":
-            indicadores[
-                "atividades_andamento"
-            ],
-
-        "atividades_concluidas":
-            indicadores[
-                "atividades_concluidas"
-            ],
-
-        "atividades_arquivadas":
-            indicadores[
-                "atividades_arquivadas"
-            ],
-
-        "atividades_finalizadas":
-            indicadores[
-                "atividades_finalizadas"
-            ],
-
-        "concluidas":
-            indicadores[
-                "atividades_finalizadas"
-            ],
-
-        # ----------------------------------------------------
-        # INDICADORES DO DIA
-        # ----------------------------------------------------
-
-        "perc_atendidas":
-            indicadores_dia[
-                "perc_atendidas"
-            ],
-
-        "perc_inventario":
-            indicadores_dia[
-                "perc_inventario"
-            ],
-
-        "perc_expedicao":
-            indicadores_dia[
-                "perc_expedicao"
-            ],
-
-        # Quantidades do dia
-        "indicadores_dia":
-            indicadores_dia,
-
-        "total_dia":
-            indicadores_dia[
-                "total"
-            ],
-
-        "finalizadas_dia":
-            indicadores_dia[
-                "finalizadas"
-            ],
-
-        "pendentes_dia":
-            indicadores_dia[
-                "pendentes"
-            ],
-
-        # ----------------------------------------------------
-        # GRÁFICOS
-        # ----------------------------------------------------
-
-        "atendidas_pizza":
-            atendidas_pizza,
-
-        "pendentes_pizza":
-            pendentes_pizza,
-
-        "inventario_pizza":
-            inventario_pizza,
-
-        "inventario_pendente_pizza":
-            inventario_pendente_pizza,
-
-        "expedicao_pizza":
-            expedicao_pizza,
-
-        "expedicao_pendente_pizza":
-            expedicao_pendente_pizza,
-
-        # ----------------------------------------------------
-        # HISTÓRICO
-        # ----------------------------------------------------
-
-        "todas_preparadas":
-            todas_preparadas,
-
-        "busca":
-            busca,
+        # Compatibilidade
+        "total_atividades": total_atividades,
     }
-
-    return dados
-
 
 # ============================================================
 # DASHBOARD PRINCIPAL

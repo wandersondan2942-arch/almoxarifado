@@ -108,6 +108,7 @@ def usando_postgresql():
 
 
 def get_db():
+
     if "db" not in g:
 
         if usando_postgresql():
@@ -414,11 +415,26 @@ def converter_para_brasil(valor):
 
         dt = valor
 
+        # PostgreSQL:
+        # timestamps armazenados pelo sistema são UTC naive.
+        #
+        # SQLite:
+        # timestamps gravados pelo sistema são horário local
+        # do servidor/computador.
+
         if dt.tzinfo is None:
 
-            dt = dt.replace(
-                tzinfo=timezone.utc
-            )
+            if usando_postgresql():
+
+                dt = dt.replace(
+                    tzinfo=timezone.utc
+                )
+
+            else:
+
+                dt = dt.replace(
+                    tzinfo=FUSO_BRASIL
+                )
 
         return dt.astimezone(
             FUSO_BRASIL
@@ -475,9 +491,17 @@ def converter_para_brasil(valor):
 
     if dt.tzinfo is None:
 
-        dt = dt.replace(
-            tzinfo=timezone.utc
-        )
+        if usando_postgresql():
+
+            dt = dt.replace(
+                tzinfo=timezone.utc
+            )
+
+        else:
+
+            dt = dt.replace(
+                tzinfo=FUSO_BRASIL
+            )
 
     return dt.astimezone(
         FUSO_BRASIL
@@ -1121,10 +1145,6 @@ def calcular_indicadores(atividades):
 
 # ============================================================
 # INDICADORES DO DIA
-#
-# IMPORTANTE:
-# Aqui não usamos todo o histórico.
-# Somente atividades do dia atual no horário de Brasília.
 # ============================================================
 
 def atividade_eh_do_dia(item, data_referencia=None):
@@ -1398,6 +1418,10 @@ def init_db():
 
         cursor = db.cursor()
 
+        # ----------------------------------------------------
+        # USUÁRIOS
+        # ----------------------------------------------------
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
@@ -1406,6 +1430,10 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # ----------------------------------------------------
+        # ATIVIDADES
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -1425,6 +1453,14 @@ def init_db():
             )
         """)
 
+        # ----------------------------------------------------
+        # CHAT
+        #
+        # IMPORTANTE:
+        # Mesmo que a tabela já exista no Render, as colunas
+        # necessárias serão verificadas.
+        # ----------------------------------------------------
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id SERIAL PRIMARY KEY,
@@ -1433,6 +1469,25 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        chat_colunas = [
+            ("usuario", "TEXT"),
+            ("mensagem", "TEXT"),
+            ("criado_em", "TIMESTAMP"),
+        ]
+
+        for coluna, tipo in chat_colunas:
+
+            cursor.execute(
+                f"""
+                ALTER TABLE chat
+                ADD COLUMN IF NOT EXISTS {coluna} {tipo}
+                """
+            )
+
+        # ----------------------------------------------------
+        # MELHORIAS
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -1446,6 +1501,10 @@ def init_db():
             )
         """)
 
+        # ----------------------------------------------------
+        # ESTOQUE
+        # ----------------------------------------------------
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id SERIAL PRIMARY KEY,
@@ -1455,6 +1514,10 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # ----------------------------------------------------
+        # MIGRAÇÃO ATIVIDADES
+        # ----------------------------------------------------
 
         colunas_atividades = [
             ("num_requisicao", "TEXT"),
@@ -1479,10 +1542,18 @@ def init_db():
                 """
             )
 
+        # ----------------------------------------------------
+        # MIGRAÇÃO USUÁRIOS
+        # ----------------------------------------------------
+
         cursor.execute("""
             ALTER TABLE usuarios
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
+
+        # ----------------------------------------------------
+        # MIGRAÇÃO MELHORIAS
+        # ----------------------------------------------------
 
         cursor.execute("""
             ALTER TABLE melhorias
@@ -1504,6 +1575,10 @@ def init_db():
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
 
+        # ----------------------------------------------------
+        # MIGRAÇÃO ESTOQUE
+        # ----------------------------------------------------
+
         cursor.execute("""
             ALTER TABLE estoque
             ADD COLUMN IF NOT EXISTS codigo TEXT
@@ -1523,6 +1598,10 @@ def init_db():
             ALTER TABLE estoque
             ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
+
+        # ----------------------------------------------------
+        # ÍNDICES
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1548,10 +1627,20 @@ def init_db():
             ON atividades (prazo)
         """)
 
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_chat_criado_em
+            ON chat (criado_em)
+        """)
+
         db.commit()
         cursor.close()
 
     else:
+
+        # ----------------------------------------------------
+        # SQLITE
+        # ----------------------------------------------------
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -1631,6 +1720,16 @@ def init_db():
                 ("criado_em", "TEXT"),
             ],
 
+            # ------------------------------------------------
+            # CHAT TAMBÉM ENTRA NA MIGRAÇÃO
+            # ------------------------------------------------
+
+            "chat": [
+                ("usuario", "TEXT"),
+                ("mensagem", "TEXT"),
+                ("criado_em", "TEXT"),
+            ],
+
             "melhorias": [
                 ("etapa", "TEXT"),
                 ("autor", "TEXT"),
@@ -1668,6 +1767,10 @@ def init_db():
                         """
                     )
 
+        # ----------------------------------------------------
+        # ÍNDICES
+        # ----------------------------------------------------
+
         db.execute("""
             CREATE INDEX IF NOT EXISTS
             idx_atividades_req_busca
@@ -1690,6 +1793,12 @@ def init_db():
             CREATE INDEX IF NOT EXISTS
             idx_atividades_prazo
             ON atividades (prazo)
+        """)
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_chat_criado_em
+            ON chat (criado_em)
         """)
 
         db.commit()
@@ -2064,9 +2173,15 @@ def logout():
 
 def obter_dados_dashboard():
 
-    usuario_atual = session[
-        "usuario_atual"
-    ]
+    usuario_atual = str(
+        session.get(
+            "usuario_atual",
+            ""
+        )
+    ).strip()
+
+    if not usuario_atual:
+        return {}
 
     arquivar_atividades_expiradas()
 
@@ -2193,8 +2308,6 @@ def obter_dados_dashboard():
 
     # --------------------------------------------------------
     # INDICADORES DO DIA
-    #
-    # AQUI ESTÁ A PRINCIPAL CORREÇÃO.
     # --------------------------------------------------------
 
     indicadores_dia = calcular_indicadores_do_dia(
@@ -2260,10 +2373,6 @@ def obter_dados_dashboard():
         "chat":
             mensagens,
 
-        # ----------------------------------------------------
-        # CARDS GERAIS
-        # ----------------------------------------------------
-
         "total_req":
             indicadores[
                 "requisicoes_pendentes"
@@ -2319,10 +2428,6 @@ def obter_dados_dashboard():
                 "total_geral"
             ],
 
-        # ----------------------------------------------------
-        # ATIVIDADES GERAIS
-        # ----------------------------------------------------
-
         "atividades_pendentes":
             indicadores[
                 "atividades_pendentes"
@@ -2353,10 +2458,6 @@ def obter_dados_dashboard():
                 "atividades_finalizadas"
             ],
 
-        # ----------------------------------------------------
-        # INDICADORES DO DIA
-        # ----------------------------------------------------
-
         "perc_atendidas":
             indicadores_dia[
                 "perc_atendidas"
@@ -2372,7 +2473,6 @@ def obter_dados_dashboard():
                 "perc_expedicao"
             ],
 
-        # Quantidades do dia
         "indicadores_dia":
             indicadores_dia,
 
@@ -2391,10 +2491,6 @@ def obter_dados_dashboard():
                 "pendentes"
             ],
 
-        # ----------------------------------------------------
-        # GRÁFICOS
-        # ----------------------------------------------------
-
         "atendidas_pizza":
             atendidas_pizza,
 
@@ -2412,10 +2508,6 @@ def obter_dados_dashboard():
 
         "expedicao_pendente_pizza":
             expedicao_pendente_pizza,
-
-        # ----------------------------------------------------
-        # HISTÓRICO
-        # ----------------------------------------------------
 
         "todas_preparadas":
             todas_preparadas,
@@ -2443,23 +2535,31 @@ def index():
             url_for("login")
         )
 
-    # --------------------------------------------------------
-    # POST
-    # --------------------------------------------------------
-
     if request.method == "POST":
 
-        usuario_atual = session[
-            "usuario_atual"
-        ]
+        usuario_atual = str(
+            session.get(
+                "usuario_atual",
+                ""
+            )
+        ).strip()
+
+        if not usuario_atual:
+
+            session.clear()
+
+            return redirect(
+                url_for("login")
+            )
 
         acao_chat = request.form.get(
-            "acao_chat"
-        )
+            "acao_chat",
+            ""
+        ).strip()
 
-        # ----------------------------------------------------
+        # ====================================================
         # CHAT
-        # ----------------------------------------------------
+        # ====================================================
 
         if acao_chat == "enviar":
 
@@ -2468,7 +2568,22 @@ def index():
                 ""
             ).strip()
 
-            if mensagem:
+            if not mensagem:
+
+                flash(
+                    "Digite uma mensagem antes de enviar.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for("index")
+                )
+
+            # Limite de segurança para evitar mensagens
+            # absurdamente grandes no banco.
+            mensagem = mensagem[:2000]
+
+            try:
 
                 executar(
                     """
@@ -2497,13 +2612,31 @@ def index():
                     commit=True
                 )
 
+                flash(
+                    "Mensagem enviada.",
+                    "success"
+                )
+
+            except Exception as erro:
+
+                print(
+                    "ERRO AO ENVIAR CHAT:",
+                    repr(erro)
+                )
+
+                flash(
+                    "Não foi possível enviar a mensagem. "
+                    "Verifique o banco de dados.",
+                    "danger"
+                )
+
             return redirect(
                 url_for("index")
             )
 
-        # ----------------------------------------------------
+        # ====================================================
         # NOVA ATIVIDADE
-        # ----------------------------------------------------
+        # ====================================================
 
         num_requisicao = normalizar_requisicao(
             request.form.get(
@@ -2665,15 +2798,7 @@ def index():
             url_for("index")
         )
 
-    # --------------------------------------------------------
-    # GET
-    # --------------------------------------------------------
-
     dados = obter_dados_dashboard()
-
-    # --------------------------------------------------------
-    # INDEX.HTML
-    # --------------------------------------------------------
 
     return render_template(
         "index.html",
@@ -2683,9 +2808,6 @@ def index():
 
 # ============================================================
 # DASHBOARD.HTML
-#
-# Mantemos uma rota separada para o dashboard que você
-# mostrou anteriormente.
 # ============================================================
 
 @app.route(
@@ -3070,10 +3192,6 @@ def modulo(nome):
         nome
     )
 
-    # --------------------------------------------------------
-    # CONFIGURAÇÕES
-    # --------------------------------------------------------
-
     if nome_normalizado == "configuracoes":
 
         return render_template(
@@ -3083,29 +3201,17 @@ def modulo(nome):
             ]
         )
 
-    # --------------------------------------------------------
-    # INDICADORES
-    # --------------------------------------------------------
-
     if nome_normalizado == "indicadores":
 
         return redirect(
             url_for("indicadores")
         )
 
-    # --------------------------------------------------------
-    # RELATÓRIOS
-    # --------------------------------------------------------
-
     if nome_normalizado == "relatorios":
 
         return redirect(
             url_for("relatorios")
         )
-
-    # --------------------------------------------------------
-    # CADASTROS
-    # --------------------------------------------------------
 
     if nome_normalizado == "cadastros":
 
@@ -3129,10 +3235,6 @@ def modulo(nome):
                 "usuario_atual"
             ]
         )
-
-    # --------------------------------------------------------
-    # MELHORIAS / PDCA
-    # --------------------------------------------------------
 
     if (
         "melhoria" in nome_normalizado
@@ -3257,10 +3359,6 @@ def modulo(nome):
             ]
         )
 
-    # --------------------------------------------------------
-    # ESTOQUE
-    # --------------------------------------------------------
-
     if nome_normalizado == "estoque":
 
         itens = executar(
@@ -3287,10 +3385,6 @@ def modulo(nome):
                 "usuario_atual"
             ]
         )
-
-    # --------------------------------------------------------
-    # MAPA
-    # --------------------------------------------------------
 
     mapa_modulos = {
 
@@ -4720,8 +4814,13 @@ def exportar_estoque():
 
     except Exception as erro:
 
+        print(
+            "ERRO AO EXPORTAR ESTOQUE:",
+            repr(erro)
+        )
+
         flash(
-            f"Erro ao gerar Excel do estoque: {erro}",
+            "Erro ao gerar Excel do estoque.",
             "danger"
         )
 
@@ -5014,6 +5113,11 @@ def importar_estoque():
         )
 
     except Exception as erro:
+
+        print(
+            "ERRO AO IMPORTAR ESTOQUE:",
+            repr(erro)
+        )
 
         flash(
             f"Erro ao importar estoque: {erro}",

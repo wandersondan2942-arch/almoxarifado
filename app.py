@@ -2472,146 +2472,134 @@ def indicadores():
 def relatorios():
 
     if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
     arquivar_atividades_expiradas()
 
-    filtro = request.args.get(
-        "filtro",
-        "todos"
+    filtro = request.args.get("filtro", "todos")
+    data_param = request.args.get("data", "").strip()
+
+    # O relatório abre, por padrão, no dia atual de Brasília.
+    if not data_param:
+        data_relatorio = agora_brasil().date()
+        data_param = data_relatorio.isoformat()
+    else:
+        try:
+            data_relatorio = datetime.strptime(
+                data_param, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            data_relatorio = agora_brasil().date()
+            data_param = data_relatorio.isoformat()
+
+    # Limites do dia em Brasília.
+    inicio_brasilia = datetime.combine(
+        data_relatorio,
+        datetime.min.time(),
+        tzinfo=FUSO_BRASIL
+    )
+    fim_brasilia = inicio_brasilia + timedelta(days=1)
+
+    if usando_postgresql():
+        # PostgreSQL guarda os horários como UTC sem timezone.
+        inicio_busca = inicio_brasilia.astimezone(
+            timezone.utc
+        ).replace(tzinfo=None)
+        fim_busca = fim_brasilia.astimezone(
+            timezone.utc
+        ).replace(tzinfo=None)
+        placeholder = "%s"
+    else:
+        # SQLite local grava os horários no relógio local.
+        inicio_busca = inicio_brasilia.replace(
+            tzinfo=None
+        )
+        fim_busca = fim_brasilia.replace(
+            tzinfo=None
+        )
+        placeholder = "?"
+
+    # O relatório diário considera início_em; quando ele não existe,
+    # usa criado_em. Isso mantém atividades antigas visíveis.
+    sql_diario = f"""
+        SELECT *
+        FROM atividades
+        WHERE COALESCE(inicio_em, criado_em) >= {placeholder}
+          AND COALESCE(inicio_em, criado_em) < {placeholder}
+        ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
+    """
+
+    todas = executar(
+        sql_diario,
+        (inicio_busca, fim_busca),
+        fetchall=True
     )
 
-    todas = preparar_lista_atividades(
-        buscar_atividades_historico()
-    )
-
-    # ========================================================
-    # FILTROS
-    # ========================================================
+    todas = preparar_lista_atividades(todas)
 
     if filtro == "pendentes":
-
         itens = [
-            item
-            for item in todas
-            if status_eh_pendente(
-                item.get("status")
-            )
+            item for item in todas
+            if status_eh_pendente(item.get("status"))
         ]
-
     elif filtro == "andamento":
-
         itens = [
-            item
-            for item in todas
-            if status_eh_andamento(
-                item.get("status")
-            )
+            item for item in todas
+            if status_eh_andamento(item.get("status"))
         ]
-
     elif filtro == "concluidos":
-
         itens = [
-            item
-            for item in todas
-            if status_eh_concluido(
-                item.get("status")
-            )
+            item for item in todas
+            if status_eh_concluido(item.get("status"))
         ]
-
     elif filtro == "arquivados":
-
         itens = [
-            item
-            for item in todas
-            if status_eh_arquivado(
-                item.get("status")
-            )
+            item for item in todas
+            if status_eh_arquivado(item.get("status"))
         ]
-
     elif filtro == "atrasados":
-
         itens = [
-            item
-            for item in todas
+            item for item in todas
             if registro_foi_atrasado(item)
         ]
-
     else:
-
         itens = todas
 
-    # ========================================================
-    # CONTADORES
-    # ========================================================
-
-    total_todos = len(
-        todas
-    )
-
+    total_todos = len(todas)
     total_pendentes = sum(
-        1
-        for item in todas
-        if status_eh_pendente(
-            item.get("status")
-        )
+        1 for item in todas
+        if status_eh_pendente(item.get("status"))
     )
-
     total_andamento = sum(
-        1
-        for item in todas
-        if status_eh_andamento(
-            item.get("status")
-        )
+        1 for item in todas
+        if status_eh_andamento(item.get("status"))
     )
-
     total_concluidos = sum(
-        1
-        for item in todas
-        if status_eh_concluido(
-            item.get("status")
-        )
+        1 for item in todas
+        if status_eh_concluido(item.get("status"))
     )
-
     total_arquivados = sum(
-        1
-        for item in todas
-        if status_eh_arquivado(
-            item.get("status")
-        )
+        1 for item in todas
+        if status_eh_arquivado(item.get("status"))
     )
-
     total_atrasados = sum(
-        1
-        for item in todas
+        1 for item in todas
         if registro_foi_atrasado(item)
     )
 
     return render_template(
         "relatorios.html",
-
         itens=itens,
-
         filtro=filtro,
-
-        usuario_atual=session[
-            "usuario_atual"
-        ],
-
+        data_relatorio=data_param,
+        data_formatada=data_relatorio.strftime("%d/%m/%Y"),
         total_todos=total_todos,
-
         total_pendentes=total_pendentes,
-
         total_andamento=total_andamento,
-
         total_concluidos=total_concluidos,
-
         total_arquivados=total_arquivados,
-
-        total_atrasados=total_atrasados
+        total_atrasados=total_atrasados,
+        usuario_atual=session["usuario_atual"]
     )
 
 
@@ -3838,15 +3826,75 @@ def deletar_melhoria(id):
 def relatorio_pdf():
 
     if "usuario_atual" not in session:
+        return redirect(url_for("login"))
 
-        return redirect(
-            url_for("login")
-        )
+    data_param = request.args.get("data", "").strip()
 
-    arquivar_atividades_expiradas()
+    if not data_param:
+        data_relatorio = agora_brasil().date()
+        data_param = data_relatorio.isoformat()
+    else:
+        try:
+            data_relatorio = datetime.strptime(
+                data_param, "%Y-%m-%d"
+            ).date()
+        except ValueError:
+            data_relatorio = agora_brasil().date()
+            data_param = data_relatorio.isoformat()
 
-    itens = preparar_lista_atividades(
-        buscar_atividades_historico()
+    # Não arquiva nem altera registros durante a emissão do PDF.
+    # O PDF é um retrato histórico do dia selecionado.
+    inicio_brasilia = datetime.combine(
+        data_relatorio,
+        datetime.min.time(),
+        tzinfo=FUSO_BRASIL
+    )
+    fim_brasilia = inicio_brasilia + timedelta(days=1)
+
+    if usando_postgresql():
+        inicio_busca = inicio_brasilia.astimezone(
+            timezone.utc
+        ).replace(tzinfo=None)
+        fim_busca = fim_brasilia.astimezone(
+            timezone.utc
+        ).replace(tzinfo=None)
+        sql = """
+            SELECT *
+            FROM atividades
+            WHERE COALESCE(inicio_em, criado_em) >= %s
+              AND COALESCE(inicio_em, criado_em) < %s
+            ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
+        """
+    else:
+        inicio_busca = inicio_brasilia.replace(tzinfo=None)
+        fim_busca = fim_brasilia.replace(tzinfo=None)
+        sql = """
+            SELECT *
+            FROM atividades
+            WHERE COALESCE(inicio_em, criado_em) >= ?
+              AND COALESCE(inicio_em, criado_em) < ?
+            ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
+        """
+
+    itens = executar(
+        sql,
+        (inicio_busca, fim_busca),
+        fetchall=True
+    )
+    itens = preparar_lista_atividades(itens)
+
+    total = len(itens)
+    concluidas = sum(
+        1 for item in itens
+        if status_eh_concluido(item.get("status"))
+    )
+    pendentes = sum(
+        1 for item in itens
+        if status_eh_pendente(item.get("status"))
+    )
+    arquivadas = sum(
+        1 for item in itens
+        if status_eh_arquivado(item.get("status"))
     )
 
     buffer = BytesIO()
@@ -3861,165 +3909,101 @@ def relatorio_pdf():
     )
 
     estilos = getSampleStyleSheet()
+    estilo_titulo = estilos["Title"]
+    estilo_normal = estilos["Normal"]
 
     elementos = []
 
     elementos.append(
         Paragraph(
-            "Relatório do Almoxarifado",
-            estilos["Title"]
+            "RELATÓRIO DIÁRIO - ALMOXARIFADO",
+            estilo_titulo
         )
     )
-
     elementos.append(
-        Spacer(1, 15)
+        Paragraph(
+            f"Data: {data_relatorio.strftime('%d/%m/%Y')}",
+            estilo_normal
+        )
     )
+    elementos.append(Spacer(1, 10))
+    elementos.append(
+        Paragraph(
+            f"Total: {total} &nbsp;&nbsp; "
+            f"Concluídas: {concluidas} &nbsp;&nbsp; "
+            f"Pendentes: {pendentes} &nbsp;&nbsp; "
+            f"Arquivadas: {arquivadas}",
+            estilo_normal
+        )
+    )
+    elementos.append(Spacer(1, 12))
 
     dados = [[
         "Req.",
         "Atividade",
         "Categoria",
         "Responsável",
+        "Prioridade",
         "Início",
-        "Prazo",
         "Conclusão",
         "Status"
     ]]
 
     for item in itens:
-
         dados.append([
-            str(
-                item.get(
-                    "num_requisicao"
-                )
-                or "-"
-            ),
+            str(item.get("num_requisicao") or "-"),
+            str(item.get("atividade") or "-"),
+            str(item.get("categoria") or "-"),
+            str(item.get("responsavel") or "-"),
+            str(item.get("prioridade") or "-"),
+            str(item.get("inicio_formatado") or "-"),
+            str(item.get("concluido_formatado") or "-"),
+            str(item.get("status") or "-")
+        ])
 
-            str(
-                item.get(
-                    "atividade"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "categoria"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "responsavel"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "inicio_formatado"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "prazo_formatado"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "concluido_formatado"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "status"
-                )
-                or "-"
-            )
+    if len(dados) == 1:
+        dados.append([
+            "-",
+            "Nenhuma atividade encontrada para esta data.",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            "-"
         ])
 
     tabela = Table(
         dados,
-        repeatRows=1
+        repeatRows=1,
+        colWidths=[55, 150, 90, 115, 65, 95, 95, 75]
     )
 
     tabela.setStyle(
         TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor(
-                    "#212529"
-                )
-            ),
-
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (-1, 0),
-                colors.white
-            ),
-
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.grey
-            ),
-
-            (
-                "FONTNAME",
-                (0, 0),
-                (-1, 0),
-                "Helvetica-Bold"
-            ),
-
-            (
-                "FONTSIZE",
-                (0, 0),
-                (-1, -1),
-                7
-            ),
-
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE"
-            ),
-
-            (
-                "ROWBACKGROUNDS",
-                (0, 1),
-                (-1, -1),
-                [
-                    colors.white,
-                    colors.HexColor(
-                        "#f4f4f4"
-                    )
-                ]
-            )
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#212529")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 7),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [
+                colors.white,
+                colors.HexColor("#f4f4f4")
+            ])
         ])
     )
 
+    elementos.append(tabela)
+    elementos.append(Spacer(1, 10))
     elementos.append(
-        tabela
+        Paragraph(
+            "Relatório gerado pelo sistema Almoxarifado Valenet.",
+            estilo_normal
+        )
     )
 
-    documento.build(
-        elementos
-    )
-
+    documento.build(elementos)
     buffer.seek(0)
 
     return send_file(
@@ -4027,7 +4011,7 @@ def relatorio_pdf():
         mimetype="application/pdf",
         as_attachment=True,
         download_name=(
-            "relatorio_almoxarifado.pdf"
+            f"relatorio_almoxarifado_{data_param}.pdf"
         )
     )
 

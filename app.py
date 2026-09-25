@@ -1539,30 +1539,25 @@ def cadastro_usuario():
                 )
             )
 
+        # O cadastro não depende da coluna criado_em.
+        # Isso mantém o formulário compatível com bancos antigos
+        # do Render que ainda não tenham essa coluna.
         executar(
             """
             INSERT INTO usuarios
-                (nome, senha, criado_em)
+                (nome, senha)
             VALUES
-                (%s,%s,%s)
+                (%s,%s)
             """
             if usando_postgresql()
             else
             """
             INSERT INTO usuarios
-                (nome, senha, criado_em)
+                (nome, senha)
             VALUES
-                (?,?,?)
+                (?,?)
             """,
-            (
-                nome,
-                senha,
-                (
-                    agora_utc_naive()
-                    if usando_postgresql()
-                    else agora_sqlite()
-                )
-            ),
+            (nome, senha),
             commit=True
         )
 

@@ -573,8 +573,6 @@ def prazo_em_datetime(valor):
 # ============================================================
 # ATRASADOS
 #
-# REGRA:
-#
 # SOMENTE Pendente e Em andamento podem estar atrasados.
 #
 # Concluído = histórico
@@ -611,6 +609,8 @@ def registro_foi_atrasado(item):
         ""
     )
 
+    # Arquivado e concluído jamais entram
+    # como atraso atual.
     if not status_eh_ativo(status):
         return False
 
@@ -788,7 +788,7 @@ def preparar_chat(itens):
 
 
 # ============================================================
-# BUSCAS PADRÃO DE ATIVIDADES
+# BUSCAS PADRÃO
 # ============================================================
 
 def buscar_atividades_ativas():
@@ -820,7 +820,7 @@ def buscar_atividades_historico():
 # ============================================================
 # DUPLICIDADE
 #
-# Somente atividades ATIVAS bloqueiam uma nova requisição.
+# Somente atividades ATIVAS bloqueiam nova requisição.
 # Concluído e Arquivado podem ser reutilizados.
 # ============================================================
 
@@ -909,6 +909,10 @@ def init_db():
 
         cursor = db.cursor()
 
+        # ----------------------------------------------------
+        # USUÁRIOS
+        # ----------------------------------------------------
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
@@ -917,6 +921,19 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # IMPORTANTE:
+        # A tabela usuarios já pode existir no Render
+        # sem criado_em. O CREATE TABLE IF NOT EXISTS
+        # NÃO adiciona colunas em tabelas existentes.
+        cursor.execute("""
+            ALTER TABLE usuarios
+            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+        """)
+
+        # ----------------------------------------------------
+        # ATIVIDADES
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -937,6 +954,65 @@ def init_db():
         """)
 
         cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS num_requisicao TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS descricao TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS categoria TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS responsavel TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS prioridade TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS prazo TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS status TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS encerrado_por TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE atividades
+            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+        """)
+
+        # ----------------------------------------------------
+        # CHAT
+        # ----------------------------------------------------
+
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id SERIAL PRIMARY KEY,
                 usuario TEXT,
@@ -944,6 +1020,10 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # ----------------------------------------------------
+        # MELHORIAS
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -953,16 +1033,6 @@ def init_db():
                 etapa TEXT,
                 autor TEXT,
                 status TEXT,
-                criado_em TIMESTAMP
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id SERIAL PRIMARY KEY,
-                codigo TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0,
                 criado_em TIMESTAMP
             )
         """)
@@ -978,19 +1048,52 @@ def init_db():
         """)
 
         cursor.execute("""
-            ALTER TABLE atividades
-            ADD COLUMN IF NOT EXISTS encerrado_por TEXT
+            ALTER TABLE melhorias
+            ADD COLUMN IF NOT EXISTS status TEXT
         """)
 
         cursor.execute("""
-            ALTER TABLE atividades
-            ADD COLUMN IF NOT EXISTS inicio_em TIMESTAMP
+            ALTER TABLE melhorias
+            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+        """)
+
+        # ----------------------------------------------------
+        # ESTOQUE
+        # ----------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS estoque (
+                id SERIAL PRIMARY KEY,
+                codigo TEXT,
+                descricao TEXT,
+                quantidade INTEGER DEFAULT 0,
+                criado_em TIMESTAMP
+            )
         """)
 
         cursor.execute("""
-            ALTER TABLE atividades
-            ADD COLUMN IF NOT EXISTS concluido_em TIMESTAMP
+            ALTER TABLE estoque
+            ADD COLUMN IF NOT EXISTS codigo TEXT
         """)
+
+        cursor.execute("""
+            ALTER TABLE estoque
+            ADD COLUMN IF NOT EXISTS descricao TEXT
+        """)
+
+        cursor.execute("""
+            ALTER TABLE estoque
+            ADD COLUMN IF NOT EXISTS quantidade INTEGER DEFAULT 0
+        """)
+
+        cursor.execute("""
+            ALTER TABLE estoque
+            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+        """)
+
+        # ----------------------------------------------------
+        # ÍNDICES
+        # ----------------------------------------------------
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1010,10 +1113,20 @@ def init_db():
             ON atividades (categoria)
         """)
 
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_prazo
+            ON atividades (prazo)
+        """)
+
         db.commit()
         cursor.close()
 
     else:
+
+        # ----------------------------------------------------
+        # USUÁRIOS SQLITE
+        # ----------------------------------------------------
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -1023,6 +1136,26 @@ def init_db():
                 criado_em TEXT
             )
         """)
+
+        colunas = db.execute(
+            "PRAGMA table_info(usuarios)"
+        ).fetchall()
+
+        nomes = [
+            coluna["name"]
+            for coluna in colunas
+        ]
+
+        if "criado_em" not in nomes:
+
+            db.execute("""
+                ALTER TABLE usuarios
+                ADD COLUMN criado_em TEXT
+            """)
+
+        # ----------------------------------------------------
+        # ATIVIDADES SQLITE
+        # ----------------------------------------------------
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -1042,6 +1175,85 @@ def init_db():
             )
         """)
 
+        colunas = db.execute(
+            "PRAGMA table_info(atividades)"
+        ).fetchall()
+
+        nomes = [
+            coluna["name"]
+            for coluna in colunas
+        ]
+
+        if "num_requisicao" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN num_requisicao TEXT
+            """)
+
+        if "descricao" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN descricao TEXT
+            """)
+
+        if "categoria" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN categoria TEXT
+            """)
+
+        if "responsavel" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN responsavel TEXT
+            """)
+
+        if "prioridade" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN prioridade TEXT
+            """)
+
+        if "prazo" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN prazo TEXT
+            """)
+
+        if "status" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN status TEXT
+            """)
+
+        if "inicio_em" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN inicio_em TEXT
+            """)
+
+        if "concluido_em" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN concluido_em TEXT
+            """)
+
+        if "encerrado_por" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN encerrado_por TEXT
+            """)
+
+        if "criado_em" not in nomes:
+            db.execute("""
+                ALTER TABLE atividades
+                ADD COLUMN criado_em TEXT
+            """)
+
+        # ----------------------------------------------------
+        # CHAT
+        # ----------------------------------------------------
+
         db.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1050,6 +1262,10 @@ def init_db():
                 criado_em TEXT
             )
         """)
+
+        # ----------------------------------------------------
+        # MELHORIAS
+        # ----------------------------------------------------
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -1062,20 +1278,6 @@ def init_db():
                 criado_em TEXT
             )
         """)
-
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS estoque (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                codigo TEXT,
-                descricao TEXT,
-                quantidade INTEGER DEFAULT 0,
-                criado_em TEXT
-            )
-        """)
-
-        # ----------------------------------------------------
-        # MIGRAÇÃO SQLITE - MELHORIAS
-        # ----------------------------------------------------
 
         colunas = db.execute(
             "PRAGMA table_info(melhorias)"
@@ -1100,12 +1302,36 @@ def init_db():
                 ADD COLUMN autor TEXT
             """)
 
+        if "status" not in nomes:
+
+            db.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN status TEXT
+            """)
+
+        if "criado_em" not in nomes:
+
+            db.execute("""
+                ALTER TABLE melhorias
+                ADD COLUMN criado_em TEXT
+            """)
+
         # ----------------------------------------------------
-        # MIGRAÇÃO SQLITE - ATIVIDADES
+        # ESTOQUE
         # ----------------------------------------------------
 
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS estoque (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                codigo TEXT,
+                descricao TEXT,
+                quantidade INTEGER DEFAULT 0,
+                criado_em TEXT
+            )
+        """)
+
         colunas = db.execute(
-            "PRAGMA table_info(atividades)"
+            "PRAGMA table_info(estoque)"
         ).fetchall()
 
         nomes = [
@@ -1113,26 +1339,37 @@ def init_db():
             for coluna in colunas
         ]
 
-        if "encerrado_por" not in nomes:
+        if "codigo" not in nomes:
 
             db.execute("""
-                ALTER TABLE atividades
-                ADD COLUMN encerrado_por TEXT
+                ALTER TABLE estoque
+                ADD COLUMN codigo TEXT
             """)
 
-        if "inicio_em" not in nomes:
+        if "descricao" not in nomes:
 
             db.execute("""
-                ALTER TABLE atividades
-                ADD COLUMN inicio_em TEXT
+                ALTER TABLE estoque
+                ADD COLUMN descricao TEXT
             """)
 
-        if "concluido_em" not in nomes:
+        if "quantidade" not in nomes:
 
             db.execute("""
-                ALTER TABLE atividades
-                ADD COLUMN concluido_em TEXT
+                ALTER TABLE estoque
+                ADD COLUMN quantidade INTEGER DEFAULT 0
             """)
+
+        if "criado_em" not in nomes:
+
+            db.execute("""
+                ALTER TABLE estoque
+                ADD COLUMN criado_em TEXT
+            """)
+
+        # ----------------------------------------------------
+        # ÍNDICES SQLITE
+        # ----------------------------------------------------
 
         db.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1150,6 +1387,12 @@ def init_db():
             CREATE INDEX IF NOT EXISTS
             idx_atividades_categoria
             ON atividades (categoria)
+        """)
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_prazo
+            ON atividades (prazo)
         """)
 
         db.commit()
@@ -1210,8 +1453,8 @@ def init_db():
 # ============================================================
 # ARQUIVAMENTO AUTOMÁTICO
 #
-# QUALQUER ATIVIDADE CONCLUÍDA HÁ MAIS DE 24 HORAS
-# PODE SER ARQUIVADA.
+# Qualquer atividade concluída há mais de 24 horas
+# é arquivada.
 #
 # O registro NÃO é apagado.
 # ============================================================
@@ -1223,11 +1466,16 @@ def arquivar_atividades_expiradas():
         - timedelta(hours=24)
     )
 
+    limite_brasil = limite.astimezone(
+        FUSO_BRASIL
+    )
+
     registros = executar(
         """
         SELECT id, status, concluido_em
         FROM atividades
         WHERE concluido_em IS NOT NULL
+          AND LOWER(COALESCE(status,'')) = 'concluído'
         """,
         fetchall=True
     )
@@ -1235,15 +1483,6 @@ def arquivar_atividades_expiradas():
     ids_para_arquivar = []
 
     for item in registros:
-
-        status = obter_valor(
-            item,
-            "status",
-            ""
-        )
-
-        if not status_eh_concluido(status):
-            continue
 
         concluido_em = obter_valor(
             item,
@@ -1257,10 +1496,6 @@ def arquivar_atividades_expiradas():
         if not dt:
             continue
 
-        limite_brasil = limite.astimezone(
-            FUSO_BRASIL
-        )
-
         if dt <= limite_brasil:
 
             ids_para_arquivar.append(
@@ -1270,6 +1505,9 @@ def arquivar_atividades_expiradas():
                 )
             )
 
+    if not ids_para_arquivar:
+        return
+
     for id_atividade in ids_para_arquivar:
 
         executar(
@@ -1277,6 +1515,7 @@ def arquivar_atividades_expiradas():
             UPDATE atividades
             SET status = 'Arquivado'
             WHERE id = %s
+              AND LOWER(COALESCE(status,'')) = 'concluído'
             """
             if usando_postgresql()
             else
@@ -1284,6 +1523,7 @@ def arquivar_atividades_expiradas():
             UPDATE atividades
             SET status = 'Arquivado'
             WHERE id = ?
+              AND LOWER(COALESCE(status,'')) = 'concluído'
             """,
             (id_atividade,),
             commit=True
@@ -1381,6 +1621,10 @@ def cadastro_usuario():
             ""
         ).strip()
 
+        # Seu cadastro.html atual não possui
+        # confirmar_senha.
+        #
+        # Se no futuro o campo existir, ele será validado.
         confirmar = request.form.get(
             "confirmar_senha",
             ""
@@ -1399,10 +1643,38 @@ def cadastro_usuario():
                 )
             )
 
-        if senha != confirmar:
+        # Só compara se o campo de confirmação
+        # realmente foi enviado pelo formulário.
+        if confirmar and senha != confirmar:
 
             flash(
                 "As senhas não conferem.",
+                "warning"
+            )
+
+            return redirect(
+                url_for(
+                    "cadastro_usuario"
+                )
+            )
+
+        if len(nome) < 2:
+
+            flash(
+                "O nome precisa ter pelo menos 2 caracteres.",
+                "warning"
+            )
+
+            return redirect(
+                url_for(
+                    "cadastro_usuario"
+                )
+            )
+
+        if len(senha) < 4:
+
+            flash(
+                "A senha deve ter pelo menos 4 caracteres.",
                 "warning"
             )
 
@@ -1824,12 +2096,13 @@ def index():
     # USUÁRIOS
     #
     # IMPORTANTE:
-    # Aqui estão TODOS os usuários cadastrados.
+    # Não depende de criado_em.
+    # Isso evita o erro que estava acontecendo no Render.
     # ========================================================
 
     usuarios = executar(
         """
-        SELECT id, nome, criado_em
+        SELECT id, nome
         FROM usuarios
         ORDER BY nome ASC
         """,
@@ -1862,21 +2135,16 @@ def index():
 
     # ========================================================
     # REQUISIÇÕES PENDENTES
-    #
-    # SOMENTE:
-    # categoria = Separação
-    # status = Pendente
-    #
-    # Usa DISTINCT porque uma requisição é uma requisição,
-    # mesmo que eventualmente existam registros repetidos.
     # ========================================================
 
     total_req = contar(
         """
         SELECT COUNT(DISTINCT UPPER(TRIM(num_requisicao))) AS total
         FROM atividades
-        WHERE categoria = %s
-          AND LOWER(COALESCE(status,'')) = 'pendente'
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'separacao'
+          AND LOWER(COALESCE(status,'')) =
+              'pendente'
           AND COALESCE(TRIM(num_requisicao),'') <> ''
         """
         if usando_postgresql()
@@ -1884,11 +2152,13 @@ def index():
         """
         SELECT COUNT(DISTINCT UPPER(TRIM(num_requisicao))) AS total
         FROM atividades
-        WHERE categoria = ?
-          AND LOWER(COALESCE(status,'')) = 'pendente'
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'separacao'
+          AND LOWER(COALESCE(status,'')) =
+              'pendente'
           AND COALESCE(TRIM(num_requisicao),'') <> ''
         """,
-        ("Separação",)
+        ()
     )
 
     # ========================================================
@@ -1899,64 +2169,40 @@ def index():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = %s
-          AND LOWER(COALESCE(status,'')) IN
-              ('pendente','em andamento')
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = ?
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'inventario'
           AND LOWER(COALESCE(status,'')) IN
               ('pendente','em andamento')
         """,
-        ("Inventário",)
+        ()
     )
 
     inv_conc = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = %s
-          AND LOWER(COALESCE(status,'')) = 'concluido'
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = ?
-          AND LOWER(COALESCE(status,'')) = 'concluido'
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'inventario'
+          AND LOWER(COALESCE(status,'')) =
+              'concluido'
         """,
-        ("Inventário",)
+        ()
     )
 
     # ========================================================
     # EXPEDIÇÃO
-    #
-    # SOMENTE ATIVAS.
     # ========================================================
 
     exp_pend = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = %s
-          AND LOWER(COALESCE(status,'')) IN
-              ('pendente','em andamento')
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = ?
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'expedicao'
           AND LOWER(COALESCE(status,'')) IN
               ('pendente','em andamento')
         """,
-        ("Expedição",)
+        ()
     )
 
     # ========================================================
@@ -1967,52 +2213,32 @@ def index():
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE categoria = %s
-          AND LOWER(COALESCE(status,'')) IN
-              ('pendente','em andamento')
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE categoria = ?
+        WHERE LOWER(COALESCE(categoria,'')) =
+              'recebimento'
           AND LOWER(COALESCE(status,'')) IN
               ('pendente','em andamento')
         """,
-        ("Recebimento",)
+        ()
     )
 
     # ========================================================
     # OCORRÊNCIAS
-    #
-    # Alta prioridade + ativa.
     # ========================================================
 
     total_oco = contar(
         """
         SELECT COUNT(*) AS total
         FROM atividades
-        WHERE prioridade = %s
-          AND LOWER(COALESCE(status,'')) IN
-              ('pendente','em andamento')
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT COUNT(*) AS total
-        FROM atividades
-        WHERE prioridade = ?
+        WHERE LOWER(COALESCE(prioridade,'')) =
+              'alta'
           AND LOWER(COALESCE(status,'')) IN
               ('pendente','em andamento')
         """,
-        ("Alta",)
+        ()
     )
 
     # ========================================================
     # TODAS AS ATIVIDADES
-    #
-    # Somente para histórico/indicadores.
     # ========================================================
 
     todas = buscar_atividades_historico()
@@ -2024,11 +2250,7 @@ def index():
     # ========================================================
     # ATRASADOS ATUAIS
     #
-    # NUNCA usa apenas o prazo.
-    #
-    # Só conta:
-    # Pendente + prazo vencido
-    # Em andamento + prazo vencido
+    # SOMENTE Pendente e Em andamento.
     # ========================================================
 
     total_atrasados = sum(
@@ -2046,10 +2268,9 @@ def index():
     )
 
     # ========================================================
-    # CONCLUÍDAS
+    # CONCLUÍDAS / ARQUIVADAS
     #
-    # Histórico:
-    # Concluído + Arquivado
+    # Para o indicador geral, ambos são histórico.
     # ========================================================
 
     total_concluidas = sum(
@@ -2591,15 +2812,16 @@ def modulo(nome):
 
     # ========================================================
     # CADASTROS
-    #
-    # Agora envia os usuários para a tela de cadastros.
     # ========================================================
 
     if nome_normalizado == "cadastros":
 
+        # IMPORTANTE:
+        # Não buscamos criado_em aqui.
+        # O erro do Render estava exatamente aqui.
         usuarios = executar(
             """
-            SELECT id, nome, criado_em
+            SELECT id, nome
             FROM usuarios
             ORDER BY nome ASC
             """,
@@ -3284,7 +3506,7 @@ def concluir(id):
     # ========================================================
     # SEPARAÇÃO CONCLUÍDA
     #
-    # → CRIA EXPEDIÇÃO AUTOMATICAMENTE
+    # CRIA EXPEDIÇÃO AUTOMATICAMENTE
     # ========================================================
 
     categoria = obter_valor(
@@ -4305,3 +4527,4 @@ if __name__ == "__main__":
 
         debug=True
     )
+    

@@ -96,10 +96,18 @@
             background-color: rgba(25, 135, 84, 0.03);
         }
 
+        /*
+         * Arquivado fica visualmente neutro.
+         * Nunca recebe o vermelho de atraso atual.
+         */
         .linha-arquivada {
             background-color: rgba(108, 117, 125, 0.04);
         }
 
+        /*
+         * Somente registros que estão efetivamente
+         * atrasados no fluxo atual recebem destaque vermelho.
+         */
         .linha-atrasada {
             background-color: rgba(220, 53, 69, 0.06) !important;
         }
@@ -196,6 +204,7 @@
 
 <body class="p-3 p-md-4">
 
+
 <div
     class="container-fluid"
     style="max-width: 1600px;"
@@ -286,7 +295,8 @@
                 {% if categoria == 'success' %}
 
                     <i
-                        class="fa-solid fa-circle-check me-1"
+                        class="fa-solid
+                               fa-circle-check me-1"
                     ></i>
 
                 {% elif categoria == 'danger' %}
@@ -308,7 +318,8 @@
                 {% else %}
 
                     <i
-                        class="fa-solid fa-circle-info me-1"
+                        class="fa-solid
+                               fa-circle-info me-1"
                     ></i>
 
                 {% endif %}
@@ -373,6 +384,9 @@
 
         <div class="d-flex gap-2 flex-wrap">
 
+
+            <!-- TODOS -->
+
             <a
                 href="{{ url_for('relatorios', filtro='todos') }}"
                 class="btn btn-sm filtro-btn
@@ -389,6 +403,8 @@
 
             </a>
 
+
+            <!-- PENDENTES -->
 
             <a
                 href="{{ url_for('relatorios', filtro='pendentes') }}"
@@ -407,6 +423,8 @@
             </a>
 
 
+            <!-- EM ANDAMENTO -->
+
             <a
                 href="{{ url_for('relatorios', filtro='andamento') }}"
                 class="btn btn-sm filtro-btn
@@ -423,6 +441,8 @@
 
             </a>
 
+
+            <!-- CONCLUÍDOS -->
 
             <a
                 href="{{ url_for('relatorios', filtro='concluidos') }}"
@@ -441,6 +461,8 @@
             </a>
 
 
+            <!-- ARQUIVADOS -->
+
             <a
                 href="{{ url_for('relatorios', filtro='arquivados') }}"
                 class="btn btn-sm filtro-btn
@@ -457,6 +479,8 @@
 
             </a>
 
+
+            <!-- ATRASADOS -->
 
             <a
                 href="{{ url_for('relatorios', filtro='atrasados') }}"
@@ -506,6 +530,8 @@
     %}
 
 
+    <!-- CONCLUÍDO -->
+
     {% if status_atual == 'Concluído'
           or status_atual == 'Concluido' %}
 
@@ -514,6 +540,8 @@
         %}
 
 
+    <!-- PENDENTE -->
+
     {% elif status_atual == 'Pendente' %}
 
         {% set pendentes.total =
@@ -521,12 +549,16 @@
         %}
 
 
+    <!-- EM ANDAMENTO -->
+
     {% elif status_atual == 'Em andamento' %}
 
         {% set andamento.total =
             andamento.total + 1
         %}
 
+
+    <!-- ARQUIVADO -->
 
     {% elif status_atual == 'Arquivada'
           or status_atual == 'Arquivado' %}
@@ -538,7 +570,16 @@
     {% endif %}
 
 
-    {% if item.foi_atrasada|default(false) %}
+    <!--
+        IMPORTANTE:
+        Arquivado NÃO entra no contador de atrasadas.
+    -->
+
+    {% if
+        status_atual != 'Arquivado'
+        and status_atual != 'Arquivada'
+        and i.foi_atrasada|default(false)
+    %}
 
         {% set atrasadas.total =
             atrasadas.total + 1
@@ -549,6 +590,10 @@
 {% endfor %}
 
 
+
+<!-- ===================================================== -->
+<!-- CARDS DE RESUMO -->
+<!-- ===================================================== -->
 
 <div class="row g-3 mb-4">
 
@@ -709,7 +754,7 @@
                 <div>
 
                     <small class="text-muted">
-                        Atrasadas
+                        Atrasadas atuais
                     </small>
 
                     <h3
@@ -762,15 +807,20 @@
 
         <div class="small mt-1">
 
-            Esta visão reúne atividades cujo prazo foi
-            ultrapassado. O registro continua preservado
-            no histórico mesmo depois de concluído ou arquivado.
+            Esta visão reúne atividades que estão
+            com o prazo ultrapassado.
+
+            <br>
+
+            Registros arquivados não são considerados
+            atrasados atualmente.
 
         </div>
 
     </div>
 
 </div>
+
 
 {% elif filtro_atual == 'arquivados' %}
 
@@ -796,6 +846,12 @@
 
             Nenhum registro é apagado definitivamente
             pelo fluxo normal.
+
+            <br>
+
+            <strong>
+                Arquivado não significa atrasado.
+            </strong>
 
         </div>
 
@@ -970,9 +1026,22 @@
                     i.status|default('Pendente')|trim
                 %}
 
+
+                <!--
+                    Somente atividades NÃO arquivadas
+                    podem ser consideradas atrasadas atualmente.
+                -->
+
+                {% set atraso_atual = (
+                    status_atual != 'Arquivado'
+                    and status_atual != 'Arquivada'
+                    and i.foi_atrasada|default(false)
+                ) %}
+
+
                 <tr
                     class="
-                    {% if i.foi_atrasada|default(false) %}
+                    {% if atraso_atual %}
                         linha-atrasada
                     {% elif status_atual == 'Concluído'
                           or status_atual == 'Concluido' %}
@@ -1048,7 +1117,9 @@
                         {% endif %}
 
 
-                        {% if i.foi_atrasada|default(false) %}
+                        <!-- ATRASO ATUAL -->
+
+                        {% if atraso_atual %}
 
                             <div class="mt-1">
 
@@ -1069,6 +1140,36 @@
                                     {{ i.texto_atraso|default(
                                         'Atividade atrasada'
                                     ) }}
+
+                                </span>
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <!-- ARQUIVADO -->
+
+                        {% if status_atual == 'Arquivado'
+                              or status_atual == 'Arquivada' %}
+
+                            <div class="mt-1">
+
+                                <span
+                                    class="badge
+                                           bg-secondary-subtle
+                                           text-secondary
+                                           border
+                                           texto-arquivado"
+                                >
+
+                                    <i
+                                        class="fa-solid
+                                               fa-box-archive
+                                               me-1"
+                                    ></i>
+
+                                    Registro arquivado
 
                                 </span>
 
@@ -1500,6 +1601,9 @@
 
                     <td>
 
+
+                        <!-- CONCLUÍDO -->
+
                         {% if status_atual == 'Concluído'
                               or status_atual == 'Concluido' %}
 
@@ -1516,6 +1620,8 @@
                             </span>
 
 
+                        <!-- ARQUIVADO -->
+
                         {% elif status_atual == 'Arquivada'
                               or status_atual == 'Arquivado' %}
 
@@ -1531,6 +1637,8 @@
 
                             </span>
 
+
+                        <!-- PENDENTE -->
 
                         {% elif status_atual == 'Pendente' %}
 
@@ -1551,6 +1659,8 @@
                             </span>
 
 
+                        <!-- EM ANDAMENTO -->
+
                         {% elif status_atual == 'Em andamento' %}
 
                             <span class="badge bg-info">
@@ -1566,6 +1676,8 @@
                             </span>
 
 
+                        <!-- OUTRO -->
+
                         {% else %}
 
                             <span class="badge bg-secondary">
@@ -1577,7 +1689,12 @@
                         {% endif %}
 
 
-                        {% if i.foi_atrasada|default(false) %}
+                        <!--
+                            SOMENTE ATIVIDADES ATUAIS
+                            PODEM EXIBIR "ATRASADO".
+                        -->
+
+                        {% if atraso_atual %}
 
                             <div class="mt-1">
 
@@ -1600,6 +1717,7 @@
 
                         {% endif %}
 
+
                     </td>
 
 
@@ -1610,8 +1728,10 @@
 
                     <td class="text-center acoes-tabela">
 
+
                         {% if status_atual != 'Arquivado'
                               and status_atual != 'Arquivada' %}
+
 
                             <!-- EDITAR -->
 
@@ -1644,8 +1764,20 @@
                                 method="POST"
                                 action="{{ url_for('arquivar', id=i.id) }}"
                                 class="d-inline"
-                                onsubmit="return confirmarArquivamento('{{ i.id }}', '{{ i.atividade|replace("'", "\\'") }}');"
+                                onsubmit="return confirmarArquivamento(this);"
                             >
+
+                                <input
+                                    type="hidden"
+                                    name="id"
+                                    value="{{ i.id }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="atividade_confirmacao"
+                                    value="{{ i.atividade or 'esta atividade' }}"
+                                >
 
                                 <button
                                     type="submit"
@@ -1662,6 +1794,7 @@
                                 </button>
 
                             </form>
+
 
                         {% else %}
 
@@ -1748,6 +1881,8 @@
 <div class="row g-3 mt-3">
 
 
+    <!-- RESPONSÁVEL -->
+
     <div class="col-12 col-lg-4">
 
         <div
@@ -1791,6 +1926,8 @@
 
 
 
+    <!-- ENCERRADO POR -->
+
     <div class="col-12 col-lg-4">
 
         <div
@@ -1833,6 +1970,8 @@
 
 
 
+    <!-- ARQUIVADOS -->
+
     <div class="col-12 col-lg-4">
 
         <div
@@ -1846,8 +1985,8 @@
 
                     <i
                         class="fa-solid
-                               fa-triangle-exclamation
-                               text-danger fa-lg"
+                               fa-box-archive
+                               text-secondary fa-lg"
                     ></i>
 
                 </div>
@@ -1855,14 +1994,14 @@
                 <div>
 
                     <strong>
-                        Atrasados
+                        Arquivados
                     </strong>
 
                     <div class="small text-muted mt-1">
 
-                        Atividades que ultrapassaram o prazo
-                        continuam identificadas mesmo depois
-                        de concluídas ou arquivadas.
+                        Registros encerrados e preservados
+                        no histórico. Arquivados não são
+                        considerados atrasados atualmente.
 
                     </div>
 
@@ -1895,6 +2034,9 @@
     >
 
         <div class="modal-content border-0 shadow-lg">
+
+
+            <!-- CABEÇALHO -->
 
             <div class="modal-header">
 
@@ -1933,6 +2075,9 @@
 
             </div>
 
+
+
+            <!-- FORMULÁRIO -->
 
             <form
                 method="POST"
@@ -2211,6 +2356,9 @@
                 </div>
 
 
+
+                <!-- RODAPÉ MODAL -->
+
                 <div class="modal-footer">
 
                     <button
@@ -2246,135 +2394,6 @@
                 </div>
 
             </form>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-
-<!-- ===================================================== -->
-<!-- MODAL DE CONFIRMAÇÃO DE ARQUIVAMENTO -->
-<!-- ===================================================== -->
-
-<div
-    class="modal fade"
-    id="modalArquivar"
-    tabindex="-1"
-    aria-labelledby="modalArquivarLabel"
-    aria-hidden="true"
->
-
-    <div
-        class="modal-dialog modal-dialog-centered"
-    >
-
-        <div class="modal-content border-0 shadow-lg">
-
-            <div class="modal-header">
-
-                <h5
-                    class="modal-title fw-bold"
-                    id="modalArquivarLabel"
-                >
-
-                    <i
-                        class="fa-solid
-                               fa-box-archive
-                               text-secondary me-2"
-                    ></i>
-
-                    Arquivar atividade
-
-                </h5>
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                ></button>
-
-            </div>
-
-
-            <div class="modal-body">
-
-                <p class="mb-2">
-
-                    Você está prestes a arquivar:
-
-                </p>
-
-                <div
-                    class="alert alert-secondary
-                           border"
-                >
-
-                    <strong id="nomeAtividadeArquivar">
-                        —
-                    </strong>
-
-                </div>
-
-                <div class="small text-muted">
-
-                    <i
-                        class="fa-solid
-                               fa-shield-halved
-                               me-1"
-                    ></i>
-
-                    O registro <strong>não será apagado</strong>.
-
-                    Ele ficará disponível em:
-
-                    <strong>
-                        Relatórios → Arquivados
-                    </strong>.
-
-                </div>
-
-            </div>
-
-
-            <div class="modal-footer">
-
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    data-bs-dismiss="modal"
-                >
-
-                    Cancelar
-
-                </button>
-
-
-                <form
-                    method="POST"
-                    id="formArquivarModal"
-                >
-
-                    <button
-                        type="submit"
-                        class="btn btn-secondary fw-bold"
-                    >
-
-                        <i
-                            class="fa-solid
-                                   fa-box-archive
-                                   me-1"
-                        ></i>
-
-                        Confirmar arquivamento
-
-                    </button>
-
-                </form>
-
-            </div>
 
         </div>
 
@@ -2435,56 +2454,122 @@
 
 function prepararEdicao(botao) {
 
-    const id = botao.dataset.id || "";
-    const requisicao = botao.dataset.requisicao || "";
-    const atividade = botao.dataset.atividade || "";
-    const categoria = botao.dataset.categoria || "";
-    const responsavel = botao.dataset.responsavel || "";
-    const prioridade = botao.dataset.prioridade || "Média";
-    const prazo = botao.dataset.prazo || "";
-    const descricao = botao.dataset.descricao || "";
+    const id =
+        botao.dataset.id || "";
 
-    document.getElementById(
-        "editar_id_visual"
-    ).value = id;
+    const requisicao =
+        botao.dataset.requisicao || "";
 
-    document.getElementById(
-        "editar_requisicao"
-    ).value = requisicao;
+    const atividade =
+        botao.dataset.atividade || "";
 
-    document.getElementById(
-        "editar_atividade"
-    ).value = atividade;
+    const categoria =
+        botao.dataset.categoria || "";
 
-    document.getElementById(
-        "editar_categoria"
-    ).value = categoria;
+    const responsavel =
+        botao.dataset.responsavel || "";
 
-    document.getElementById(
-        "editar_responsavel"
-    ).value = responsavel;
+    const prioridade =
+        botao.dataset.prioridade || "Média";
 
-    document.getElementById(
-        "editar_prioridade"
-    ).value = prioridade;
+    const prazo =
+        botao.dataset.prazo || "";
 
-    document.getElementById(
-        "editar_prazo"
-    ).value = converterPrazoParaInput(prazo);
+    const descricao =
+        botao.dataset.descricao || "";
 
-    document.getElementById(
-        "editar_descricao"
-    ).value = descricao;
+
+    const campoId =
+        document.getElementById(
+            "editar_id_visual"
+        );
+
+    const campoRequisicao =
+        document.getElementById(
+            "editar_requisicao"
+        );
+
+    const campoAtividade =
+        document.getElementById(
+            "editar_atividade"
+        );
+
+    const campoCategoria =
+        document.getElementById(
+            "editar_categoria"
+        );
+
+    const campoResponsavel =
+        document.getElementById(
+            "editar_responsavel"
+        );
+
+    const campoPrioridade =
+        document.getElementById(
+            "editar_prioridade"
+        );
+
+    const campoPrazo =
+        document.getElementById(
+            "editar_prazo"
+        );
+
+    const campoDescricao =
+        document.getElementById(
+            "editar_descricao"
+        );
+
+    const formulario =
+        document.getElementById(
+            "formEditar"
+        );
+
+
+    if (campoId) {
+        campoId.value = id;
+    }
+
+    if (campoRequisicao) {
+        campoRequisicao.value = requisicao;
+    }
+
+    if (campoAtividade) {
+        campoAtividade.value = atividade;
+    }
+
+    if (campoCategoria) {
+        campoCategoria.value = categoria;
+    }
+
+    if (campoResponsavel) {
+        campoResponsavel.value = responsavel;
+    }
+
+    if (campoPrioridade) {
+        campoPrioridade.value = prioridade;
+    }
+
+    if (campoPrazo) {
+        campoPrazo.value =
+            converterPrazoParaInput(prazo);
+    }
+
+    if (campoDescricao) {
+        campoDescricao.value = descricao;
+    }
 
 
     /*
-     * O backend utiliza:
+     * Backend:
      * /editar/<id>
      */
 
-    document.getElementById(
-        "formEditar"
-    ).action = "/editar/" + id;
+    if (formulario) {
+
+        formulario.action =
+            "/editar/" + id;
+
+    }
 
 }
 
@@ -2499,8 +2584,9 @@ function converterPrazoParaInput(valor) {
         return "";
     }
 
+
     /*
-     * Caso já esteja no formato:
+     * Exemplo:
      * 2026-09-24T18:30
      */
 
@@ -2515,25 +2601,33 @@ function converterPrazoParaInput(valor) {
 
 
     /*
-     * Caso venha como:
+     * Exemplo:
      * 2026-09-24 18:30:00
      */
 
     if (valor.includes(" ")) {
 
-        const partes = valor.split(" ");
+        const partes =
+            valor.split(" ");
 
         if (partes.length >= 2) {
 
-            const data = partes[0];
+            const data =
+                partes[0];
 
-            const hora = partes[1];
+            const hora =
+                partes[1];
 
-            return data + "T" + hora.substring(0, 5);
+            return (
+                data +
+                "T" +
+                hora.substring(0, 5)
+            );
 
         }
 
     }
+
 
     return valor;
 
@@ -2544,24 +2638,32 @@ function converterPrazoParaInput(valor) {
    CONFIRMAÇÃO DE ARQUIVAMENTO
    ========================================================= */
 
-function confirmarArquivamento(id, atividade) {
+function confirmarArquivamento(formulario) {
 
-    /*
-     * Mantemos a confirmação simples caso
-     * o navegador bloqueie algum modal.
-     */
+    if (!formulario) {
+        return false;
+    }
+
+
+    const campo =
+        formulario.querySelector(
+            'input[name="atividade_confirmacao"]'
+        );
+
 
     const nome =
-        atividade && atividade.trim()
-            ? atividade
+        campo && campo.value
+            ? campo.value
             : "esta atividade";
+
 
     return confirm(
         "Arquivar " +
         nome +
         "?\n\n" +
-        "O registro não será apagado. " +
-        "Ele continuará disponível em Relatórios > Arquivados."
+        "O registro não será apagado.\n" +
+        "Ele continuará disponível em " +
+        "Relatórios > Arquivados."
     );
 
 }

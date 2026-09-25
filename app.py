@@ -100,7 +100,7 @@ STATUS_VALIDOS = [
 
 
 # ============================================================
-# BANCO
+# BANCO DE DADOS
 # ============================================================
 
 def usando_postgresql():
@@ -108,7 +108,6 @@ def usando_postgresql():
 
 
 def get_db():
-
     if "db" not in g:
 
         if usando_postgresql():
@@ -218,18 +217,11 @@ def obter_valor(
         return padrao
 
     if isinstance(linha, dict):
-
-        return linha.get(
-            campo,
-            padrao
-        )
+        return linha.get(campo, padrao)
 
     try:
-
         return linha[campo]
-
     except Exception:
-
         return padrao
 
 
@@ -255,7 +247,6 @@ def contar(
 
     try:
         return int(valor or 0)
-
     except Exception:
         return 0
 
@@ -292,6 +283,50 @@ def normalizar_status(valor):
 def normalizar_categoria(valor):
     return normalizar_texto(valor)
 
+
+def normalizar_nome_modulo(valor):
+
+    texto = str(valor or "")
+
+    texto = unicodedata.normalize(
+        "NFKD",
+        texto
+    )
+
+    texto = "".join(
+        caractere
+        for caractere in texto
+        if not unicodedata.combining(caractere)
+    )
+
+    return texto.strip().lower()
+
+
+def normalizar_requisicao(valor):
+
+    if valor is None:
+        return ""
+
+    return str(valor).strip().upper()
+
+
+def categoria_eh(item, categoria):
+
+    return (
+        normalizar_categoria(
+            obter_valor(
+                item,
+                "categoria",
+                ""
+            )
+        )
+        == normalizar_categoria(categoria)
+    )
+
+
+# ============================================================
+# TESTES DE STATUS
+# ============================================================
 
 def status_eh_pendente(valor):
 
@@ -338,46 +373,6 @@ def status_eh_ativo(valor):
     )
 
 
-def normalizar_nome_modulo(valor):
-
-    texto = str(valor or "")
-
-    texto = unicodedata.normalize(
-        "NFKD",
-        texto
-    )
-
-    texto = "".join(
-        caractere
-        for caractere in texto
-        if not unicodedata.combining(caractere)
-    )
-
-    return texto.strip().lower()
-
-
-def normalizar_requisicao(valor):
-
-    if valor is None:
-        return ""
-
-    return str(valor).strip().upper()
-
-
-def categoria_eh(item, categoria):
-
-    return (
-        normalizar_categoria(
-            obter_valor(
-                item,
-                "categoria",
-                ""
-            )
-        )
-        == normalizar_categoria(categoria)
-    )
-
-
 # ============================================================
 # DATA / HORA
 # ============================================================
@@ -417,13 +412,15 @@ def converter_para_brasil(valor):
 
     if isinstance(valor, datetime):
 
-        if valor.tzinfo is None:
+        dt = valor
 
-            valor = valor.replace(
+        if dt.tzinfo is None:
+
+            dt = dt.replace(
                 tzinfo=timezone.utc
             )
 
-        return valor.astimezone(
+        return dt.astimezone(
             FUSO_BRASIL
         )
 
@@ -489,9 +486,7 @@ def converter_para_brasil(valor):
 
 def formatar_data_hora(valor):
 
-    dt = converter_para_brasil(
-        valor
-    )
+    dt = converter_para_brasil(valor)
 
     if not dt:
         return "-"
@@ -503,9 +498,7 @@ def formatar_data_hora(valor):
 
 def formatar_hora(valor):
 
-    dt = converter_para_brasil(
-        valor
-    )
+    dt = converter_para_brasil(valor)
 
     if not dt:
         return "-"
@@ -644,9 +637,7 @@ def prazo_atrasado(
     if not status_eh_ativo(status):
         return False
 
-    dt = prazo_em_datetime(
-        prazo
-    )
+    dt = prazo_em_datetime(prazo)
 
     if not dt:
         return False
@@ -681,25 +672,11 @@ def registro_foi_atrasado(item):
 
 def texto_atraso(item):
 
-    status = obter_valor(
-        item,
-        "status",
-        ""
-    )
-
-    if not status_eh_ativo(status):
-        return ""
-
-    prazo = obter_valor(
-        item,
-        "prazo"
-    )
-
-    if not prazo:
+    if not registro_foi_atrasado(item):
         return ""
 
     prazo_dt = prazo_em_datetime(
-        prazo
+        obter_valor(item, "prazo")
     )
 
     if not prazo_dt:
@@ -710,13 +687,13 @@ def texto_atraso(item):
         - prazo_dt
     )
 
-    if diferenca.total_seconds() <= 0:
-        return ""
-
     minutos = int(
         diferenca.total_seconds()
         // 60
     )
+
+    if minutos <= 0:
+        return ""
 
     dias = minutos // 1440
 
@@ -745,14 +722,12 @@ def texto_atraso(item):
 
 
 # ============================================================
-# PREPARAÇÃO
+# PREPARAÇÃO DOS REGISTROS
 # ============================================================
 
 def preparar_atividade(item):
 
-    item = linha_para_dict(
-        item
-    )
+    item = linha_para_dict(item)
 
     if not item:
         return item
@@ -763,40 +738,28 @@ def preparar_atividade(item):
     if not item.get("prioridade"):
         item["prioridade"] = "Baixa"
 
-    item["inicio_formatado"] = (
-        formatar_data_hora(
-            item.get("inicio_em")
-        )
+    item["inicio_formatado"] = formatar_data_hora(
+        item.get("inicio_em")
     )
 
-    item["concluido_formatado"] = (
-        formatar_data_hora(
-            item.get("concluido_em")
-        )
+    item["concluido_formatado"] = formatar_data_hora(
+        item.get("concluido_em")
     )
 
-    item["criado_formatado"] = (
-        formatar_data_hora(
-            item.get("criado_em")
-        )
+    item["criado_formatado"] = formatar_data_hora(
+        item.get("criado_em")
     )
 
-    item["prazo_formatado"] = (
-        formatar_data_hora(
-            item.get("prazo")
-        )
+    item["prazo_formatado"] = formatar_data_hora(
+        item.get("prazo")
     )
 
-    item["foi_atrasada"] = (
-        registro_foi_atrasado(
-            item
-        )
+    item["foi_atrasada"] = registro_foi_atrasado(
+        item
     )
 
-    item["texto_atraso"] = (
-        texto_atraso(
-            item
-        )
+    item["texto_atraso"] = texto_atraso(
+        item
     )
 
     item["duracao"] = calcular_duracao(
@@ -821,16 +784,12 @@ def preparar_chat(itens):
 
     for item in itens:
 
-        item = linha_para_dict(
-            item
-        )
+        item = linha_para_dict(item)
 
         if item:
 
-            item["data_formatada"] = (
-                formatar_data_hora(
-                    item.get("criado_em")
-                )
+            item["data_formatada"] = formatar_data_hora(
+                item.get("criado_em")
             )
 
             resultado.append(item)
@@ -839,7 +798,7 @@ def preparar_chat(itens):
 
 
 # ============================================================
-# BUSCAS
+# BUSCA DE ATIVIDADES
 # ============================================================
 
 def buscar_atividades_ativas():
@@ -879,9 +838,7 @@ def buscar_atividades_historico():
 
 
 # ============================================================
-# INDICADORES
-#
-# ESTA É A FONTE CENTRAL DOS NÚMEROS DO DASHBOARD.
+# INDICADORES GERAIS
 # ============================================================
 
 def calcular_indicadores(atividades):
@@ -891,10 +848,6 @@ def calcular_indicadores(atividades):
         for item in atividades
         if linha_para_dict(item)
     ]
-
-    # ========================================================
-    # STATUS
-    # ========================================================
 
     atividades_pendentes = 0
     atividades_andamento = 0
@@ -937,12 +890,6 @@ def calcular_indicadores(atividades):
 
     total_geral = len(atividades)
 
-    # ========================================================
-    # ATENDIDAS
-    #
-    # Considera concluídas + arquivadas.
-    # ========================================================
-
     if total_geral > 0:
 
         perc_atendidas = round(
@@ -956,10 +903,6 @@ def calcular_indicadores(atividades):
 
         perc_atendidas = 0
 
-    # ========================================================
-    # INVENTÁRIO
-    # ========================================================
-
     inventarios = [
         item
         for item in atividades
@@ -969,9 +912,7 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    inventario_total = len(
-        inventarios
-    )
+    inventario_total = len(inventarios)
 
     inventario_concluido = sum(
         1
@@ -1003,10 +944,6 @@ def calcular_indicadores(atividades):
 
         perc_inventario = 0
 
-    # ========================================================
-    # EXPEDIÇÃO
-    # ========================================================
-
     expedicoes = [
         item
         for item in atividades
@@ -1016,9 +953,7 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    expedicao_total = len(
-        expedicoes
-    )
+    expedicao_total = len(expedicoes)
 
     expedicao_concluida = sum(
         1
@@ -1050,13 +985,6 @@ def calcular_indicadores(atividades):
 
         perc_expedicao = 0
 
-    # ========================================================
-    # REQUISIÇÕES
-    #
-    # Conta números de requisição distintos que ainda possuem
-    # Separação ativa.
-    # ========================================================
-
     requisicoes_pendentes = set()
 
     for item in atividades:
@@ -1084,14 +1012,7 @@ def calcular_indicadores(atividades):
         )
 
         if numero:
-
-            requisicoes_pendentes.add(
-                numero
-            )
-
-    # ========================================================
-    # RECEBIMENTOS
-    # ========================================================
+            requisicoes_pendentes.add(numero)
 
     recebimento_pendente = sum(
         1
@@ -1109,12 +1030,6 @@ def calcular_indicadores(atividades):
             )
         )
     )
-
-    # ========================================================
-    # OCORRÊNCIAS
-    #
-    # Alta prioridade + atividade ativa.
-    # ========================================================
 
     ocorrencias = sum(
         1
@@ -1136,52 +1051,14 @@ def calcular_indicadores(atividades):
         )
     )
 
-    # ========================================================
-    # ATRASADOS
-    # ========================================================
-
     atrasados = sum(
         1
         for item in atividades
         if registro_foi_atrasado(item)
     )
 
-    # ========================================================
-    # GARANTE 0 - 100
-    # ========================================================
-
-    perc_atendidas = max(
-        0,
-        min(
-            100,
-            perc_atendidas
-        )
-    )
-
-    perc_inventario = max(
-        0,
-        min(
-            100,
-            perc_inventario
-        )
-    )
-
-    perc_expedicao = max(
-        0,
-        min(
-            100,
-            perc_expedicao
-        )
-    )
-
-    # ========================================================
-    # RESULTADO
-    # ========================================================
-
     return {
-
-        "total_geral":
-            total_geral,
+        "total_geral": total_geral,
 
         "atividades_pendentes":
             atividades_pendentes,
@@ -1202,7 +1079,7 @@ def calcular_indicadores(atividades):
             atividades_ativas,
 
         "perc_atendidas":
-            perc_atendidas,
+            max(0, min(100, perc_atendidas)),
 
         "inventario_total":
             inventario_total,
@@ -1214,7 +1091,7 @@ def calcular_indicadores(atividades):
             inventario_pendente,
 
         "perc_inventario":
-            perc_inventario,
+            max(0, min(100, perc_inventario)),
 
         "expedicao_total":
             expedicao_total,
@@ -1226,7 +1103,7 @@ def calcular_indicadores(atividades):
             expedicao_pendente,
 
         "perc_expedicao":
-            perc_expedicao,
+            max(0, min(100, perc_expedicao)),
 
         "requisicoes_pendentes":
             len(requisicoes_pendentes),
@@ -1243,7 +1120,216 @@ def calcular_indicadores(atividades):
 
 
 # ============================================================
-# DUPLICIDADE
+# INDICADORES DO DIA
+#
+# IMPORTANTE:
+# Aqui não usamos todo o histórico.
+# Somente atividades do dia atual no horário de Brasília.
+# ============================================================
+
+def atividade_eh_do_dia(item, data_referencia=None):
+
+    if data_referencia is None:
+        data_referencia = agora_brasil().date()
+
+    data_valor = (
+        obter_valor(item, "inicio_em")
+        or obter_valor(item, "criado_em")
+    )
+
+    dt = converter_para_brasil(data_valor)
+
+    if not dt:
+        return False
+
+    return dt.date() == data_referencia
+
+
+def calcular_indicadores_do_dia(atividades):
+
+    hoje = agora_brasil().date()
+
+    atividades_dia = [
+        linha_para_dict(item)
+        for item in atividades
+        if (
+            linha_para_dict(item)
+            and atividade_eh_do_dia(
+                item,
+                hoje
+            )
+        )
+    ]
+
+    total_dia = len(
+        atividades_dia
+    )
+
+    finalizadas_dia = sum(
+        1
+        for item in atividades_dia
+        if status_eh_finalizado(
+            obter_valor(
+                item,
+                "status"
+            )
+        )
+    )
+
+    pendentes_dia = sum(
+        1
+        for item in atividades_dia
+        if status_eh_ativo(
+            obter_valor(
+                item,
+                "status"
+            )
+        )
+    )
+
+    if total_dia > 0:
+
+        perc_atendidas = round(
+            (
+                finalizadas_dia
+                / total_dia
+            ) * 100
+        )
+
+    else:
+
+        perc_atendidas = 0
+
+    inventarios = [
+        item
+        for item in atividades_dia
+        if categoria_eh(
+            item,
+            "Inventário"
+        )
+    ]
+
+    inventario_total = len(
+        inventarios
+    )
+
+    inventario_concluido = sum(
+        1
+        for item in inventarios
+        if status_eh_finalizado(
+            obter_valor(
+                item,
+                "status"
+            )
+        )
+    )
+
+    if inventario_total > 0:
+
+        perc_inventario = round(
+            (
+                inventario_concluido
+                / inventario_total
+            ) * 100
+        )
+
+    else:
+
+        perc_inventario = 0
+
+    expedicoes = [
+        item
+        for item in atividades_dia
+        if categoria_eh(
+            item,
+            "Expedição"
+        )
+    ]
+
+    expedicao_total = len(
+        expedicoes
+    )
+
+    expedicao_concluida = sum(
+        1
+        for item in expedicoes
+        if status_eh_finalizado(
+            obter_valor(
+                item,
+                "status"
+            )
+        )
+    )
+
+    if expedicao_total > 0:
+
+        perc_expedicao = round(
+            (
+                expedicao_concluida
+                / expedicao_total
+            ) * 100
+        )
+
+    else:
+
+        perc_expedicao = 0
+
+    return {
+        "data": hoje.strftime(
+            "%d/%m/%Y"
+        ),
+
+        "total": total_dia,
+
+        "finalizadas":
+            finalizadas_dia,
+
+        "pendentes":
+            pendentes_dia,
+
+        "perc_atendidas":
+            max(
+                0,
+                min(
+                    100,
+                    perc_atendidas
+                )
+            ),
+
+        "inventario_total":
+            inventario_total,
+
+        "inventario_concluido":
+            inventario_concluido,
+
+        "perc_inventario":
+            max(
+                0,
+                min(
+                    100,
+                    perc_inventario
+                )
+            ),
+
+        "expedicao_total":
+            expedicao_total,
+
+        "expedicao_concluida":
+            expedicao_concluida,
+
+        "perc_expedicao":
+            max(
+                0,
+                min(
+                    100,
+                    perc_expedicao
+                )
+            ),
+    }
+
+
+# ============================================================
+# DUPLICIDADE DE REQUISIÇÃO
 # ============================================================
 
 def requisicao_duplicada(
@@ -1295,7 +1381,6 @@ def requisicao_duplicada(
                 "status"
             )
         ):
-
             return True
 
     return False
@@ -1323,11 +1408,6 @@ def init_db():
         """)
 
         cursor.execute("""
-            ALTER TABLE usuarios
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
-        """)
-
-        cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
                 id SERIAL PRIMARY KEY,
                 num_requisicao TEXT,
@@ -1344,29 +1424,6 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
-
-        colunas_atividades = [
-            ("num_requisicao", "TEXT"),
-            ("descricao", "TEXT"),
-            ("categoria", "TEXT"),
-            ("responsavel", "TEXT"),
-            ("prioridade", "TEXT"),
-            ("prazo", "TEXT"),
-            ("status", "TEXT"),
-            ("inicio_em", "TIMESTAMP"),
-            ("concluido_em", "TIMESTAMP"),
-            ("encerrado_por", "TEXT"),
-            ("criado_em", "TIMESTAMP"),
-        ]
-
-        for coluna, tipo in colunas_atividades:
-
-            cursor.execute(
-                f"""
-                ALTER TABLE atividades
-                ADD COLUMN IF NOT EXISTS {coluna} {tipo}
-                """
-            )
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
@@ -1397,6 +1454,34 @@ def init_db():
                 quantidade INTEGER DEFAULT 0,
                 criado_em TIMESTAMP
             )
+        """)
+
+        colunas_atividades = [
+            ("num_requisicao", "TEXT"),
+            ("descricao", "TEXT"),
+            ("categoria", "TEXT"),
+            ("responsavel", "TEXT"),
+            ("prioridade", "TEXT"),
+            ("prazo", "TEXT"),
+            ("status", "TEXT"),
+            ("inicio_em", "TIMESTAMP"),
+            ("concluido_em", "TIMESTAMP"),
+            ("encerrado_por", "TEXT"),
+            ("criado_em", "TIMESTAMP"),
+        ]
+
+        for coluna, tipo in colunas_atividades:
+
+            cursor.execute(
+                f"""
+                ALTER TABLE atividades
+                ADD COLUMN IF NOT EXISTS {coluna} {tipo}
+                """
+            )
+
+        cursor.execute("""
+            ALTER TABLE usuarios
+            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
         """)
 
         cursor.execute("""
@@ -1561,20 +1646,20 @@ def init_db():
             ],
         }
 
-        for tabela, colunas_esperadas in tabelas_colunas.items():
+        for tabela, colunas in tabelas_colunas.items():
 
-            colunas_existentes = db.execute(
+            existentes = db.execute(
                 f"PRAGMA table_info({tabela})"
             ).fetchall()
 
-            nomes_existentes = [
+            nomes = [
                 coluna["name"]
-                for coluna in colunas_existentes
+                for coluna in existentes
             ]
 
-            for coluna, tipo in colunas_esperadas:
+            for coluna, tipo in colunas:
 
-                if coluna not in nomes_existentes:
+                if coluna not in nomes:
 
                     db.execute(
                         f"""
@@ -1610,7 +1695,7 @@ def init_db():
         db.commit()
 
     # ========================================================
-    # ADMIN
+    # USUÁRIO ADMINISTRADOR
     # ========================================================
 
     usuario = executar(
@@ -1673,10 +1758,6 @@ def arquivar_atividades_expiradas():
         - timedelta(hours=24)
     )
 
-    limite_naive = limite.replace(
-        tzinfo=None
-    )
-
     registros = executar(
         """
         SELECT id, status, concluido_em
@@ -1686,7 +1767,7 @@ def arquivar_atividades_expiradas():
         fetchall=True
     )
 
-    ids_para_arquivar = []
+    ids = []
 
     for item in registros:
 
@@ -1706,57 +1787,25 @@ def arquivar_atividades_expiradas():
         if not concluido:
             continue
 
-        try:
+        dt = converter_para_brasil(
+            concluido
+        )
 
-            if isinstance(
-                concluido,
-                datetime
-            ):
-
-                dt = concluido
-
-                if dt.tzinfo is None:
-                    dt = dt.replace(
-                        tzinfo=timezone.utc
-                    )
-
-                if dt <= limite:
-
-                    ids_para_arquivar.append(
-                        obter_valor(
-                            item,
-                            "id"
-                        )
-                    )
-
-            else:
-
-                texto = str(
-                    concluido
-                ).strip()
-
-                dt = datetime.fromisoformat(
-                    texto
-                )
-
-                if dt.tzinfo is None:
-                    dt = dt.replace(
-                        tzinfo=timezone.utc
-                    )
-
-                if dt <= limite:
-
-                    ids_para_arquivar.append(
-                        obter_valor(
-                            item,
-                            "id"
-                        )
-                    )
-
-        except Exception:
+        if not dt:
             continue
 
-    for item_id in ids_para_arquivar:
+        if dt.astimezone(
+            timezone.utc
+        ) <= limite:
+
+            ids.append(
+                obter_valor(
+                    item,
+                    "id"
+                )
+            )
+
+    for item_id in ids:
 
         executar(
             """
@@ -1824,11 +1873,9 @@ def login():
 
         if usuario:
 
-            session["usuario_atual"] = (
-                obter_valor(
-                    usuario,
-                    "nome"
-                )
+            session["usuario_atual"] = obter_valor(
+                usuario,
+                "nome"
             )
 
             return redirect(
@@ -1846,7 +1893,7 @@ def login():
 
 
 # ============================================================
-# CADASTRO
+# CADASTRO DE USUÁRIO
 # ============================================================
 
 @app.route(
@@ -1959,21 +2006,26 @@ def cadastro_usuario():
         executar(
             """
             INSERT INTO usuarios
-                (nome, senha)
+                (nome, senha, criado_em)
             VALUES
-                (%s,%s)
+                (%s,%s,%s)
             """
             if usando_postgresql()
             else
             """
             INSERT INTO usuarios
-                (nome, senha)
+                (nome, senha, criado_em)
             VALUES
-                (?,?)
+                (?,?,?)
             """,
             (
                 nome,
-                senha
+                senha,
+                (
+                    agora_utc_naive()
+                    if usando_postgresql()
+                    else agora_sqlite()
+                )
             ),
             commit=True
         )
@@ -2007,7 +2059,376 @@ def logout():
 
 
 # ============================================================
-# DASHBOARD
+# DADOS DO DASHBOARD
+# ============================================================
+
+def obter_dados_dashboard():
+
+    usuario_atual = session[
+        "usuario_atual"
+    ]
+
+    arquivar_atividades_expiradas()
+
+    # --------------------------------------------------------
+    # ATIVIDADES ATIVAS
+    # --------------------------------------------------------
+
+    atividades_brutas = buscar_atividades_ativas()
+
+    busca = request.args.get(
+        "q",
+        ""
+    ).strip()
+
+    if busca:
+
+        busca_normalizada = normalizar_texto(
+            busca
+        )
+
+        itens = []
+
+        for item in atividades_brutas:
+
+            campos = [
+                obter_valor(
+                    item,
+                    "num_requisicao",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "atividade",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "descricao",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "responsavel",
+                    ""
+                ),
+                obter_valor(
+                    item,
+                    "categoria",
+                    ""
+                ),
+            ]
+
+            if any(
+                busca_normalizada
+                in normalizar_texto(campo)
+                for campo in campos
+            ):
+
+                itens.append(item)
+
+    else:
+
+        itens = atividades_brutas
+
+    itens = preparar_lista_atividades(
+        itens
+    )
+
+    # --------------------------------------------------------
+    # USUÁRIOS
+    # --------------------------------------------------------
+
+    usuarios = executar(
+        """
+        SELECT id, nome
+        FROM usuarios
+        ORDER BY nome ASC
+        """,
+        fetchall=True
+    )
+
+    usuarios = linhas_para_dict(
+        usuarios
+    )
+
+    # --------------------------------------------------------
+    # CHAT
+    # --------------------------------------------------------
+
+    mensagens = executar(
+        """
+        SELECT *
+        FROM chat
+        ORDER BY id DESC
+        LIMIT 30
+        """,
+        fetchall=True
+    )
+
+    mensagens = preparar_chat(
+        mensagens
+    )
+
+    mensagens.reverse()
+
+    # --------------------------------------------------------
+    # TODAS AS ATIVIDADES
+    # --------------------------------------------------------
+
+    atividades_todas = buscar_atividades_historico()
+
+    atividades_todas = [
+        linha_para_dict(item)
+        for item in atividades_todas
+    ]
+
+    # --------------------------------------------------------
+    # INDICADORES GERAIS
+    # --------------------------------------------------------
+
+    indicadores = calcular_indicadores(
+        atividades_todas
+    )
+
+    # --------------------------------------------------------
+    # INDICADORES DO DIA
+    #
+    # AQUI ESTÁ A PRINCIPAL CORREÇÃO.
+    # --------------------------------------------------------
+
+    indicadores_dia = calcular_indicadores_do_dia(
+        atividades_todas
+    )
+
+    # --------------------------------------------------------
+    # HISTÓRICO
+    # --------------------------------------------------------
+
+    todas_preparadas = preparar_lista_atividades(
+        atividades_todas
+    )
+
+    # --------------------------------------------------------
+    # GRÁFICOS
+    # --------------------------------------------------------
+
+    atendidas_pizza = indicadores_dia[
+        "perc_atendidas"
+    ]
+
+    pendentes_pizza = max(
+        0,
+        100 - atendidas_pizza
+    )
+
+    inventario_pizza = indicadores_dia[
+        "perc_inventario"
+    ]
+
+    inventario_pendente_pizza = max(
+        0,
+        100 - inventario_pizza
+    )
+
+    expedicao_pizza = indicadores_dia[
+        "perc_expedicao"
+    ]
+
+    expedicao_pendente_pizza = max(
+        0,
+        100 - expedicao_pizza
+    )
+
+    dados = {
+
+        "usuario_atual":
+            usuario_atual,
+
+        "itens":
+            itens,
+
+        "atividades":
+            itens,
+
+        "usuarios":
+            usuarios,
+
+        "mensagens":
+            mensagens,
+
+        "chat":
+            mensagens,
+
+        # ----------------------------------------------------
+        # CARDS GERAIS
+        # ----------------------------------------------------
+
+        "total_req":
+            indicadores[
+                "requisicoes_pendentes"
+            ],
+
+        "inv_total":
+            indicadores[
+                "inventario_total"
+            ],
+
+        "inv_conc":
+            indicadores[
+                "inventario_concluido"
+            ],
+
+        "inv_pend":
+            indicadores[
+                "inventario_pendente"
+            ],
+
+        "exp_pend":
+            indicadores[
+                "expedicao_pendente"
+            ],
+
+        "exp_total":
+            indicadores[
+                "expedicao_total"
+            ],
+
+        "exp_conc":
+            indicadores[
+                "expedicao_concluida"
+            ],
+
+        "rec_pend":
+            indicadores[
+                "recebimento_pendente"
+            ],
+
+        "total_oco":
+            indicadores[
+                "ocorrencias"
+            ],
+
+        "total_atrasados":
+            indicadores[
+                "atrasados"
+            ],
+
+        "total_geral":
+            indicadores[
+                "total_geral"
+            ],
+
+        # ----------------------------------------------------
+        # ATIVIDADES GERAIS
+        # ----------------------------------------------------
+
+        "atividades_pendentes":
+            indicadores[
+                "atividades_pendentes"
+            ],
+
+        "atividades_andamento":
+            indicadores[
+                "atividades_andamento"
+            ],
+
+        "atividades_concluidas":
+            indicadores[
+                "atividades_concluidas"
+            ],
+
+        "atividades_arquivadas":
+            indicadores[
+                "atividades_arquivadas"
+            ],
+
+        "atividades_finalizadas":
+            indicadores[
+                "atividades_finalizadas"
+            ],
+
+        "concluidas":
+            indicadores[
+                "atividades_finalizadas"
+            ],
+
+        # ----------------------------------------------------
+        # INDICADORES DO DIA
+        # ----------------------------------------------------
+
+        "perc_atendidas":
+            indicadores_dia[
+                "perc_atendidas"
+            ],
+
+        "perc_inventario":
+            indicadores_dia[
+                "perc_inventario"
+            ],
+
+        "perc_expedicao":
+            indicadores_dia[
+                "perc_expedicao"
+            ],
+
+        # Quantidades do dia
+        "indicadores_dia":
+            indicadores_dia,
+
+        "total_dia":
+            indicadores_dia[
+                "total"
+            ],
+
+        "finalizadas_dia":
+            indicadores_dia[
+                "finalizadas"
+            ],
+
+        "pendentes_dia":
+            indicadores_dia[
+                "pendentes"
+            ],
+
+        # ----------------------------------------------------
+        # GRÁFICOS
+        # ----------------------------------------------------
+
+        "atendidas_pizza":
+            atendidas_pizza,
+
+        "pendentes_pizza":
+            pendentes_pizza,
+
+        "inventario_pizza":
+            inventario_pizza,
+
+        "inventario_pendente_pizza":
+            inventario_pendente_pizza,
+
+        "expedicao_pizza":
+            expedicao_pizza,
+
+        "expedicao_pendente_pizza":
+            expedicao_pendente_pizza,
+
+        # ----------------------------------------------------
+        # HISTÓRICO
+        # ----------------------------------------------------
+
+        "todas_preparadas":
+            todas_preparadas,
+
+        "busca":
+            busca,
+    }
+
+    return dados
+
+
+# ============================================================
+# DASHBOARD PRINCIPAL
 # ============================================================
 
 @app.route(
@@ -2022,25 +2443,23 @@ def index():
             url_for("login")
         )
 
-    arquivar_atividades_expiradas()
-
-    usuario_atual = session[
-        "usuario_atual"
-    ]
-
-    # ========================================================
+    # --------------------------------------------------------
     # POST
-    # ========================================================
+    # --------------------------------------------------------
 
     if request.method == "POST":
+
+        usuario_atual = session[
+            "usuario_atual"
+        ]
 
         acao_chat = request.form.get(
             "acao_chat"
         )
 
-        # ====================================================
+        # ----------------------------------------------------
         # CHAT
-        # ====================================================
+        # ----------------------------------------------------
 
         if acao_chat == "enviar":
 
@@ -2082,9 +2501,9 @@ def index():
                 url_for("index")
             )
 
-        # ====================================================
+        # ----------------------------------------------------
         # NOVA ATIVIDADE
-        # ====================================================
+        # ----------------------------------------------------
 
         num_requisicao = normalizar_requisicao(
             request.form.get(
@@ -2153,8 +2572,11 @@ def index():
                 url_for("index")
             )
 
-        if num_requisicao and requisicao_duplicada(
+        if (
             num_requisicao
+            and requisicao_duplicada(
+                num_requisicao
+            )
         ):
 
             flash(
@@ -2175,6 +2597,12 @@ def index():
                 if usando_postgresql()
                 else agora_sqlite()
             )
+
+        agora_criacao = (
+            agora_utc_naive()
+            if usando_postgresql()
+            else agora_sqlite()
+        )
 
         executar(
             """
@@ -2223,11 +2651,7 @@ def index():
                 prazo or None,
                 STATUS_PENDENTE,
                 inicio_em,
-                (
-                    agora_utc_naive()
-                    if usando_postgresql()
-                    else agora_sqlite()
-                )
+                agora_criacao
             ),
             commit=True
         )
@@ -2241,310 +2665,46 @@ def index():
             url_for("index")
         )
 
-    # ========================================================
-    # ATIVIDADES ATIVAS
-    # ========================================================
+    # --------------------------------------------------------
+    # GET
+    # --------------------------------------------------------
 
-    busca = request.args.get(
-        "q",
-        ""
-    ).strip()
+    dados = obter_dados_dashboard()
 
-    atividades_brutas = buscar_atividades_ativas()
-
-    if busca:
-
-        busca_normalizada = normalizar_texto(
-            busca
-        )
-
-        itens_filtrados = []
-
-        for item in atividades_brutas:
-
-            campos = [
-                obter_valor(
-                    item,
-                    "num_requisicao",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "atividade",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "descricao",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "responsavel",
-                    ""
-                ),
-                obter_valor(
-                    item,
-                    "categoria",
-                    ""
-                ),
-            ]
-
-            encontrou = any(
-                busca_normalizada
-                in normalizar_texto(campo)
-                for campo in campos
-            )
-
-            if encontrou:
-                itens_filtrados.append(item)
-
-        itens = itens_filtrados
-
-    else:
-
-        itens = atividades_brutas
-
-    itens = preparar_lista_atividades(
-        itens
-    )
-
-    # ========================================================
-    # USUÁRIOS
-    # ========================================================
-
-    usuarios = executar(
-        """
-        SELECT id, nome
-        FROM usuarios
-        ORDER BY nome ASC
-        """,
-        fetchall=True
-    )
-
-    usuarios = linhas_para_dict(
-        usuarios
-    )
-
-    # ========================================================
-    # CHAT
-    # ========================================================
-
-    mensagens = executar(
-        """
-        SELECT *
-        FROM chat
-        ORDER BY id DESC
-        LIMIT 30
-        """,
-        fetchall=True
-    )
-
-    mensagens = preparar_chat(
-        mensagens
-    )
-
-    mensagens.reverse()
-
-    # ========================================================
-    # TODOS OS REGISTROS
-    # ========================================================
-
-    atividades_todas = buscar_atividades_historico()
-
-    atividades_todas = [
-        linha_para_dict(item)
-        for item in atividades_todas
-    ]
-
-    # ========================================================
-    # INDICADORES
-    # ========================================================
-
-    indicadores = calcular_indicadores(
-        atividades_todas
-    )
-
-    # ========================================================
-    # HISTÓRICO PREPARADO
-    # ========================================================
-
-    todas_preparadas = preparar_lista_atividades(
-        atividades_todas
-    )
-
-    # ========================================================
-    # GRÁFICOS
-    # ========================================================
-
-    atendidas_pizza = indicadores[
-        "perc_atendidas"
-    ]
-
-    pendentes_pizza = max(
-        0,
-        100 - atendidas_pizza
-    )
-
-    inventario_pizza = indicadores[
-        "perc_inventario"
-    ]
-
-    inventario_pendente_pizza = max(
-        0,
-        100 - inventario_pizza
-    )
-
-    expedicao_pizza = indicadores[
-        "perc_expedicao"
-    ]
-
-    expedicao_pendente_pizza = max(
-        0,
-        100 - expedicao_pizza
-    )
-
-    # ========================================================
-    # DASHBOARD
-    # ========================================================
+    # --------------------------------------------------------
+    # INDEX.HTML
+    # --------------------------------------------------------
 
     return render_template(
         "index.html",
+        **dados
+    )
 
-        usuario_atual=usuario_atual,
 
-        itens=itens,
+# ============================================================
+# DASHBOARD.HTML
+#
+# Mantemos uma rota separada para o dashboard que você
+# mostrou anteriormente.
+# ============================================================
 
-        atividades=itens,
+@app.route(
+    "/dashboard",
+    methods=["GET"]
+)
+def dashboard():
 
-        usuarios=usuarios,
+    if "usuario_atual" not in session:
 
-        mensagens=mensagens,
+        return redirect(
+            url_for("login")
+        )
 
-        chat=mensagens,
+    dados = obter_dados_dashboard()
 
-        # ====================================================
-        # CARDS
-        # ====================================================
-
-        total_req=indicadores[
-            "requisicoes_pendentes"
-        ],
-
-        # CORRIGIDO:
-        # antes estava usando inventario_pendente
-        # como se fosse inventario_total.
-        inv_total=indicadores[
-            "inventario_total"
-        ],
-
-        inv_conc=indicadores[
-            "inventario_concluido"
-        ],
-
-        inv_pend=indicadores[
-            "inventario_pendente"
-        ],
-
-        exp_pend=indicadores[
-            "expedicao_pendente"
-        ],
-
-        exp_total=indicadores[
-            "expedicao_total"
-        ],
-
-        exp_conc=indicadores[
-            "expedicao_concluida"
-        ],
-
-        rec_pend=indicadores[
-            "recebimento_pendente"
-        ],
-
-        total_oco=indicadores[
-            "ocorrencias"
-        ],
-
-        total_atrasados=indicadores[
-            "atrasados"
-        ],
-
-        total_geral=indicadores[
-            "total_geral"
-        ],
-
-        # ====================================================
-        # ATIVIDADES
-        # ====================================================
-
-        atividades_pendentes=indicadores[
-            "atividades_pendentes"
-        ],
-
-        atividades_andamento=indicadores[
-            "atividades_andamento"
-        ],
-
-        atividades_concluidas=indicadores[
-            "atividades_concluidas"
-        ],
-
-        atividades_arquivadas=indicadores[
-            "atividades_arquivadas"
-        ],
-
-        atividades_finalizadas=indicadores[
-            "atividades_finalizadas"
-        ],
-
-        concluidas=indicadores[
-            "atividades_finalizadas"
-        ],
-
-        # ====================================================
-        # INDICADORES DO DIA
-        # ====================================================
-
-        perc_atendidas=indicadores[
-            "perc_atendidas"
-        ],
-
-        perc_inventario=indicadores[
-            "perc_inventario"
-        ],
-
-        perc_expedicao=indicadores[
-            "perc_expedicao"
-        ],
-
-        # ====================================================
-        # PIZZA
-        # ====================================================
-
-        atendidas_pizza=atendidas_pizza,
-
-        pendentes_pizza=pendentes_pizza,
-
-        inventario_pizza=inventario_pizza,
-
-        inventario_pendente_pizza=(
-            inventario_pendente_pizza
-        ),
-
-        expedicao_pizza=expedicao_pizza,
-
-        expedicao_pendente_pizza=(
-            expedicao_pendente_pizza
-        ),
-
-        # ====================================================
-        # HISTÓRICO
-        # ====================================================
-
-        todas_preparadas=todas_preparadas,
-
-        busca=busca
+    return render_template(
+        "dashboard.html",
+        **dados
     )
 
 
@@ -2584,66 +2744,72 @@ def indicadores():
 
     arquivar_atividades_expiradas()
 
-    itens = buscar_atividades_historico()
+    atividades = buscar_atividades_historico()
 
-    indicadores = calcular_indicadores(
-        itens
+    indicadores_gerais = calcular_indicadores(
+        atividades
+    )
+
+    indicadores_dia = calcular_indicadores_do_dia(
+        atividades
     )
 
     return render_template(
         "indicadores.html",
 
-        total_geral=indicadores[
+        total_geral=indicadores_gerais[
             "total_geral"
         ],
 
-        concluidas=indicadores[
+        concluidas=indicadores_gerais[
             "atividades_finalizadas"
         ],
 
-        atividades_pendentes=indicadores[
+        atividades_pendentes=indicadores_gerais[
             "atividades_pendentes"
         ],
 
-        atividades_andamento=indicadores[
+        atividades_andamento=indicadores_gerais[
             "atividades_andamento"
         ],
 
-        atividades_concluidas=indicadores[
+        atividades_concluidas=indicadores_gerais[
             "atividades_concluidas"
         ],
 
-        atividades_arquivadas=indicadores[
+        atividades_arquivadas=indicadores_gerais[
             "atividades_arquivadas"
         ],
 
-        perc_atendidas=indicadores[
+        perc_atendidas=indicadores_dia[
             "perc_atendidas"
         ],
 
-        perc_inventario=indicadores[
+        perc_inventario=indicadores_dia[
             "perc_inventario"
         ],
 
-        perc_expedicao=indicadores[
+        perc_expedicao=indicadores_dia[
             "perc_expedicao"
         ],
 
-        inventario_total=indicadores[
+        inventario_total=indicadores_gerais[
             "inventario_total"
         ],
 
-        inventario_concluido=indicadores[
+        inventario_concluido=indicadores_gerais[
             "inventario_concluido"
         ],
 
-        expedicao_total=indicadores[
+        expedicao_total=indicadores_gerais[
             "expedicao_total"
         ],
 
-        expedicao_concluida=indicadores[
+        expedicao_concluida=indicadores_gerais[
             "expedicao_concluida"
-        ]
+        ],
+
+        indicadores_dia=indicadores_dia
     )
 
 
@@ -2676,9 +2842,7 @@ def relatorios():
 
         data_relatorio = agora_brasil().date()
 
-        data_param = (
-            data_relatorio.isoformat()
-        )
+        data_param = data_relatorio.isoformat()
 
     else:
 
@@ -2693,9 +2857,7 @@ def relatorios():
 
             data_relatorio = agora_brasil().date()
 
-            data_param = (
-                data_relatorio.isoformat()
-            )
+            data_param = data_relatorio.isoformat()
 
     inicio_brasilia = datetime.combine(
         data_relatorio,
@@ -2722,32 +2884,38 @@ def relatorios():
             .replace(tzinfo=None)
         )
 
-        placeholder = "%s"
+        sql = """
+            SELECT *
+            FROM atividades
+            WHERE COALESCE(inicio_em, criado_em) >= %s
+              AND COALESCE(inicio_em, criado_em) < %s
+            ORDER BY
+                COALESCE(inicio_em, criado_em) ASC,
+                id ASC
+        """
 
     else:
 
-        inicio_busca = (
-            inicio_brasilia
-            .replace(tzinfo=None)
+        inicio_busca = inicio_brasilia.replace(
+            tzinfo=None
         )
 
-        fim_busca = (
-            fim_brasilia
-            .replace(tzinfo=None)
+        fim_busca = fim_brasilia.replace(
+            tzinfo=None
         )
 
-        placeholder = "?"
-
-    sql_diario = f"""
-        SELECT *
-        FROM atividades
-        WHERE COALESCE(inicio_em, criado_em) >= {placeholder}
-          AND COALESCE(inicio_em, criado_em) < {placeholder}
-        ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
-    """
+        sql = """
+            SELECT *
+            FROM atividades
+            WHERE COALESCE(inicio_em, criado_em) >= ?
+              AND COALESCE(inicio_em, criado_em) < ?
+            ORDER BY
+                COALESCE(inicio_em, criado_em) ASC,
+                id ASC
+        """
 
     todas = executar(
-        sql_diario,
+        sql,
         (
             inicio_busca,
             fim_busca
@@ -2860,10 +3028,8 @@ def relatorios():
 
         data_relatorio=data_param,
 
-        data_formatada=(
-            data_relatorio.strftime(
-                "%d/%m/%Y"
-            )
+        data_formatada=data_relatorio.strftime(
+            "%d/%m/%Y"
         ),
 
         total_todos=total_todos,
@@ -2904,9 +3070,9 @@ def modulo(nome):
         nome
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # CONFIGURAÇÕES
-    # ========================================================
+    # --------------------------------------------------------
 
     if nome_normalizado == "configuracoes":
 
@@ -2917,9 +3083,9 @@ def modulo(nome):
             ]
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # INDICADORES
-    # ========================================================
+    # --------------------------------------------------------
 
     if nome_normalizado == "indicadores":
 
@@ -2927,9 +3093,9 @@ def modulo(nome):
             url_for("indicadores")
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # RELATÓRIOS
-    # ========================================================
+    # --------------------------------------------------------
 
     if nome_normalizado == "relatorios":
 
@@ -2937,9 +3103,9 @@ def modulo(nome):
             url_for("relatorios")
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # CADASTROS
-    # ========================================================
+    # --------------------------------------------------------
 
     if nome_normalizado == "cadastros":
 
@@ -2964,9 +3130,9 @@ def modulo(nome):
             ]
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # MELHORIAS / PDCA
-    # ========================================================
+    # --------------------------------------------------------
 
     if (
         "melhoria" in nome_normalizado
@@ -3071,7 +3237,9 @@ def modulo(nome):
             """
             SELECT *
             FROM melhorias
-            WHERE LOWER(COALESCE(status,'')) <> 'arquivado'
+            WHERE LOWER(
+                COALESCE(status,'')
+            ) <> 'arquivado'
             ORDER BY id DESC
             """,
             fetchall=True
@@ -3089,9 +3257,9 @@ def modulo(nome):
             ]
         )
 
-    # ========================================================
+    # --------------------------------------------------------
     # ESTOQUE
-    # ========================================================
+    # --------------------------------------------------------
 
     if nome_normalizado == "estoque":
 
@@ -3120,9 +3288,9 @@ def modulo(nome):
             ]
         )
 
-    # ========================================================
-    # MAPA DOS MÓDULOS
-    # ========================================================
+    # --------------------------------------------------------
+    # MAPA
+    # --------------------------------------------------------
 
     mapa_modulos = {
 
@@ -3351,6 +3519,7 @@ def editar(id):
     )
 
     if status_normalizado == "pendente":
+
         status = STATUS_PENDENTE
 
     elif status_normalizado in (
@@ -3358,6 +3527,7 @@ def editar(id):
         "andamento",
         "em processo"
     ):
+
         status = STATUS_ANDAMENTO
 
     elif status_normalizado in (
@@ -3366,12 +3536,15 @@ def editar(id):
         "finalizado",
         "finalizada"
     ):
+
         status = STATUS_CONCLUIDO
 
     elif status_normalizado == "arquivado":
+
         status = STATUS_ARQUIVADO
 
     else:
+
         status = STATUS_PENDENTE
 
     if (
@@ -3624,9 +3797,9 @@ def concluir(id):
         commit=True
     )
 
-    # ========================================================
+    # --------------------------------------------------------
     # SEPARAÇÃO -> EXPEDIÇÃO
-    # ========================================================
+    # --------------------------------------------------------
 
     num_requisicao = normalizar_requisicao(
         obter_valor(
@@ -3824,15 +3997,12 @@ def arquivar(id):
             url_for("relatorios")
         )
 
-    status_atual = normalizar_status(
+    if status_eh_arquivado(
         obter_valor(
             atividade,
-            "status",
-            ""
+            "status"
         )
-    )
-
-    if status_atual == "arquivado":
+    ):
 
         flash(
             "Esse registro já está arquivado.",
@@ -3847,14 +4017,16 @@ def arquivar(id):
     executar(
         """
         UPDATE atividades
-        SET status = 'Arquivado'
+        SET
+            status = 'Arquivado'
         WHERE id = %s
         """
         if usando_postgresql()
         else
         """
         UPDATE atividades
-        SET status = 'Arquivado'
+        SET
+            status = 'Arquivado'
         WHERE id = ?
         """,
         (id,),
@@ -3942,8 +4114,10 @@ def salvar_estoque():
             )
         )
 
-    if quantidade < 0:
-        quantidade = 0
+    quantidade = max(
+        0,
+        quantidade
+    )
 
     executar(
         """
@@ -4108,9 +4282,7 @@ def relatorio_pdf():
 
         data_relatorio = agora_brasil().date()
 
-        data_param = (
-            data_relatorio.isoformat()
-        )
+        data_param = data_relatorio.isoformat()
 
     else:
 
@@ -4125,9 +4297,7 @@ def relatorio_pdf():
 
             data_relatorio = agora_brasil().date()
 
-            data_param = (
-                data_relatorio.isoformat()
-            )
+            data_param = data_relatorio.isoformat()
 
     inicio_brasilia = datetime.combine(
         data_relatorio,
@@ -4159,19 +4329,19 @@ def relatorio_pdf():
             FROM atividades
             WHERE COALESCE(inicio_em, criado_em) >= %s
               AND COALESCE(inicio_em, criado_em) < %s
-            ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
+            ORDER BY
+                COALESCE(inicio_em, criado_em) ASC,
+                id ASC
         """
 
     else:
 
-        inicio_busca = (
-            inicio_brasilia
-            .replace(tzinfo=None)
+        inicio_busca = inicio_brasilia.replace(
+            tzinfo=None
         )
 
-        fim_busca = (
-            fim_brasilia
-            .replace(tzinfo=None)
+        fim_busca = fim_brasilia.replace(
+            tzinfo=None
         )
 
         sql = """
@@ -4179,7 +4349,9 @@ def relatorio_pdf():
             FROM atividades
             WHERE COALESCE(inicio_em, criado_em) >= ?
               AND COALESCE(inicio_em, criado_em) < ?
-            ORDER BY COALESCE(inicio_em, criado_em) ASC, id ASC
+            ORDER BY
+                COALESCE(inicio_em, criado_em) ASC,
+                id ASC
         """
 
     itens = executar(
@@ -4234,22 +4406,19 @@ def relatorio_pdf():
 
     estilos = getSampleStyleSheet()
 
-    estilo_titulo = estilos["Title"]
-    estilo_normal = estilos["Normal"]
-
     elementos = []
 
     elementos.append(
         Paragraph(
             "RELATÓRIO DIÁRIO - ALMOXARIFADO",
-            estilo_titulo
+            estilos["Title"]
         )
     )
 
     elementos.append(
         Paragraph(
             f"Data: {data_relatorio.strftime('%d/%m/%Y')}",
-            estilo_normal
+            estilos["Normal"]
         )
     )
 
@@ -4263,7 +4432,7 @@ def relatorio_pdf():
             f"Concluídas: {concluidas} &nbsp;&nbsp; "
             f"Pendentes: {pendentes} &nbsp;&nbsp; "
             f"Arquivadas: {arquivadas}",
-            estilo_normal
+            estilos["Normal"]
         )
     )
 
@@ -4438,7 +4607,7 @@ def relatorio_pdf():
     elementos.append(
         Paragraph(
             "Relatório gerado pelo sistema Almoxarifado Valenet.",
-            estilo_normal
+            estilos["Normal"]
         )
     )
 
@@ -4509,12 +4678,13 @@ def exportar_estoque():
                     0
                 ),
 
-                "Cadastrado em": formatar_data_hora(
-                    obter_valor(
-                        item,
-                        "criado_em"
+                "Cadastrado em":
+                    formatar_data_hora(
+                        obter_valor(
+                            item,
+                            "criado_em"
+                        )
                     )
-                )
             })
 
         df = pd.DataFrame(
@@ -4684,9 +4854,9 @@ def importar_estoque():
                 )
             )
 
-        # ====================================================
+        # ----------------------------------------------------
         # NORMALIZAÇÃO DAS COLUNAS
-        # ====================================================
+        # ----------------------------------------------------
 
         df.columns = [
             normalizar_texto(
@@ -4795,7 +4965,6 @@ def importar_estoque():
                 and not descricao
                 and quantidade == 0
             ):
-
                 continue
 
             executar(

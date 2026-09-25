@@ -405,19 +405,6 @@ def agora_sqlite():
 
 def agora_banco():
 
-    """
-    HORÁRIO OFICIAL USADO PARA GRAVAÇÃO.
-
-    PostgreSQL:
-        TIMESTAMP sem timezone recebe UTC sem tzinfo.
-
-    SQLite:
-        grava horário local de Brasília.
-
-    Na leitura, converter_para_brasil()
-    faz a conversão correta.
-    """
-
     if usando_postgresql():
         return agora_utc_naive()
 
@@ -437,15 +424,12 @@ def converter_para_brasil(valor):
 
             if usando_postgresql():
 
-                # PostgreSQL grava TIMESTAMP sem timezone
-                # em UTC.
                 dt = dt.replace(
                     tzinfo=timezone.utc
                 )
 
             else:
 
-                # SQLite grava horário de Brasília.
                 dt = dt.replace(
                     tzinfo=FUSO_BRASIL
                 )
@@ -1200,9 +1184,6 @@ def atividade_eh_do_dia(
     if data_referencia is None:
         data_referencia = agora_brasil().date()
 
-    # IMPORTANTE:
-    # Para uma Separação, o indicador diário usa
-    # primeiro inicio_em.
     data_valor = (
         obter_valor(
             item,
@@ -2508,10 +2489,6 @@ def index():
             ""
         ).strip()
 
-        # ====================================================
-        # CHAT
-        # ====================================================
-
         if acao_chat == "enviar":
 
             mensagem = request.form.get(
@@ -2598,10 +2575,6 @@ def index():
                 url_for("index")
             )
 
-        # ====================================================
-        # NOVA ATIVIDADE
-        # ====================================================
-
         num_requisicao = normalizar_requisicao(
             request.form.get(
                 "num_requisicao"
@@ -2669,10 +2642,6 @@ def index():
                 url_for("index")
             )
 
-        # ====================================================
-        # PRAZO
-        # ====================================================
-
         prazo_valido, prazo_dt = prazo_formulario_valido(
             prazo
         )
@@ -2702,10 +2671,6 @@ def index():
             "%Y-%m-%d %H:%M"
         )
 
-        # ====================================================
-        # DUPLICIDADE
-        # ====================================================
-
         if (
             num_requisicao
             and requisicao_duplicada(
@@ -2722,22 +2687,6 @@ def index():
                 url_for("index")
             )
 
-        # ====================================================
-        # HORÁRIO DA SEPARAÇÃO
-        # ====================================================
-        #
-        # ESTA É UMA DAS CORREÇÕES PRINCIPAIS.
-        #
-        # O horário é capturado UMA ÚNICA VEZ pelo servidor,
-        # imediatamente antes do INSERT.
-        #
-        # Para Separação:
-        #     inicio_em = agora_banco()
-        #
-        # Assim o horário da requisição fica registrado
-        # independentemente do relógio do navegador.
-        # ====================================================
-
         agora_registro = agora_banco()
 
         inicio_em = None
@@ -2745,10 +2694,6 @@ def index():
         if categoria == "Separação":
 
             inicio_em = agora_registro
-
-        # ====================================================
-        # CRIAÇÃO
-        # ====================================================
 
         executar(
             """
@@ -2800,22 +2745,6 @@ def index():
                 agora_registro
             ),
             commit=True
-        )
-
-        print(
-            "ATIVIDADE CRIADA:",
-            "REQ=", num_requisicao,
-            "CATEGORIA=", categoria,
-            "INICIO=", (
-                formatar_data_hora(
-                    inicio_em
-                )
-                if inicio_em
-                else "-"
-            ),
-            "CRIADO=", formatar_data_hora(
-                agora_registro
-            )
         )
 
         flash(
@@ -3700,17 +3629,22 @@ def editar(id):
         return redirect(
             url_for("relatorios")
         )
+
+    # CARREGA OS VALORES ATUAIS DO REGISTRO NO BANCO
+    status_anterior = obter_valor(atividade, "status")
+    inicio_em = obter_valor(atividade, "inicio_em")
+    concluido_em = obter_valor(atividade, "concluido_em")
+    encerrado_por = obter_valor(atividade, "encerrado_por")
+
     # ========================================================
-    # PRAZO (CORRIGIDO)
+    # PRAZO
     # ========================================================
     prazo_original = obter_valor(atividade, "prazo")
 
     if prazo:
-        # Tenta validar o novo prazo inserido no formulário
         prazo_valido, prazo_dt = prazo_formulario_valido(prazo)
 
         if not prazo_valido:
-            # Se a atividade estiver ativa e a data inserida for no passado, barra a alteração
             if status_eh_ativo(status):
                 flash(
                     "O prazo informado já passou. Escolha uma data e horário futuros.",
@@ -3718,25 +3652,14 @@ def editar(id):
                 )
                 return redirect(url_for("relatorios"))
             else:
-                # Se o status for concluído/arquivado, aceita a data formatada
                 prazo = prazo_dt.strftime("%Y-%m-%d %H:%M") if prazo_dt else prazo_original
         else:
             prazo = prazo_dt.strftime("%Y-%m-%d %H:%M")
     else:
-        # CASO O CAMPO PRAZO FIQUE VAZIO NO FORMULÁRIO:
-        # Mantém o prazo original que já estava salvo no banco de dados
         prazo = prazo_original
 
-   
     # ========================================================
     # CORREÇÃO DO HORÁRIO DE INÍCIO
-    # ========================================================
-    #
-    # Se a atividade entrar em "Em andamento" e ainda não
-    # possuir início, grava o horário atual do servidor.
-    #
-    # Também corrige registros antigos de Separação que
-    # estejam sem inicio_em.
     # ========================================================
 
     if (
@@ -3923,10 +3846,6 @@ def concluir(id):
 
     agora = agora_banco()
 
-    # ========================================================
-    # GARANTE INÍCIO
-    # ========================================================
-
     inicio_existente = obter_valor(
         atividade,
         "inicio_em"
@@ -3956,10 +3875,6 @@ def concluir(id):
             commit=True
         )
 
-    # ========================================================
-    # CONCLUI
-    # ========================================================
-
     executar(
         """
         UPDATE atividades
@@ -3988,10 +3903,6 @@ def concluir(id):
         ),
         commit=True
     )
-
-    # ========================================================
-    # SEPARAÇÃO -> EXPEDIÇÃO
-    # ========================================================
 
     num_requisicao = normalizar_requisicao(
         obter_valor(
@@ -4124,12 +4035,6 @@ def concluir(id):
                 commit=True
             )
 
-            print(
-                "EXPEDIÇÃO AUTOMÁTICA CRIADA:",
-                num_requisicao,
-                prazo_expedicao
-            )
-
             flash(
                 "Separação concluída e Expedição criada automaticamente. "
                 f"Prazo da Expedição: "
@@ -4140,8 +4045,7 @@ def concluir(id):
         else:
 
             flash(
-                "Separação concluída. Já existia uma Expedição ativa "
-                "para essa requisição.",
+                "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
                 "info"
             )
 
@@ -4153,1154 +4057,21 @@ def concluir(id):
         )
 
     return redirect(
-        request.referrer
-        or url_for("index")
+        request.referrer or url_for("index")
     )
 
 
 # ============================================================
-# ARQUIVAR
-# ============================================================
-
-@app.route(
-    "/arquivar/<int:id>",
-    methods=["POST", "GET"]
-)
-def arquivar(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    atividade = executar(
-        """
-        SELECT *
-        FROM atividades
-        WHERE id = %s
-        """
-        if usando_postgresql()
-        else
-        """
-        SELECT *
-        FROM atividades
-        WHERE id = ?
-        """,
-        (id,),
-        fetchone=True
-    )
-
-    if atividade is None:
-
-        flash(
-            "Registro não encontrado.",
-            "warning"
-        )
-
-        return redirect(
-            url_for("relatorios")
-        )
-
-    if status_eh_arquivado(
-        obter_valor(
-            atividade,
-            "status"
-        )
-    ):
-
-        flash(
-            "Esse registro já está arquivado.",
-            "info"
-        )
-
-        return redirect(
-            request.referrer
-            or url_for("relatorios")
-        )
-
-    executar(
-        """
-        UPDATE atividades
-        SET
-            status = 'Arquivado'
-        WHERE id = %s
-        """
-        if usando_postgresql()
-        else
-        """
-        UPDATE atividades
-        SET
-            status = 'Arquivado'
-        WHERE id = ?
-        """,
-        (id,),
-        commit=True
-    )
-
-    flash(
-        "Registro arquivado. Ele continua disponível "
-        "em Relatórios > Arquivados.",
-        "success"
-    )
-
-    return redirect(
-        request.referrer
-        or url_for("relatorios")
-    )
-
-
-# ============================================================
-# COMPATIBILIDADE COM DELETAR
-# ============================================================
-
-@app.route(
-    "/deletar/<int:id>",
-    methods=["POST", "GET"]
-)
-def deletar(id):
-
-    return arquivar(id)
-
-
-# ============================================================
-# ESTOQUE
-# ============================================================
-
-@app.route(
-    "/salvar_estoque",
-    methods=["POST"]
-)
-def salvar_estoque():
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    codigo = request.form.get(
-        "codigo",
-        ""
-    ).strip()
-
-    descricao = request.form.get(
-        "descricao",
-        ""
-    ).strip()
-
-    quantidade_texto = request.form.get(
-        "quantidade",
-        "0"
-    ).strip()
-
-    try:
-
-        quantidade = int(
-            float(
-                quantidade_texto or 0
-            )
-        )
-
-    except Exception:
-
-        quantidade = 0
-
-    if not codigo and not descricao:
-
-        flash(
-            "Informe o código ou a descrição do item.",
-            "warning"
-        )
-
-        return redirect(
-            url_for(
-                "modulo",
-                nome="Estoque"
-            )
-        )
-
-    quantidade = max(
-        0,
-        quantidade
-    )
-
-    executar(
-        """
-        INSERT INTO estoque
-        (
-            codigo,
-            descricao,
-            quantidade,
-            criado_em
-        )
-        VALUES
-        (%s,%s,%s,%s)
-        """
-        if usando_postgresql()
-        else
-        """
-        INSERT INTO estoque
-        (
-            codigo,
-            descricao,
-            quantidade,
-            criado_em
-        )
-        VALUES
-        (?,?,?,?)
-        """,
-        (
-            codigo,
-            descricao,
-            quantidade,
-            agora_banco()
-        ),
-        commit=True
-    )
-
-    flash(
-        "Item adicionado ao estoque.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="Estoque"
-        )
-    )
-
-
-# ============================================================
-# EXCLUIR ESTOQUE
-# ============================================================
-
-@app.route(
-    "/deletar_estoque/<int:id>",
-    methods=["POST", "GET"]
-)
-def deletar_estoque(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    executar(
-        """
-        DELETE FROM estoque
-        WHERE id = %s
-        """
-        if usando_postgresql()
-        else
-        """
-        DELETE FROM estoque
-        WHERE id = ?
-        """,
-        (id,),
-        commit=True
-    )
-
-    flash(
-        "Item do estoque removido.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="Estoque"
-        )
-    )
-
-
-# ============================================================
-# MELHORIA - ARQUIVAR
-# ============================================================
-
-@app.route(
-    "/deletar_melhoria/<int:id>",
-    methods=["POST", "GET"]
-)
-def deletar_melhoria(id):
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    executar(
-        """
-        UPDATE melhorias
-        SET status = 'Arquivado'
-        WHERE id = %s
-        """
-        if usando_postgresql()
-        else
-        """
-        UPDATE melhorias
-        SET status = 'Arquivado'
-        WHERE id = ?
-        """,
-        (id,),
-        commit=True
-    )
-
-    flash(
-        "Melhoria arquivada.",
-        "success"
-    )
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="Melhorias / PDCA"
-        )
-    )
-
-
-# ============================================================
-# RELATÓRIO PDF
-# ============================================================
-
-@app.route("/relatorio_pdf")
-def relatorio_pdf():
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    data_param = request.args.get(
-        "data",
-        ""
-    ).strip()
-
-    if not data_param:
-
-        data_relatorio = agora_brasil().date()
-
-        data_param = data_relatorio.isoformat()
-
-    else:
-
-        try:
-
-            data_relatorio = datetime.strptime(
-                data_param,
-                "%Y-%m-%d"
-            ).date()
-
-        except ValueError:
-
-            data_relatorio = agora_brasil().date()
-
-            data_param = data_relatorio.isoformat()
-
-    inicio_brasilia = datetime.combine(
-        data_relatorio,
-        datetime.min.time(),
-        tzinfo=FUSO_BRASIL
-    )
-
-    fim_brasilia = (
-        inicio_brasilia
-        + timedelta(days=1)
-    )
-
-    if usando_postgresql():
-
-        inicio_busca = (
-            inicio_brasilia
-            .astimezone(
-                timezone.utc
-            )
-            .replace(
-                tzinfo=None
-            )
-        )
-
-        fim_busca = (
-            fim_brasilia
-            .astimezone(
-                timezone.utc
-            )
-            .replace(
-                tzinfo=None
-            )
-        )
-
-        sql = """
-            SELECT *
-            FROM atividades
-            WHERE COALESCE(inicio_em, criado_em) >= %s
-              AND COALESCE(inicio_em, criado_em) < %s
-            ORDER BY
-                COALESCE(inicio_em, criado_em) ASC,
-                id ASC
-        """
-
-    else:
-
-        inicio_busca = inicio_brasilia.replace(
-            tzinfo=None
-        )
-
-        fim_busca = fim_brasilia.replace(
-            tzinfo=None
-        )
-
-        sql = """
-            SELECT *
-            FROM atividades
-            WHERE COALESCE(inicio_em, criado_em) >= ?
-              AND COALESCE(inicio_em, criado_em) < ?
-            ORDER BY
-                COALESCE(inicio_em, criado_em) ASC,
-                id ASC
-        """
-
-    itens = executar(
-        sql,
-        (
-            inicio_busca,
-            fim_busca
-        ),
-        fetchall=True
-    )
-
-    itens = preparar_lista_atividades(
-        itens
-    )
-
-    total = len(itens)
-
-    concluidas = sum(
-        1
-        for item in itens
-        if status_eh_concluido(
-            item.get("status")
-        )
-    )
-
-    pendentes = sum(
-        1
-        for item in itens
-        if status_eh_pendente(
-            item.get("status")
-        )
-    )
-
-    arquivadas = sum(
-        1
-        for item in itens
-        if status_eh_arquivado(
-            item.get("status")
-        )
-    )
-
-    buffer = BytesIO()
-
-    documento = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(A4),
-        rightMargin=25,
-        leftMargin=25,
-        topMargin=25,
-        bottomMargin=25
-    )
-
-    estilos = getSampleStyleSheet()
-
-    elementos = []
-
-    elementos.append(
-        Paragraph(
-            "RELATÓRIO DIÁRIO - ALMOXARIFADO",
-            estilos["Title"]
-        )
-    )
-
-    elementos.append(
-        Paragraph(
-            f"Data: "
-            f"{data_relatorio.strftime('%d/%m/%Y')}",
-            estilos["Normal"]
-        )
-    )
-
-    elementos.append(
-        Spacer(1, 10)
-    )
-
-    elementos.append(
-        Paragraph(
-            f"Total: {total} &nbsp;&nbsp; "
-            f"Concluídas: {concluidas} &nbsp;&nbsp; "
-            f"Pendentes: {pendentes} &nbsp;&nbsp; "
-            f"Arquivadas: {arquivadas}",
-            estilos["Normal"]
-        )
-    )
-
-    elementos.append(
-        Spacer(1, 12)
-    )
-
-    dados = [[
-        "Req.",
-        "Atividade",
-        "Categoria",
-        "Responsável",
-        "Prioridade",
-        "Início",
-        "Conclusão",
-        "Status"
-    ]]
-
-    for item in itens:
-
-        dados.append([
-            str(
-                item.get(
-                    "num_requisicao"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "atividade"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "categoria"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "responsavel"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "prioridade"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "inicio_formatado"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "concluido_formatado"
-                )
-                or "-"
-            ),
-
-            str(
-                item.get(
-                    "status"
-                )
-                or "-"
-            )
-        ])
-
-    if len(dados) == 1:
-
-        dados.append([
-            "-",
-            "Nenhuma atividade encontrada para esta data.",
-            "-",
-            "-",
-            "-",
-            "-",
-            "-",
-            "-"
-        ])
-
-    tabela = Table(
-        dados,
-        repeatRows=1,
-        colWidths=[
-            55,
-            150,
-            90,
-            115,
-            65,
-            95,
-            95,
-            75
-        ]
-    )
-
-    tabela.setStyle(
-        TableStyle([
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.HexColor("#212529")
-            ),
-
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (-1, 0),
-                colors.white
-            ),
-
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                0.5,
-                colors.grey
-            ),
-
-            (
-                "FONTNAME",
-                (0, 0),
-                (-1, 0),
-                "Helvetica-Bold"
-            ),
-
-            (
-                "FONTSIZE",
-                (0, 0),
-                (-1, -1),
-                7
-            ),
-
-            (
-                "VALIGN",
-                (0, 0),
-                (-1, -1),
-                "MIDDLE"
-            ),
-
-            (
-                "ROWBACKGROUNDS",
-                (0, 1),
-                (-1, -1),
-                [
-                    colors.white,
-                    colors.HexColor("#f4f4f4")
-                ]
-            )
-        ])
-    )
-
-    elementos.append(
-        tabela
-    )
-
-    elementos.append(
-        Spacer(1, 10)
-    )
-
-    elementos.append(
-        Paragraph(
-            "Relatório gerado pelo sistema "
-            "Almoxarifado Valenet.",
-            estilos["Normal"]
-        )
-    )
-
-    documento.build(
-        elementos
-    )
-
-    buffer.seek(0)
-
-    return send_file(
-        buffer,
-        mimetype="application/pdf",
-        as_attachment=True,
-        download_name=(
-            f"relatorio_almoxarifado_{data_param}.pdf"
-        )
-    )
-
-
-# ============================================================
-# EXPORTAR ESTOQUE
-# ============================================================
-
-@app.route("/exportar_estoque")
-def exportar_estoque():
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    try:
-
-        itens = executar(
-            """
-            SELECT
-                codigo,
-                descricao,
-                quantidade,
-                criado_em
-            FROM estoque
-            ORDER BY id DESC
-            """,
-            fetchall=True
-        )
-
-        registros = []
-
-        for item in itens:
-
-            registros.append({
-                "Código": obter_valor(
-                    item,
-                    "codigo",
-                    ""
-                ),
-
-                "Descrição": obter_valor(
-                    item,
-                    "descricao",
-                    ""
-                ),
-
-                "Quantidade": obter_valor(
-                    item,
-                    "quantidade",
-                    0
-                ),
-
-                "Cadastrado em":
-                    formatar_data_hora(
-                        obter_valor(
-                            item,
-                            "criado_em"
-                        )
-                    )
-            })
-
-        df = pd.DataFrame(
-            registros
-        )
-
-        arquivo = BytesIO()
-
-        with pd.ExcelWriter(
-            arquivo,
-            engine="openpyxl"
-        ) as writer:
-
-            df.to_excel(
-                writer,
-                index=False,
-                sheet_name="Estoque"
-            )
-
-        arquivo.seek(0)
-
-        return send_file(
-            arquivo,
-            mimetype=(
-                "application/vnd.openxmlformats-"
-                "officedocument.spreadsheetml.sheet"
-            ),
-            as_attachment=True,
-            download_name=(
-                "estoque_almoxarifado.xlsx"
-            )
-        )
-
-    except Exception as erro:
-
-        print(
-            "ERRO AO EXPORTAR ESTOQUE:",
-            repr(erro)
-        )
-
-        flash(
-            "Erro ao gerar Excel do estoque.",
-            "danger"
-        )
-
-        return redirect(
-            url_for(
-                "modulo",
-                nome="Estoque"
-            )
-        )
-
-
-# ============================================================
-# IMPORTAR ESTOQUE
-# ============================================================
-
-@app.route(
-    "/importar_estoque",
-    methods=["POST"]
-)
-def importar_estoque():
-
-    if "usuario_atual" not in session:
-
-        return redirect(
-            url_for("login")
-        )
-
-    arquivo = request.files.get(
-        "arquivo"
-    )
-
-    if (
-        not arquivo
-        or not arquivo.filename
-    ):
-
-        flash(
-            "Selecione um arquivo.",
-            "warning"
-        )
-
-        return redirect(
-            url_for(
-                "modulo",
-                nome="Estoque"
-            )
-        )
-
-    nome = (
-        arquivo.filename
-        .lower()
-        .strip()
-    )
-
-    try:
-
-        if nome.endswith(".csv"):
-
-            try:
-
-                df = pd.read_csv(
-                    arquivo
-                )
-
-            except Exception:
-
-                arquivo.stream.seek(0)
-
-                df = pd.read_csv(
-                    arquivo,
-                    sep=";"
-                )
-
-        elif nome.endswith(".xlsx"):
-
-            df = pd.read_excel(
-                arquivo,
-                engine="openpyxl"
-            )
-
-        elif nome.endswith(".xls"):
-
-            try:
-
-                df = pd.read_excel(
-                    arquivo,
-                    engine="xlrd"
-                )
-
-            except Exception:
-
-                flash(
-                    "Não foi possível ler o arquivo .xls. "
-                    "Prefira salvar o arquivo como .xlsx.",
-                    "warning"
-                )
-
-                return redirect(
-                    url_for(
-                        "modulo",
-                        nome="Estoque"
-                    )
-                )
-
-        else:
-
-            flash(
-                "Formato não suportado. Use XLSX, XLS ou CSV.",
-                "danger"
-            )
-
-            return redirect(
-                url_for(
-                    "modulo",
-                    nome="Estoque"
-                )
-            )
-
-        if df.empty:
-
-            flash(
-                "O arquivo não possui registros.",
-                "warning"
-            )
-
-            return redirect(
-                url_for(
-                    "modulo",
-                    nome="Estoque"
-                )
-            )
-
-        df.columns = [
-            normalizar_texto(
-                coluna
-            )
-            for coluna in df.columns
-        ]
-
-        coluna_codigo = None
-        coluna_descricao = None
-        coluna_quantidade = None
-
-        for coluna in df.columns:
-
-            if coluna in [
-                "codigo",
-                "cod",
-                "item",
-                "codigo do item"
-            ]:
-
-                coluna_codigo = coluna
-
-            if coluna in [
-                "descricao",
-                "produto",
-                "material",
-                "nome"
-            ]:
-
-                coluna_descricao = coluna
-
-            if coluna in [
-                "quantidade",
-                "qtd",
-                "qtde",
-                "saldo",
-                "estoque"
-            ]:
-
-                coluna_quantidade = coluna
-
-        if coluna_codigo is None and len(df.columns) >= 1:
-
-            coluna_codigo = df.columns[0]
-
-        if coluna_descricao is None and len(df.columns) >= 2:
-
-            coluna_descricao = df.columns[1]
-
-        if coluna_quantidade is None and len(df.columns) >= 3:
-
-            coluna_quantidade = df.columns[2]
-
-        quantidade_importada = 0
-
-        for _, linha in df.iterrows():
-
-            codigo = ""
-
-            if coluna_codigo:
-
-                valor = linha.get(
-                    coluna_codigo
-                )
-
-                if pd.notna(valor):
-
-                    codigo = str(
-                        valor
-                    ).strip()
-
-            descricao = ""
-
-            if coluna_descricao:
-
-                valor = linha.get(
-                    coluna_descricao
-                )
-
-                if pd.notna(valor):
-
-                    descricao = str(
-                        valor
-                    ).strip()
-
-            quantidade = 0
-
-            if coluna_quantidade:
-
-                valor = linha.get(
-                    coluna_quantidade
-                )
-
-                if pd.notna(valor):
-
-                    try:
-
-                        quantidade = int(
-                            float(valor)
-                        )
-
-                    except Exception:
-
-                        quantidade = 0
-
-            if (
-                not codigo
-                and not descricao
-                and quantidade == 0
-            ):
-
-                continue
-
-            executar(
-                """
-                INSERT INTO estoque
-                (
-                    codigo,
-                    descricao,
-                    quantidade,
-                    criado_em
-                )
-                VALUES
-                (%s,%s,%s,%s)
-                """
-                if usando_postgresql()
-                else
-                """
-                INSERT INTO estoque
-                (
-                    codigo,
-                    descricao,
-                    quantidade,
-                    criado_em
-                )
-                VALUES
-                (?,?,?,?)
-                """,
-                (
-                    codigo,
-                    descricao,
-                    quantidade,
-                    agora_banco()
-                ),
-                commit=True
-            )
-
-            quantidade_importada += 1
-
-        flash(
-            f"Estoque importado com sucesso. "
-            f"{quantidade_importada} registro(s) incluído(s).",
-            "success"
-        )
-
-    except Exception as erro:
-
-        print(
-            "ERRO AO IMPORTAR ESTOQUE:",
-            repr(erro)
-        )
-
-        flash(
-            f"Erro ao importar estoque: {erro}",
-            "danger"
-        )
-
-    return redirect(
-        url_for(
-            "modulo",
-            nome="Estoque"
-        )
-    )
-
-
-# ============================================================
-# INICIALIZAÇÃO
-# ============================================================
-
-with app.app_context():
-
-    try:
-
-        init_db()
-
-        print(
-            "=========================================="
-        )
-
-        print(
-            "BANCO DE DADOS INICIALIZADO"
-        )
-
-        print(
-            "PostgreSQL:",
-            usando_postgresql()
-        )
-
-        print(
-            "Horário Brasil:",
-            agora_brasil().strftime(
-                "%d/%m/%Y %H:%M:%S"
-            )
-        )
-
-        print(
-            "=========================================="
-        )
-
-    except Exception as erro:
-
-        print(
-            "ERRO AO INICIALIZAR BANCO:",
-            repr(erro)
-        )
-
-
-# ============================================================
-# EXECUÇÃO
+# INICIALIZAÇÃO DO SERVIDOR
 # ============================================================
 
 if __name__ == "__main__":
 
+    with app.app_context():
+        init_db()
+
     app.run(
         host="0.0.0.0",
-        port=int(
-            os.environ.get(
-                "PORT",
-                5000
-            )
-        ),
+        port=int(os.environ.get("PORT", 5000)),
         debug=True
     )

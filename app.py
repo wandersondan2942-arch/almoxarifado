@@ -110,7 +110,6 @@ def close_connection(exception=None):
 
         try:
             db.close()
-
         except Exception:
             pass
 
@@ -122,9 +121,6 @@ def close_connection(exception=None):
 def executar(sql, parametros=()):
     """
     Executa SQL compatível com SQLite e PostgreSQL.
-
-    O código utiliza %s nas consultas.
-    Quando estiver no SQLite, convertemos %s para ?.
     """
 
     db = get_db()
@@ -151,6 +147,9 @@ def linha_para_dict(linha):
 
     SQLite:
         sqlite3.Row
+
+    Isso evita problemas quando o sistema utiliza
+    .get(), principalmente no relatório PDF.
     """
 
     if linha is None:
@@ -165,14 +164,12 @@ def linha_para_dict(linha):
     except Exception:
 
         try:
-
             return {
                 chave: linha[chave]
                 for chave in linha.keys()
             }
 
         except Exception:
-
             return {}
 
 
@@ -212,7 +209,6 @@ def fechar_cursor(cursor):
 
         try:
             cursor.close()
-
         except Exception:
             pass
 
@@ -256,7 +252,6 @@ def contar(sql, parametros=()):
 
         try:
             get_db().rollback()
-
         except Exception:
             pass
 
@@ -318,6 +313,9 @@ def agora_sqlite():
 
 
 def data_brasil():
+    """
+    Retorna a data atual do Brasil.
+    """
 
     return agora_brasil().date()
 
@@ -369,8 +367,8 @@ def converter_para_brasil(valor):
                     "%Y-%m-%d %H:%M:%S"
                 )
 
-        # Valores antigos sem timezone
-        # são tratados como UTC.
+        # Banco armazena valores antigos sem timezone
+        # como UTC.
         if dt.tzinfo is None:
 
             dt = dt.replace(
@@ -392,6 +390,11 @@ def converter_para_brasil(valor):
 
 
 def formatar_data_hora(valor):
+    """
+    Converte para:
+
+        DD/MM/AAAA HH:MM
+    """
 
     dt = converter_para_brasil(
         valor
@@ -424,12 +427,10 @@ def calcular_duracao(inicio, fim):
     Calcula a duração entre início e conclusão.
 
     Exemplo:
-
         01/09/2026 08:00
         01/09/2026 10:35
 
         Resultado:
-
         2h 35min
     """
 
@@ -471,16 +472,23 @@ def calcular_duracao(inicio, fim):
     )
 
 
-# =========================================================
-# PREPARAÇÃO DAS ATIVIDADES
-# =========================================================
-
 def preparar_atividade(item):
     """
     Prepara uma atividade para exibição.
 
-    Mantém os valores originais para cálculo
-    e também fornece os valores formatados.
+    Acrescenta:
+
+        encerrado_por
+        inicio_formatado
+        conclusao_formatada
+        duracao
+
+    E mantém:
+
+        inicio_em
+        concluido_em
+
+    compatíveis com templates antigos.
     """
 
     dados = linha_para_dict(
@@ -495,10 +503,6 @@ def preparar_atividade(item):
         "concluido_em"
     )
 
-    # -----------------------------------------------------
-    # VALORES ORIGINAIS
-    # -----------------------------------------------------
-
     dados["inicio_original"] = (
         inicio_original
     )
@@ -506,10 +510,6 @@ def preparar_atividade(item):
     dados["conclusao_original"] = (
         conclusao_original
     )
-
-    # -----------------------------------------------------
-    # VALORES FORMATADOS
-    # -----------------------------------------------------
 
     dados["inicio_formatado"] = (
         formatar_data_hora(
@@ -523,10 +523,7 @@ def preparar_atividade(item):
         )
     )
 
-    # -----------------------------------------------------
-    # COMPATIBILIDADE COM HTML ANTIGO
-    # -----------------------------------------------------
-
+    # Compatibilidade com HTML antigo
     dados["inicio_em"] = (
         dados["inicio_formatado"]
     )
@@ -535,18 +532,10 @@ def preparar_atividade(item):
         dados["conclusao_formatada"]
     )
 
-    # -----------------------------------------------------
-    # ENCERRADO POR
-    # -----------------------------------------------------
-
     dados["encerrado_por"] = (
         dados.get("encerrado_por")
         or "-"
     )
-
-    # -----------------------------------------------------
-    # DURAÇÃO
-    # -----------------------------------------------------
 
     dados["duracao"] = calcular_duracao(
         inicio_original,
@@ -560,39 +549,6 @@ def preparar_lista_atividades(itens):
 
     return [
         preparar_atividade(item)
-        for item in itens
-    ]
-
-
-# =========================================================
-# PREPARAÇÃO DO CHAT
-# =========================================================
-
-def preparar_mensagem_chat(item):
-
-    dados = linha_para_dict(
-        item
-    )
-
-    horario_original = dados.get(
-        "horario"
-    )
-
-    dados["horario_original"] = (
-        horario_original
-    )
-
-    dados["horario"] = formatar_data_hora(
-        horario_original
-    )
-
-    return dados
-
-
-def preparar_lista_chat(itens):
-
-    return [
-        preparar_mensagem_chat(item)
         for item in itens
     ]
 
@@ -649,7 +605,7 @@ def init_db():
             """)
 
             # -------------------------------------------------
-            # MIGRAÇÃO
+            # MIGRAÇÃO ATIVIDADES
             # -------------------------------------------------
 
             cursor.execute("""
@@ -864,7 +820,6 @@ def init_db():
             for coluna in colunas:
 
                 try:
-
                     nomes_colunas.append(
                         coluna["name"]
                     )
@@ -969,14 +924,16 @@ def init_db():
                 WHERE descricao IS NULL
             """)
 
-            # IMPORTANTE:
-            # Não criamos artificialmente um horário de início
-            # para registros antigos.
-            #
-            # Se não sabemos quando começaram,
-            # mantemos NULL.
-            #
-            # Isso evita falsificar o histórico.
+            # Somente registros antigos que não possuem início
+            # recebem uma referência de início.
+            cursor.execute("""
+                UPDATE atividades
+                SET inicio_em = COALESCE(
+                    concluido_em,
+                    datetime('now')
+                )
+                WHERE inicio_em IS NULL
+            """)
 
             # -------------------------------------------------
             # CHAT
@@ -1018,7 +975,6 @@ def init_db():
             for coluna in colunas_melhorias:
 
                 try:
-
                     nomes_melhorias.append(
                         coluna["name"]
                     )
@@ -1211,7 +1167,6 @@ def arquivar_atividades_expiradas():
 
         try:
             get_db().rollback()
-
         except Exception:
             pass
 
@@ -1235,7 +1190,6 @@ def arquivar_atividades_expiradas():
 def login():
 
     erro = None
-
     cursor = None
 
     if request.method == "POST":
@@ -1281,9 +1235,7 @@ def login():
                     url_for("index")
                 )
 
-            erro = (
-                "Usuário ou senha inválidos!"
-            )
+            erro = "Usuário ou senha inválidos!"
 
         except Exception as erro_banco:
 
@@ -1293,9 +1245,7 @@ def login():
                 f"[ERRO LOGIN] {erro_banco}"
             )
 
-            erro = (
-                "Erro ao realizar login."
-            )
+            erro = "Erro ao realizar login."
 
         finally:
 
@@ -1318,7 +1268,6 @@ def login():
 def cadastro_usuario():
 
     erro = None
-
     cursor = None
 
     if request.method == "POST":
@@ -1335,9 +1284,7 @@ def cadastro_usuario():
 
         if not nome or not senha:
 
-            erro = (
-                "Preencha todos os campos."
-            )
+            erro = "Preencha todos os campos."
 
         else:
 
@@ -1571,20 +1518,16 @@ def index():
             )
 
         # =================================================
-        # DATA/HORA DE INÍCIO
+        # DATA/HORA
         # =================================================
 
         if usando_postgresql():
 
-            inicio_em = (
-                agora_utc_naive()
-            )
+            inicio_em = agora_utc_naive()
 
         else:
 
-            inicio_em = (
-                agora_sqlite()
-            )
+            inicio_em = agora_sqlite()
 
         # =================================================
         # INSERÇÃO
@@ -1756,7 +1699,7 @@ def index():
 
         mensagens_chat = cursor.fetchall()
 
-        mensagens_chat = preparar_lista_chat(
+        mensagens_chat = linhas_para_dict(
             mensagens_chat
         )
 
@@ -1781,6 +1724,15 @@ def index():
         SELECT COUNT(*)
         FROM atividades
         WHERE categoria = 'Separação'
+        AND status = 'Pendente'
+        """
+    )
+
+    inv_pendentes = contar(
+        """
+        SELECT COUNT(*)
+        FROM atividades
+        WHERE categoria = 'Inventário'
         AND status = 'Pendente'
         """
     )
@@ -2699,16 +2651,11 @@ def modulo(nome):
                         )
 
                     inseridos = 0
-
                     ignorados = 0
 
                     cursor = None
 
                     try:
-
-                        # Um único cursor para toda
-                        # a importação.
-                        cursor = get_db().cursor()
 
                         for _, linha in df.iterrows():
 
@@ -2795,7 +2742,8 @@ def modulo(nome):
 
                                 quantidade_valor = 0
 
-                            sql = """
+                            cursor = executar(
+                                """
                                 INSERT INTO estoque
                                 (
                                     rua,
@@ -2812,17 +2760,7 @@ def modulo(nome):
                                     %s,
                                     %s
                                 )
-                            """
-
-                            if not usando_postgresql():
-
-                                sql = sql.replace(
-                                    "%s",
-                                    "?"
-                                )
-
-                            cursor.execute(
-                                sql,
+                                """,
                                 (
                                     rua_valor,
                                     prateleira_valor,
@@ -3087,7 +3025,6 @@ def relatorio_pdf():
         )
 
         fechar_cursor(cursor)
-
         cursor = None
 
         # =================================================
@@ -3287,115 +3224,60 @@ def relatorio_pdf():
 
         dados = [
             [
-                Paragraph(
-                    "Req.",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Atividade",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Categoria",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Responsável",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Encerrado por",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Início",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Encerramento",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Duração",
-                    estilo_cabecalho
-                ),
-
-                Paragraph(
-                    "Status",
-                    estilo_cabecalho
-                )
+                Paragraph("Req.", estilo_cabecalho),
+                Paragraph("Atividade", estilo_cabecalho),
+                Paragraph("Categoria", estilo_cabecalho),
+                Paragraph("Responsável", estilo_cabecalho),
+                Paragraph("Encerrado por", estilo_cabecalho),
+                Paragraph("Início", estilo_cabecalho),
+                Paragraph("Encerramento", estilo_cabecalho),
+                Paragraph("Duração", estilo_cabecalho),
+                Paragraph("Status", estilo_cabecalho)
             ]
         ]
 
         for item in atividades_dia:
 
             requisicao = (
-                item.get(
-                    "num_requisicao"
-                )
+                item.get("num_requisicao")
                 or "-"
             )
 
             atividade = (
-                item.get(
-                    "atividade"
-                )
+                item.get("atividade")
                 or "-"
             )
 
             categoria_item = (
-                item.get(
-                    "categoria"
-                )
+                item.get("categoria")
                 or "-"
             )
 
             responsavel = (
-                item.get(
-                    "responsavel"
-                )
+                item.get("responsavel")
                 or "-"
             )
 
             encerrado_por = (
-                item.get(
-                    "encerrado_por"
-                )
+                item.get("encerrado_por")
                 or "-"
             )
 
             inicio = formatar_data_hora(
-                item.get(
-                    "inicio_em"
-                )
+                item.get("inicio_em")
             )
 
             conclusao = formatar_data_hora(
-                item.get(
-                    "concluido_em"
-                )
+                item.get("concluido_em")
             )
 
             duracao = calcular_duracao(
-                item.get(
-                    "inicio_em"
-                ),
-                item.get(
-                    "concluido_em"
-                )
+                item.get("inicio_em"),
+                item.get("concluido_em")
             )
 
             status = (
-                item.get(
-                    "status"
-                )
+                item.get("status")
                 or "-"
             )
 
@@ -3453,42 +3335,34 @@ def relatorio_pdf():
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "Nenhuma atividade registrada no dia.",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
                 ),
-
                 Paragraph(
                     "-",
                     estilo_celula
@@ -3499,15 +3373,15 @@ def relatorio_pdf():
             dados,
             repeatRows=1,
             colWidths=[
-                1.7 * cm,
-                4.6 * cm,
-                2.7 * cm,
-                3.3 * cm,
-                3.3 * cm,
-                3.0 * cm,
-                3.0 * cm,
-                2.1 * cm,
-                2.4 * cm
+                1.7 * cm,  # Req.
+                4.6 * cm,  # Atividade
+                2.7 * cm,  # Categoria
+                3.3 * cm,  # Responsável
+                3.3 * cm,  # Encerrado por
+                3.0 * cm,  # Início
+                3.0 * cm,  # Encerramento
+                2.1 * cm,  # Duração
+                2.4 * cm   # Status
             ]
         )
 
@@ -3653,9 +3527,9 @@ def concluir(id):
 
     try:
 
-        usuario_que_encerrou = (
-            session["usuario"]
-        )
+        usuario_que_encerrou = session[
+            "usuario"
+        ]
 
         # =================================================
         # BUSCA ATIVIDADE PENDENTE
@@ -3676,7 +3550,6 @@ def concluir(id):
         atividade_raw = cursor.fetchone()
 
         fechar_cursor(cursor)
-
         cursor = None
 
         if not atividade_raw:
@@ -3714,6 +3587,15 @@ def concluir(id):
 
         # =================================================
         # ENCERRA A ATIVIDADE
+        #
+        # responsavel:
+        #     pessoa atribuída
+        #
+        # encerrado_por:
+        #     pessoa que clicou em Encerrar
+        #
+        # concluido_em:
+        #     momento exato
         # =================================================
 
         cursor = executar(
@@ -3738,7 +3620,6 @@ def concluir(id):
         )
 
         fechar_cursor(cursor)
-
         cursor = None
 
         if quantidade_atualizada == 0:
@@ -3760,42 +3641,32 @@ def concluir(id):
         # SEPARAÇÃO → EXPEDIÇÃO
         # =================================================
 
-        if atividade.get(
-            "categoria"
-        ) == "Separação":
+        if atividade.get("categoria") == "Separação":
 
             num_requisicao = (
-                atividade.get(
-                    "num_requisicao"
-                )
+                atividade.get("num_requisicao")
                 or ""
             ).strip()
 
             prioridade = (
-                atividade.get(
-                    "prioridade"
-                )
+                atividade.get("prioridade")
                 or "Baixa"
             )
 
             responsavel = (
-                atividade.get(
-                    "responsavel"
-                )
+                atividade.get("responsavel")
                 or usuario_que_encerrou
             )
 
             prazo = (
-                atividade.get(
-                    "prazo"
-                )
+                atividade.get("prazo")
                 or ""
             )
 
             if num_requisicao:
 
                 # -----------------------------------------
-                # VERIFICA EXPEDIÇÃO EXISTENTE
+                # VERIFICA SE JÁ EXISTE EXPEDIÇÃO
                 # -----------------------------------------
 
                 cursor = executar(
@@ -3816,7 +3687,6 @@ def concluir(id):
                 )
 
                 fechar_cursor(cursor)
-
                 cursor = None
 
                 # -----------------------------------------
@@ -3828,8 +3698,7 @@ def concluir(id):
                 ) == 0:
 
                     # A Expedição começa exatamente
-                    # no encerramento da Separação.
-
+                    # quando a Separação foi encerrada.
                     inicio_expedicao = (
                         momento_encerramento
                     )
@@ -3884,7 +3753,6 @@ def concluir(id):
                     )
 
                     fechar_cursor(cursor)
-
                     cursor = None
 
                     flash(
@@ -4045,16 +3913,16 @@ def arquivar(id):
 def deletar_compatibilidade(id):
 
     """
-    Compatibilidade com versões antigas.
+    Mantém compatibilidade com versões antigas
+    do HTML que ainda utilizem /deletar/<id>.
 
     IMPORTANTE:
+    Não apaga a atividade.
 
-    A atividade NÃO é apagada.
-
-    Se estiver concluída, será arquivada.
+    Direciona para o processo de conclusão.
     """
 
-    return arquivar(id)
+    return concluir(id)
 
 
 # =========================================================

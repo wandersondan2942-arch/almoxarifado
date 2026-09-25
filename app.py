@@ -100,7 +100,7 @@ STATUS_VALIDOS = [
 
 
 # ============================================================
-# BANCO DE DADOS
+# BANCO
 # ============================================================
 
 def usando_postgresql():
@@ -226,10 +226,7 @@ def obter_valor(
         return padrao
 
 
-def contar(
-    sql,
-    parametros=()
-):
+def contar(sql, parametros=()):
 
     resultado = executar(
         sql,
@@ -326,7 +323,7 @@ def categoria_eh(item, categoria):
 
 
 # ============================================================
-# TESTES DE STATUS
+# STATUS
 # ============================================================
 
 def status_eh_pendente(valor):
@@ -375,7 +372,7 @@ def status_eh_ativo(valor):
 
 
 # ============================================================
-# DATA / HORA
+# DATA E HORA
 # ============================================================
 
 def agora_utc():
@@ -401,9 +398,30 @@ def agora_utc_naive():
 
 def agora_sqlite():
 
-    return datetime.now().strftime(
+    return agora_brasil().strftime(
         "%Y-%m-%d %H:%M:%S"
     )
+
+
+def agora_banco():
+
+    """
+    HORÁRIO OFICIAL USADO PARA GRAVAÇÃO.
+
+    PostgreSQL:
+        TIMESTAMP sem timezone recebe UTC sem tzinfo.
+
+    SQLite:
+        grava horário local de Brasília.
+
+    Na leitura, converter_para_brasil()
+    faz a conversão correta.
+    """
+
+    if usando_postgresql():
+        return agora_utc_naive()
+
+    return agora_sqlite()
 
 
 def converter_para_brasil(valor):
@@ -419,12 +437,15 @@ def converter_para_brasil(valor):
 
             if usando_postgresql():
 
+                # PostgreSQL grava TIMESTAMP sem timezone
+                # em UTC.
                 dt = dt.replace(
                     tzinfo=timezone.utc
                 )
 
             else:
 
+                # SQLite grava horário de Brasília.
                 dt = dt.replace(
                     tzinfo=FUSO_BRASIL
                 )
@@ -646,28 +667,17 @@ def prazo_em_datetime(valor):
 
 def prazo_formulario_valido(valor):
 
-    """
-    Valida o prazo enviado pelo formulário.
-
-    Retorna:
-        (True, datetime)  -> prazo válido
-        (False, None)     -> prazo inválido
-
-    O backend usa o horário oficial de America/Sao_Paulo,
-    evitando depender do relógio do navegador ou do servidor.
-    """
-
     if not valor:
         return False, None
 
-    prazo_dt = prazo_em_datetime(valor)
+    prazo_dt = prazo_em_datetime(
+        valor
+    )
 
     if not prazo_dt:
         return False, None
 
-    agora = agora_brasil()
-
-    if prazo_dt < agora:
+    if prazo_dt < agora_brasil():
         return False, prazo_dt
 
     return True, prazo_dt
@@ -724,7 +734,10 @@ def texto_atraso(item):
         return ""
 
     prazo_dt = prazo_em_datetime(
-        obter_valor(item, "prazo")
+        obter_valor(
+            item,
+            "prazo"
+        )
     )
 
     if not prazo_dt:
@@ -770,7 +783,7 @@ def texto_atraso(item):
 
 
 # ============================================================
-# PREPARAÇÃO DOS REGISTROS
+# PREPARAÇÃO
 # ============================================================
 
 def preparar_atividade(item):
@@ -836,9 +849,6 @@ def preparar_chat(itens):
 
         if item:
 
-            # Segurança adicional:
-            # mensagens antigas que eventualmente tenham
-            # usuario NULL não quebram o template.
             if not item.get("usuario"):
                 item["usuario"] = "Usuário"
 
@@ -852,7 +862,7 @@ def preparar_chat(itens):
 
 
 # ============================================================
-# BUSCA DE ATIVIDADES
+# BUSCA
 # ============================================================
 
 def buscar_atividades_ativas():
@@ -861,6 +871,12 @@ def buscar_atividades_ativas():
         """
         SELECT *
         FROM atividades
+        WHERE status IS NULL
+           OR LOWER(status) NOT IN (
+               'concluído',
+               'concluido',
+               'arquivado'
+           )
         ORDER BY id DESC
         """,
         fetchall=True
@@ -966,7 +982,9 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    inventario_total = len(inventarios)
+    inventario_total = len(
+        inventarios
+    )
 
     inventario_concluido = sum(
         1
@@ -985,7 +1003,7 @@ def calcular_indicadores(atividades):
         - inventario_concluido
     )
 
-    if inventario_total > 0:
+    if inventario_total:
 
         perc_inventario = round(
             (
@@ -1007,7 +1025,9 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    expedicao_total = len(expedicoes)
+    expedicao_total = len(
+        expedicoes
+    )
 
     expedicao_concluida = sum(
         1
@@ -1026,7 +1046,7 @@ def calcular_indicadores(atividades):
         - expedicao_concluida
     )
 
-    if expedicao_total > 0:
+    if expedicao_total:
 
         perc_expedicao = round(
             (
@@ -1066,7 +1086,9 @@ def calcular_indicadores(atividades):
         )
 
         if numero:
-            requisicoes_pendentes.add(numero)
+            requisicoes_pendentes.add(
+                numero
+            )
 
     recebimento_pendente = sum(
         1
@@ -1120,32 +1142,37 @@ def calcular_indicadores(atividades):
         "atividades_finalizadas": atividades_finalizadas,
         "atividades_ativas": atividades_ativas,
 
-        "perc_atendidas":
-            max(0, min(100, perc_atendidas)),
+        "perc_atendidas": max(
+            0,
+            min(
+                100,
+                perc_atendidas
+            )
+        ),
 
-        "inventario_total":
-            inventario_total,
+        "inventario_total": inventario_total,
+        "inventario_concluido": inventario_concluido,
+        "inventario_pendente": inventario_pendente,
 
-        "inventario_concluido":
-            inventario_concluido,
+        "perc_inventario": max(
+            0,
+            min(
+                100,
+                perc_inventario
+            )
+        ),
 
-        "inventario_pendente":
-            inventario_pendente,
+        "expedicao_total": expedicao_total,
+        "expedicao_concluida": expedicao_concluida,
+        "expedicao_pendente": expedicao_pendente,
 
-        "perc_inventario":
-            max(0, min(100, perc_inventario)),
-
-        "expedicao_total":
-            expedicao_total,
-
-        "expedicao_concluida":
-            expedicao_concluida,
-
-        "expedicao_pendente":
-            expedicao_pendente,
-
-        "perc_expedicao":
-            max(0, min(100, perc_expedicao)),
+        "perc_expedicao": max(
+            0,
+            min(
+                100,
+                perc_expedicao
+            )
+        ),
 
         "requisicoes_pendentes":
             len(requisicoes_pendentes),
@@ -1165,17 +1192,31 @@ def calcular_indicadores(atividades):
 # INDICADORES DO DIA
 # ============================================================
 
-def atividade_eh_do_dia(item, data_referencia=None):
+def atividade_eh_do_dia(
+    item,
+    data_referencia=None
+):
 
     if data_referencia is None:
         data_referencia = agora_brasil().date()
 
+    # IMPORTANTE:
+    # Para uma Separação, o indicador diário usa
+    # primeiro inicio_em.
     data_valor = (
-        obter_valor(item, "inicio_em")
-        or obter_valor(item, "criado_em")
+        obter_valor(
+            item,
+            "inicio_em"
+        )
+        or obter_valor(
+            item,
+            "criado_em"
+        )
     )
 
-    dt = converter_para_brasil(data_valor)
+    dt = converter_para_brasil(
+        data_valor
+    )
 
     if not dt:
         return False
@@ -1187,17 +1228,22 @@ def calcular_indicadores_do_dia(atividades):
 
     hoje = agora_brasil().date()
 
-    atividades_dia = [
-        linha_para_dict(item)
-        for item in atividades
-        if (
-            linha_para_dict(item)
-            and atividade_eh_do_dia(
-                item,
-                hoje
+    atividades_dia = []
+
+    for item in atividades:
+
+        item_dict = linha_para_dict(item)
+
+        if not item_dict:
+            continue
+
+        if atividade_eh_do_dia(
+            item_dict,
+            hoje
+        ):
+            atividades_dia.append(
+                item_dict
             )
-        )
-    ]
 
     total_dia = len(
         atividades_dia
@@ -1225,7 +1271,7 @@ def calcular_indicadores_do_dia(atividades):
         )
     )
 
-    if total_dia > 0:
+    if total_dia:
 
         perc_atendidas = round(
             (
@@ -1262,7 +1308,7 @@ def calcular_indicadores_do_dia(atividades):
         )
     )
 
-    if inventario_total > 0:
+    if inventario_total:
 
         perc_inventario = round(
             (
@@ -1299,7 +1345,7 @@ def calcular_indicadores_do_dia(atividades):
         )
     )
 
-    if expedicao_total > 0:
+    if expedicao_total:
 
         perc_expedicao = round(
             (
@@ -1325,14 +1371,13 @@ def calcular_indicadores_do_dia(atividades):
         "pendentes":
             pendentes_dia,
 
-        "perc_atendidas":
-            max(
-                0,
-                min(
-                    100,
-                    perc_atendidas
-                )
-            ),
+        "perc_atendidas": max(
+            0,
+            min(
+                100,
+                perc_atendidas
+            )
+        ),
 
         "inventario_total":
             inventario_total,
@@ -1340,14 +1385,13 @@ def calcular_indicadores_do_dia(atividades):
         "inventario_concluido":
             inventario_concluido,
 
-        "perc_inventario":
-            max(
-                0,
-                min(
-                    100,
-                    perc_inventario
-                )
-            ),
+        "perc_inventario": max(
+            0,
+            min(
+                100,
+                perc_inventario
+            )
+        ),
 
         "expedicao_total":
             expedicao_total,
@@ -1355,19 +1399,18 @@ def calcular_indicadores_do_dia(atividades):
         "expedicao_concluida":
             expedicao_concluida,
 
-        "perc_expedicao":
-            max(
-                0,
-                min(
-                    100,
-                    perc_expedicao
-                )
-            ),
+        "perc_expedicao": max(
+            0,
+            min(
+                100,
+                perc_expedicao
+            )
+        ),
     }
 
 
 # ============================================================
-# DUPLICIDADE DE REQUISIÇÃO
+# DUPLICIDADE
 # ============================================================
 
 def requisicao_duplicada(
@@ -1425,7 +1468,7 @@ def requisicao_duplicada(
 
 
 # ============================================================
-# INICIALIZAÇÃO DO BANCO
+# BANCO - INICIALIZAÇÃO
 # ============================================================
 
 def init_db():
@@ -1472,21 +1515,6 @@ def init_db():
             )
         """)
 
-        chat_colunas = [
-            ("usuario", "TEXT"),
-            ("mensagem", "TEXT"),
-            ("criado_em", "TIMESTAMP"),
-        ]
-
-        for coluna, tipo in chat_colunas:
-
-            cursor.execute(
-                f"""
-                ALTER TABLE chat
-                ADD COLUMN IF NOT EXISTS {coluna} {tipo}
-                """
-            )
-
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
                 id SERIAL PRIMARY KEY,
@@ -1532,50 +1560,42 @@ def init_db():
                 """
             )
 
-        cursor.execute("""
-            ALTER TABLE usuarios
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
-        """)
+        tabelas = {
+            "usuarios": [
+                ("criado_em", "TIMESTAMP")
+            ],
 
-        cursor.execute("""
-            ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS etapa TEXT
-        """)
+            "chat": [
+                ("usuario", "TEXT"),
+                ("mensagem", "TEXT"),
+                ("criado_em", "TIMESTAMP")
+            ],
 
-        cursor.execute("""
-            ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS autor TEXT
-        """)
+            "melhorias": [
+                ("etapa", "TEXT"),
+                ("autor", "TEXT"),
+                ("status", "TEXT"),
+                ("criado_em", "TIMESTAMP")
+            ],
 
-        cursor.execute("""
-            ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS status TEXT
-        """)
+            "estoque": [
+                ("codigo", "TEXT"),
+                ("descricao", "TEXT"),
+                ("quantidade", "INTEGER DEFAULT 0"),
+                ("criado_em", "TIMESTAMP")
+            ],
+        }
 
-        cursor.execute("""
-            ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
-        """)
+        for tabela, colunas in tabelas.items():
 
-        cursor.execute("""
-            ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS codigo TEXT
-        """)
+            for coluna, tipo in colunas:
 
-        cursor.execute("""
-            ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS descricao TEXT
-        """)
-
-        cursor.execute("""
-            ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS quantidade INTEGER DEFAULT 0
-        """)
-
-        cursor.execute("""
-            ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
-        """)
+                cursor.execute(
+                    f"""
+                    ALTER TABLE {tabela}
+                    ADD COLUMN IF NOT EXISTS {coluna} {tipo}
+                    """
+                )
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1593,6 +1613,12 @@ def init_db():
             CREATE INDEX IF NOT EXISTS
             idx_atividades_categoria
             ON atividades (categoria)
+        """)
+
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_atividades_inicio
+            ON atividades (inicio_em)
         """)
 
         cursor.execute("""
@@ -1753,6 +1779,12 @@ def init_db():
 
         db.execute("""
             CREATE INDEX IF NOT EXISTS
+            idx_atividades_inicio
+            ON atividades (inicio_em)
+        """)
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
             idx_atividades_prazo
             ON atividades (prazo)
         """)
@@ -1766,7 +1798,7 @@ def init_db():
         db.commit()
 
     # ========================================================
-    # USUÁRIO ADMINISTRADOR
+    # ADMIN
     # ========================================================
 
     usuario = executar(
@@ -1808,11 +1840,7 @@ def init_db():
             (
                 "Wanderson Fernandes",
                 "1234",
-                (
-                    agora_utc_naive()
-                    if usando_postgresql()
-                    else agora_sqlite()
-                )
+                agora_banco()
             ),
             commit=True
         )
@@ -1838,8 +1866,6 @@ def arquivar_atividades_expiradas():
         fetchall=True
     )
 
-    ids = []
-
     for item in registros:
 
         if not status_eh_concluido(
@@ -1855,9 +1881,6 @@ def arquivar_atividades_expiradas():
             "concluido_em"
         )
 
-        if not concluido:
-            continue
-
         dt = converter_para_brasil(
             concluido
         )
@@ -1865,35 +1888,33 @@ def arquivar_atividades_expiradas():
         if not dt:
             continue
 
-        if dt.astimezone(
-            timezone.utc
-        ) <= limite:
+        if (
+            dt.astimezone(
+                timezone.utc
+            ) <= limite
+        ):
 
-            ids.append(
-                obter_valor(
-                    item,
-                    "id"
-                )
+            executar(
+                """
+                UPDATE atividades
+                SET status = 'Arquivado'
+                WHERE id = %s
+                """
+                if usando_postgresql()
+                else
+                """
+                UPDATE atividades
+                SET status = 'Arquivado'
+                WHERE id = ?
+                """,
+                (
+                    obter_valor(
+                        item,
+                        "id"
+                    ),
+                ),
+                commit=True
             )
-
-    for item_id in ids:
-
-        executar(
-            """
-            UPDATE atividades
-            SET status = 'Arquivado'
-            WHERE id = %s
-            """
-            if usando_postgresql()
-            else
-            """
-            UPDATE atividades
-            SET status = 'Arquivado'
-            WHERE id = ?
-            """,
-            (item_id,),
-            commit=True
-        )
 
 
 # ============================================================
@@ -1970,7 +1991,7 @@ def login():
 
 
 # ============================================================
-# CADASTRO DE USUÁRIO
+# CADASTRO
 # ============================================================
 
 @app.route(
@@ -2098,11 +2119,7 @@ def cadastro_usuario():
             (
                 nome,
                 senha,
-                (
-                    agora_utc_naive()
-                    if usando_postgresql()
-                    else agora_sqlite()
-                )
+                agora_banco()
             ),
             commit=True
         )
@@ -2289,7 +2306,7 @@ def obter_dados_dashboard():
         100 - expedicao_pizza
     )
 
-    dados = {
+    return {
 
         "usuario_atual":
             usuario_atual,
@@ -2452,8 +2469,6 @@ def obter_dados_dashboard():
             busca,
     }
 
-    return dados
-
 
 # ============================================================
 # DASHBOARD PRINCIPAL
@@ -2519,9 +2534,6 @@ def index():
 
             try:
 
-                # Revalida o usuário pela sessão.
-                # Se por algum motivo a sessão estiver vazia,
-                # não grava None no banco.
                 nome_chat = str(
                     session.get(
                         "usuario_atual",
@@ -2560,19 +2572,9 @@ def index():
                     (
                         nome_chat,
                         mensagem,
-                        (
-                            agora_utc_naive()
-                            if usando_postgresql()
-                            else agora_sqlite()
-                        )
+                        agora_banco()
                     ),
                     commit=True
-                )
-
-                print(
-                    "CHAT ENVIADO:",
-                    nome_chat,
-                    mensagem
                 )
 
                 flash(
@@ -2588,8 +2590,7 @@ def index():
                 )
 
                 flash(
-                    "Não foi possível enviar a mensagem. "
-                    "Verifique o banco de dados.",
+                    "Não foi possível enviar a mensagem.",
                     "danger"
                 )
 
@@ -2669,7 +2670,7 @@ def index():
             )
 
         # ====================================================
-        # VALIDAÇÃO DO PRAZO NO BACKEND
+        # PRAZO
         # ====================================================
 
         prazo_valido, prazo_dt = prazo_formulario_valido(
@@ -2697,10 +2698,13 @@ def index():
                 url_for("index")
             )
 
-        # Mantém o formato que o banco já utiliza.
         prazo = prazo_dt.strftime(
             "%Y-%m-%d %H:%M"
         )
+
+        # ====================================================
+        # DUPLICIDADE
+        # ====================================================
 
         if (
             num_requisicao
@@ -2718,21 +2722,33 @@ def index():
                 url_for("index")
             )
 
+        # ====================================================
+        # HORÁRIO DA SEPARAÇÃO
+        # ====================================================
+        #
+        # ESTA É UMA DAS CORREÇÕES PRINCIPAIS.
+        #
+        # O horário é capturado UMA ÚNICA VEZ pelo servidor,
+        # imediatamente antes do INSERT.
+        #
+        # Para Separação:
+        #     inicio_em = agora_banco()
+        #
+        # Assim o horário da requisição fica registrado
+        # independentemente do relógio do navegador.
+        # ====================================================
+
+        agora_registro = agora_banco()
+
         inicio_em = None
 
         if categoria == "Separação":
 
-            inicio_em = (
-                agora_utc_naive()
-                if usando_postgresql()
-                else agora_sqlite()
-            )
+            inicio_em = agora_registro
 
-        agora_criacao = (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
-        )
+        # ====================================================
+        # CRIAÇÃO
+        # ====================================================
 
         executar(
             """
@@ -2781,16 +2797,25 @@ def index():
                 prazo,
                 STATUS_PENDENTE,
                 inicio_em,
-                agora_criacao
+                agora_registro
             ),
             commit=True
         )
 
         print(
             "ATIVIDADE CRIADA:",
-            num_requisicao,
-            categoria,
-            prazo
+            "REQ=", num_requisicao,
+            "CATEGORIA=", categoria,
+            "INICIO=", (
+                formatar_data_hora(
+                    inicio_em
+                )
+                if inicio_em
+                else "-"
+            ),
+            "CRIADO=", formatar_data_hora(
+                agora_registro
+            )
         )
 
         flash(
@@ -2811,7 +2836,7 @@ def index():
 
 
 # ============================================================
-# DASHBOARD.HTML
+# DASHBOARD
 # ============================================================
 
 @app.route(
@@ -3000,14 +3025,22 @@ def relatorios():
 
         inicio_busca = (
             inicio_brasilia
-            .astimezone(timezone.utc)
-            .replace(tzinfo=None)
+            .astimezone(
+                timezone.utc
+            )
+            .replace(
+                tzinfo=None
+            )
         )
 
         fim_busca = (
             fim_brasilia
-            .astimezone(timezone.utc)
-            .replace(tzinfo=None)
+            .astimezone(
+                timezone.utc
+            )
+            .replace(
+                tzinfo=None
+            )
         )
 
         sql = """
@@ -3230,11 +3263,9 @@ def modulo(nome):
 
         return render_template(
             "cadastros.html",
-
             usuarios=linhas_para_dict(
                 usuarios
             ),
-
             usuario_atual=session[
                 "usuario_atual"
             ]
@@ -3318,11 +3349,7 @@ def modulo(nome):
                         "usuario_atual"
                     ],
                     status,
-                    (
-                        agora_utc_naive()
-                        if usando_postgresql()
-                        else agora_sqlite()
-                    )
+                    agora_banco()
                 ),
                 commit=True
             )
@@ -3353,11 +3380,9 @@ def modulo(nome):
 
         return render_template(
             "melhorias.html",
-
             melhorias=linhas_para_dict(
                 melhorias
             ),
-
             usuario_atual=session[
                 "usuario_atual"
             ]
@@ -3677,7 +3702,7 @@ def editar(id):
         )
 
     # ========================================================
-    # VALIDAÇÃO DO PRAZO NA EDIÇÃO
+    # PRAZO
     # ========================================================
 
     if prazo:
@@ -3686,15 +3711,7 @@ def editar(id):
             prazo
         )
 
-        # Permite manter um prazo antigo em uma atividade
-        # já concluída/arquivada, pois ela não está mais ativa.
         if not prazo_valido:
-
-            status_atual = obter_valor(
-                atividade,
-                "status",
-                ""
-            )
 
             if status_eh_ativo(status):
 
@@ -3724,6 +3741,11 @@ def editar(id):
         STATUS_PENDENTE
     )
 
+    inicio_em = obter_valor(
+        atividade,
+        "inicio_em"
+    )
+
     concluido_em = obter_valor(
         atividade,
         "concluido_em"
@@ -3734,6 +3756,36 @@ def editar(id):
         "encerrado_por"
     )
 
+    # ========================================================
+    # CORREÇÃO DO HORÁRIO DE INÍCIO
+    # ========================================================
+    #
+    # Se a atividade entrar em "Em andamento" e ainda não
+    # possuir início, grava o horário atual do servidor.
+    #
+    # Também corrige registros antigos de Separação que
+    # estejam sem inicio_em.
+    # ========================================================
+
+    if (
+        categoria == "Separação"
+        and not inicio_em
+        and status_eh_ativo(status)
+    ):
+
+        inicio_em = agora_banco()
+
+    elif (
+        status_eh_andamento(status)
+        and not inicio_em
+    ):
+
+        inicio_em = agora_banco()
+
+    # ========================================================
+    # CONCLUSÃO
+    # ========================================================
+
     if (
         status == STATUS_CONCLUIDO
         and not status_eh_concluido(
@@ -3741,11 +3793,7 @@ def editar(id):
         )
     ):
 
-        concluido_em = (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
-        )
+        concluido_em = agora_banco()
 
         encerrado_por = session[
             "usuario_atual"
@@ -3763,11 +3811,7 @@ def editar(id):
 
         if not concluido_em:
 
-            concluido_em = (
-                agora_utc_naive()
-                if usando_postgresql()
-                else agora_sqlite()
-            )
+            concluido_em = agora_banco()
 
         if not encerrado_por:
 
@@ -3787,6 +3831,7 @@ def editar(id):
             prioridade = %s,
             prazo = %s,
             status = %s,
+            inicio_em = %s,
             concluido_em = %s,
             encerrado_por = %s
         WHERE id = %s
@@ -3804,6 +3849,7 @@ def editar(id):
             prioridade = ?,
             prazo = ?,
             status = ?,
+            inicio_em = ?,
             concluido_em = ?,
             encerrado_por = ?
         WHERE id = ?
@@ -3817,6 +3863,7 @@ def editar(id):
             prioridade,
             prazo,
             status,
+            inicio_em,
             concluido_em,
             encerrado_por,
             id
@@ -3902,11 +3949,44 @@ def concluir(id):
             or url_for("index")
         )
 
-    agora = (
-        agora_utc_naive()
-        if usando_postgresql()
-        else agora_sqlite()
+    agora = agora_banco()
+
+    # ========================================================
+    # GARANTE INÍCIO
+    # ========================================================
+
+    inicio_existente = obter_valor(
+        atividade,
+        "inicio_em"
     )
+
+    if not inicio_existente:
+
+        executar(
+            """
+            UPDATE atividades
+            SET
+                inicio_em = %s
+            WHERE id = %s
+            """
+            if usando_postgresql()
+            else
+            """
+            UPDATE atividades
+            SET
+                inicio_em = ?
+            WHERE id = ?
+            """,
+            (
+                agora,
+                id
+            ),
+            commit=True
+        )
+
+    # ========================================================
+    # CONCLUI
+    # ========================================================
 
     executar(
         """
@@ -3937,9 +4017,9 @@ def concluir(id):
         commit=True
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # SEPARAÇÃO -> EXPEDIÇÃO
-    # --------------------------------------------------------
+    # ========================================================
 
     num_requisicao = normalizar_requisicao(
         obter_valor(
@@ -4002,18 +4082,6 @@ def concluir(id):
                 "após conclusão da Separação "
                 f"da requisição {num_requisicao}."
             )
-
-            # ------------------------------------------------
-            # NOVA REGRA:
-            # A expedição automática recebe um prazo baseado
-            # no momento em que ela foi criada.
-            #
-            # Assim, uma Separação concluída hoje não gera
-            # automaticamente uma Expedição já atrasada por
-            # causa de um prazo antigo da Separação.
-            #
-            # Prazo padrão: 1 hora após a criação.
-            # ------------------------------------------------
 
             prazo_expedicao = (
                 agora_brasil()
@@ -4092,14 +4160,16 @@ def concluir(id):
 
             flash(
                 "Separação concluída e Expedição criada automaticamente. "
-                f"Prazo da Expedição: {formatar_data_hora(prazo_expedicao)}.",
+                f"Prazo da Expedição: "
+                f"{formatar_data_hora(prazo_expedicao)}.",
                 "success"
             )
 
         else:
 
             flash(
-                "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
+                "Separação concluída. Já existia uma Expedição ativa "
+                "para essa requisição.",
                 "info"
             )
 
@@ -4197,7 +4267,8 @@ def arquivar(id):
     )
 
     flash(
-        "Registro arquivado. Ele continua disponível em Relatórios > Arquivados.",
+        "Registro arquivado. Ele continua disponível "
+        "em Relatórios > Arquivados.",
         "success"
     )
 
@@ -4208,7 +4279,7 @@ def arquivar(id):
 
 
 # ============================================================
-# DELETAR - COMPATIBILIDADE
+# COMPATIBILIDADE COM DELETAR
 # ============================================================
 
 @app.route(
@@ -4221,7 +4292,7 @@ def deletar(id):
 
 
 # ============================================================
-# ESTOQUE - CADASTRO
+# ESTOQUE
 # ============================================================
 
 @app.route(
@@ -4311,11 +4382,7 @@ def salvar_estoque():
             codigo,
             descricao,
             quantidade,
-            (
-                agora_utc_naive()
-                if usando_postgresql()
-                else agora_sqlite()
-            )
+            agora_banco()
         ),
         commit=True
     )
@@ -4334,7 +4401,7 @@ def salvar_estoque():
 
 
 # ============================================================
-# ESTOQUE - EXCLUSÃO
+# EXCLUIR ESTOQUE
 # ============================================================
 
 @app.route(
@@ -4378,7 +4445,7 @@ def deletar_estoque(id):
 
 
 # ============================================================
-# MELHORIAS - ARQUIVAR
+# MELHORIA - ARQUIVAR
 # ============================================================
 
 @app.route(
@@ -4477,14 +4544,22 @@ def relatorio_pdf():
 
         inicio_busca = (
             inicio_brasilia
-            .astimezone(timezone.utc)
-            .replace(tzinfo=None)
+            .astimezone(
+                timezone.utc
+            )
+            .replace(
+                tzinfo=None
+            )
         )
 
         fim_busca = (
             fim_brasilia
-            .astimezone(timezone.utc)
-            .replace(tzinfo=None)
+            .astimezone(
+                timezone.utc
+            )
+            .replace(
+                tzinfo=None
+            )
         )
 
         sql = """
@@ -4580,7 +4655,8 @@ def relatorio_pdf():
 
     elementos.append(
         Paragraph(
-            f"Data: {data_relatorio.strftime('%d/%m/%Y')}",
+            f"Data: "
+            f"{data_relatorio.strftime('%d/%m/%Y')}",
             estilos["Normal"]
         )
     )
@@ -4769,7 +4845,8 @@ def relatorio_pdf():
 
     elementos.append(
         Paragraph(
-            "Relatório gerado pelo sistema Almoxarifado Valenet.",
+            "Relatório gerado pelo sistema "
+            "Almoxarifado Valenet.",
             estilos["Normal"]
         )
     )
@@ -5064,12 +5141,15 @@ def importar_estoque():
                 coluna_quantidade = coluna
 
         if coluna_codigo is None and len(df.columns) >= 1:
+
             coluna_codigo = df.columns[0]
 
         if coluna_descricao is None and len(df.columns) >= 2:
+
             coluna_descricao = df.columns[1]
 
         if coluna_quantidade is None and len(df.columns) >= 3:
+
             coluna_quantidade = df.columns[2]
 
         quantidade_importada = 0
@@ -5129,6 +5209,7 @@ def importar_estoque():
                 and not descricao
                 and quantidade == 0
             ):
+
                 continue
 
             executar(
@@ -5160,11 +5241,7 @@ def importar_estoque():
                     codigo,
                     descricao,
                     quantidade,
-                    (
-                        agora_utc_naive()
-                        if usando_postgresql()
-                        else agora_sqlite()
-                    )
+                    agora_banco()
                 ),
                 commit=True
             )
@@ -5208,19 +5285,39 @@ with app.app_context():
         init_db()
 
         print(
-            "Banco de dados inicializado com sucesso."
+            "=========================================="
+        )
+
+        print(
+            "BANCO DE DADOS INICIALIZADO"
+        )
+
+        print(
+            "PostgreSQL:",
+            usando_postgresql()
+        )
+
+        print(
+            "Horário Brasil:",
+            agora_brasil().strftime(
+                "%d/%m/%Y %H:%M:%S"
+            )
+        )
+
+        print(
+            "=========================================="
         )
 
     except Exception as erro:
 
         print(
-            "ERRO AO INICIALIZAR BANCO: "
-            f"{erro}"
+            "ERRO AO INICIALIZAR BANCO:",
+            repr(erro)
         )
 
 
 # ============================================================
-# EXECUÇÃO LOCAL
+# EXECUÇÃO
 # ============================================================
 
 if __name__ == "__main__":

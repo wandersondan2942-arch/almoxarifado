@@ -3287,15 +3287,12 @@ def relatorios():
 # ============================================================
 # MÓDULOS
 # ============================================================
-
-@app.route(
-    "/modulo/<path:nome>",
+@app.route("/modulo/<path:nome>",
     methods=["GET", "POST"]
 )
 def modulo(nome):
 
     if "usuario_atual" not in session:
-
         return redirect(
             url_for("login")
         )
@@ -3509,6 +3506,8 @@ def modulo(nome):
         return render_template(
             "modulo.html",
 
+            nome="Estoque",
+
             titulo="Estoque",
 
             modulo="Estoque",
@@ -3523,7 +3522,7 @@ def modulo(nome):
         )
 
     # --------------------------------------------------------
-    # MAPA
+    # MAPA DOS MÓDULOS OPERACIONAIS
     # --------------------------------------------------------
 
     mapa_modulos = {
@@ -3546,16 +3545,6 @@ def modulo(nome):
         "recebimento": {
             "titulo": "Recebimento",
             "categoria": "Recebimento"
-        },
-
-        "logistica reversa": {
-            "titulo": "Logística Reversa",
-            "categoria": "Logística Reversa"
-        },
-
-        "reversa": {
-            "titulo": "Logística Reversa",
-            "categoria": "Logística Reversa"
         }
     }
 
@@ -3598,6 +3587,12 @@ def modulo(nome):
         return render_template(
             "modulo.html",
 
+            # IMPORTANTE:
+            # modulo.html utiliza {{ nome }}
+            nome=configuracao[
+                "titulo"
+            ],
+
             titulo=configuracao[
                 "titulo"
             ],
@@ -3614,6 +3609,10 @@ def modulo(nome):
                 "usuario_atual"
             ]
         )
+
+    # --------------------------------------------------------
+    # MÓDULO NÃO ENCONTRADO
+    # --------------------------------------------------------
 
     flash(
         f"Módulo '{nome}' não encontrado.",

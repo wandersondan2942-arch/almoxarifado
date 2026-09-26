@@ -3364,7 +3364,7 @@ def modulo(nome):
     # --------------------------------------------------------
     # MELHORIAS / PDCA
     # --------------------------------------------------------
-if (
+    if (
     "melhoria" in nome_normalizado
     or "pdca" in nome_normalizado
 ):

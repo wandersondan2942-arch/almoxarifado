@@ -763,32 +763,41 @@
     <span>Início</span>
 </a>
 
-
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Requisições') }}"
+>
     <i class="fa-solid fa-file-lines"></i>
     <span>Requisições</span>
 </a>
 
 
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Inventário') }}"
+>
     <i class="fa-solid fa-boxes-stacked"></i>
     <span>Inventário</span>
 </a>
 
 
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Expedição') }}"
+>
     <i class="fa-solid fa-truck-fast"></i>
     <span>Expedição</span>
 </a>
 
 
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Recebimento') }}"
+>
     <i class="fa-solid fa-truck-ramp-box"></i>
     <span>Recebimento</span>
 </a>
 
 
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Estoque') }}"
+>
     <i class="fa-solid fa-warehouse"></i>
     <span>Estoque</span>
 </a>
@@ -799,9 +808,43 @@
 </div>
 
 
-<a href="#">
+<a
+    href="{{ url_for('modulo', nome='Cadastros') }}"
+>
     <i class="fa-solid fa-users"></i>
     <span>Cadastros</span>
+</a>
+
+
+<a
+    href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+>
+    <i class="fa-solid fa-arrows-rotate"></i>
+    <span>Melhorias / PDCA</span>
+</a>
+
+
+<a
+    href="{{ url_for('modulo', nome='Indicadores') }}"
+>
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Indicadores</span>
+</a>
+
+
+<a
+    href="{{ url_for('relatorios') }}"
+>
+    <i class="fa-solid fa-chart-column"></i>
+    <span>Relatórios</span>
+</a>
+
+
+<a
+    href="{{ url_for('modulo', nome='Configurações') }}"
+>
+    <i class="fa-solid fa-gear"></i>
+    <span>Configurações</span>
 </a>
 
 

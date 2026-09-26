@@ -2,13 +2,9 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Almoxarifado Valenet</title>
+    <title>Painel Operacional Valenet</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -20,751 +16,183 @@
         rel="stylesheet"
     >
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            background: #f4f6f9;
-            font-family: "Segoe UI", Arial, sans-serif;
-            color: #212529;
-        }
-
-        /* =========================
-           SIDEBAR
-        ========================= */
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100vh;
-            background: #172033;
-            color: #fff;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .sidebar-header {
-            height: 75px;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-            text-decoration: none;
-        }
-
-        .sidebar-logo i {
-            font-size: 25px;
-        }
-
-        .menu-label {
-            padding: 20px 20px 8px;
-            color: #7f8ba3;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-            padding: 12px 20px;
-            color: #cbd2df;
-            text-decoration: none;
-            font-size: 14px;
-            transition: .2s;
-        }
-
-        .sidebar a i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .sidebar a:hover {
-            background: rgba(255,255,255,.07);
-            color: #fff;
-        }
-
-        .sidebar a.active {
-            background: #0d6efd;
-            color: #fff;
-        }
-
-        /* =========================
-           MAIN
-        ========================= */
-
-        .main {
-            margin-left: 250px;
-            min-height: 100vh;
-        }
-
-        .topbar {
-            height: 75px;
-            background: #fff;
-            border-bottom: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-        }
-
-        .page-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #495057;
-            font-size: 14px;
-        }
-
-        .user-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            background: #0d6efd;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-        }
-
-        .content {
-            padding: 30px;
-        }
-
-        /* =========================
-           CARDS
-        ========================= */
-
-        .stat-card {
-            background: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            height: 100%;
-            box-shadow: 0 2px 8px rgba(0,0,0,.03);
-        }
-
-        .stat-card-top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .stat-title {
-            color: #6c757d;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            margin-top: 8px;
-        }
-
-        .stat-icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #eef4ff;
-            color: #0d6efd;
-            font-size: 20px;
-        }
-
-        /* =========================
-           GENERAL CARDS
-        ========================= */
-
-        .card-custom {
-            background: #fff;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.03);
-        }
-
-        .card-header-custom {
-            padding: 18px 20px;
-            border-bottom: 1px solid #edf0f2;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card-header-custom h5 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 700;
-        }
-
-        .card-body-custom {
-            padding: 20px;
-        }
-
-        /* =========================
-           FORM
-        ========================= */
-
-        .form-label {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .form-control,
-        .form-select {
-            border-radius: 8px;
-            min-height: 42px;
-        }
-
-        textarea.form-control {
-            min-height: 90px;
-        }
-
-        /* =========================
-           INDICADORES
-        ========================= */
-
-        .indicator-box {
-            text-align: center;
-            padding: 10px;
-        }
-
-        .indicator-circle {
-            width: 115px;
-            height: 115px;
-            border-radius: 50%;
-            margin: 0 auto 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f1f3f5;
-            border: 10px solid #0d6efd;
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .indicator-label {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        /* =========================
-           ATIVIDADES
-        ========================= */
-
-        .activity-item {
-            border-bottom: 1px solid #edf0f2;
-            padding: 15px 0;
-        }
-
-        .activity-item:last-child {
-            border-bottom: 0;
-        }
-
-        .activity-title {
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .activity-meta {
-            font-size: 12px;
-            color: #6c757d;
-        }
-
-        .badge-status {
-            font-size: 11px;
-            padding: 5px 9px;
-            border-radius: 20px;
-        }
-
-        .badge-pendente {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .badge-concluido {
-            background: #d1e7dd;
-            color: #0f5132;
-        }
-
-        .badge-arquivada {
-            background: #e2e3e5;
-            color: #41464b;
-        }
-
-        .badge-prioridade {
-            font-size: 10px;
-        }
-
-        /* =========================
-           CHAT
-        ========================= */
-
-        .chat-box {
-            max-height: 360px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .chat-message {
-            padding: 10px 12px;
-            border-radius: 10px;
-            background: #f8f9fa;
-            margin-bottom: 10px;
-        }
-
-        .chat-user {
-            font-size: 12px;
-            font-weight: 700;
-            color: #0d6efd;
-        }
-
-        .chat-text {
-            font-size: 13px;
-            margin-top: 3px;
-            word-break: break-word;
-        }
-
-        .chat-time {
-            font-size: 10px;
-            color: #6c757d;
-            margin-top: 4px;
-        }
-
-        /* =========================
-           RESPONSIVO
-        ========================= */
-
-        @media (max-width: 991px) {
-
-            .sidebar {
-                width: 220px;
-            }
-
-            .main {
-                margin-left: 220px;
-            }
-
-            .content {
-                padding: 20px;
-            }
-        }
-
-        @media (max-width: 767px) {
-
-            .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
-            .topbar {
-                padding: 0 15px;
-            }
-
-            .content {
-                padding: 15px;
-            }
-
-            .page-title {
-                font-size: 18px;
-            }
-        }
-    </style>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
 </head>
 
 <body>
 
-<!-- =========================================================
-     SIDEBAR
-========================================================= -->
+<div class="app-container">
 
-<div class="sidebar">
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+    <aside class="sidebar">
 
-    <div class="sidebar-header">
-        <a
-            href="{{ url_for('index') }}"
-            class="sidebar-logo"
-        >
-            <i class="fa-solid fa-boxes-stacked"></i>
-            <span>Almoxarifado</span>
-        </a>
-    </div>
+        <div class="sidebar-brand">
 
-    <div class="menu-label">
-        Operacional
-    </div>
-
-    <a
-        href="{{ url_for('index') }}"
-        class="active"
-    >
-        <i class="fa-solid fa-house"></i>
-        <span>Início</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Requisições') }}"
-    >
-        <i class="fa-solid fa-file-lines"></i>
-        <span>Requisições</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Inventário') }}"
-    >
-        <i class="fa-solid fa-boxes-stacked"></i>
-        <span>Inventário</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Expedição') }}"
-    >
-        <i class="fa-solid fa-truck-fast"></i>
-        <span>Expedição</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Recebimento') }}"
-    >
-        <i class="fa-solid fa-truck-ramp-box"></i>
-        <span>Recebimento</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Estoque') }}"
-    >
-        <i class="fa-solid fa-warehouse"></i>
-        <span>Estoque</span>
-    </a>
-
-    <div class="menu-label">
-        Gestão
-    </div>
-
-    <a
-        href="{{ url_for('modulo', nome='Cadastros') }}"
-    >
-        <i class="fa-solid fa-users"></i>
-        <span>Cadastros</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
-    >
-        <i class="fa-solid fa-arrows-rotate"></i>
-        <span>Melhorias / PDCA</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Indicadores') }}"
-    >
-        <i class="fa-solid fa-chart-line"></i>
-        <span>Indicadores</span>
-    </a>
-
-    <a
-        href="{{ url_for('relatorios') }}"
-    >
-        <i class="fa-solid fa-chart-column"></i>
-        <span>Relatórios</span>
-    </a>
-
-    <a
-        href="{{ url_for('modulo', nome='Configurações') }}"
-    >
-        <i class="fa-solid fa-gear"></i>
-        <span>Configurações</span>
-    </a>
-
-</div>
-
-
-<!-- =========================================================
-     MAIN
-========================================================= -->
-
-<div class="main">
-
-    <!-- TOPBAR -->
-
-    <div class="topbar">
-
-        <h1 class="page-title">
-            Painel Operacional Valenet
-        </h1>
-
-        <div class="user-info">
-
-            <div>
-                {{ session.get('usuario_atual', 'Usuário') }}
+            <div class="brand-icon">
+                <i class="fa-solid fa-boxes-stacked"></i>
             </div>
 
-            <div class="user-avatar">
-                {{ session.get('usuario_atual', 'U')[0]|upper }}
+            <div class="brand-text">
+                <strong>Almoxarifado</strong>
+                <span>VALENET</span>
             </div>
 
         </div>
 
-    </div>
+        <div class="sidebar-divider"></div>
 
+        <div class="menu-title">
+            OPERAÇÃO
+        </div>
 
-    <!-- CONTENT -->
+        <nav class="sidebar-menu">
 
-    <div class="content">
+            <a href="{{ url_for('index') }}"
+               class="menu-item active">
 
-        <!-- =====================================================
-             FLASH MESSAGES
-        ====================================================== -->
+                <span class="menu-icon">
+                    <i class="fa-solid fa-house"></i>
+                </span>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
+                <span>Painel</span>
+            </a>
 
-            {% if messages %}
+            <a href="{{ url_for('modulo', nome='Requisições') }}"
+               class="menu-item">
 
-                {% for category, message in messages %}
+                <span class="menu-icon">
+                    <i class="fa-solid fa-clipboard-list"></i>
+                </span>
 
-                    <div
-                        class="alert alert-{{ category }} alert-dismissible fade show"
-                        role="alert"
-                    >
-                        {{ message }}
+                <span>Requisições</span>
+            </a>
 
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="alert"
-                        ></button>
+            <a href="{{ url_for('modulo', nome='Inventário') }}"
+               class="menu-item">
 
-                    </div>
+                <span class="menu-icon">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </span>
 
-                {% endfor %}
+                <span>Inventário</span>
+            </a>
 
-            {% endif %}
+            <a href="{{ url_for('modulo', nome='Expedição') }}"
+               class="menu-item">
 
-        {% endwith %}
+                <span class="menu-icon">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </span>
 
+                <span>Expedição</span>
+            </a>
 
-        <!-- =====================================================
-             INDICADORES PRINCIPAIS
-        ====================================================== -->
+            <a href="{{ url_for('modulo', nome='Recebimento') }}"
+               class="menu-item">
 
-        <div class="row g-3 mb-4">
+                <span class="menu-icon">
+                    <i class="fa-solid fa-dolly"></i>
+                </span>
 
-            <!-- REQUISIÇÕES -->
+                <span>Recebimento</span>
+            </a>
 
-            <div class="col-xl-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('modulo', nome='Estoque') }}"
+               class="menu-item">
 
-                <div class="stat-card">
+                <span class="menu-icon">
+                    <i class="fa-solid fa-warehouse"></i>
+                </span>
 
-                    <div class="stat-card-top">
+                <span>Estoque</span>
+            </a>
 
-                        <div>
-                            <div class="stat-title">
-                                Requisições
-                            </div>
+            <div class="menu-title menu-title-space">
+                GESTÃO
+            </div>
 
-                            <div class="stat-value">
-                                {{ total_req }}
-                            </div>
-                        </div>
+            <a href="{{ url_for('modulo', nome='Cadastros') }}"
+               class="menu-item">
 
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-file-lines"></i>
-                        </div>
+                <span class="menu-icon">
+                    <i class="fa-solid fa-users"></i>
+                </span>
 
-                    </div>
+                <span>Cadastros</span>
+            </a>
+
+            <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+               class="menu-item">
+
+                <span class="menu-icon">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </span>
+
+                <span>Melhorias / PDCA</span>
+            </a>
+
+            <a href="{{ url_for('modulo', nome='Indicadores') }}"
+               class="menu-item">
+
+                <span class="menu-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </span>
+
+                <span>Indicadores</span>
+            </a>
+
+            <a href="{{ url_for('modulo', nome='Relatórios') }}"
+               class="menu-item">
+
+                <span class="menu-icon">
+                    <i class="fa-solid fa-file-lines"></i>
+                </span>
+
+                <span>Relatórios</span>
+            </a>
+
+            <a href="{{ url_for('modulo', nome='Configurações') }}"
+               class="menu-item">
+
+                <span class="menu-icon">
+                    <i class="fa-solid fa-gear"></i>
+                </span>
+
+                <span>Configurações</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="user-box">
+
+                <div class="user-avatar">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+
+                <div class="user-info">
+
+                    <strong>
+                        {{ session.get('usuario_atual', 'Usuário') }}
+                    </strong>
+
+                    <span>
+                        Almoxarifado
+                    </span>
 
                 </div>
 
-            </div>
-
-
-            <!-- INVENTÁRIO -->
-
-            <div class="col-xl-2 col-md-4 col-sm-6">
-
-                <div class="stat-card">
-
-                    <div class="stat-card-top">
-
-                        <div>
-
-                            <div class="stat-title">
-                                Inventários
-                            </div>
-
-                            <div class="stat-value">
-                                {{ inv_conc }}
-                            </div>
-
-                        </div>
-
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-boxes-stacked"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- EXPEDIÇÃO -->
-
-            <div class="col-xl-2 col-md-4 col-sm-6">
-
-                <div class="stat-card">
-
-                    <div class="stat-card-top">
-
-                        <div>
-
-                            <div class="stat-title">
-                                Expedições
-                            </div>
-
-                            <div class="stat-value">
-                                {{ exp_pend }}
-                            </div>
-
-                        </div>
-
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-truck-fast"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- RECEBIMENTO -->
-
-            <div class="col-xl-2 col-md-4 col-sm-6">
-
-                <div class="stat-card">
-
-                    <div class="stat-card-top">
-
-                        <div>
-
-                            <div class="stat-title">
-                                Recebimentos
-                            </div>
-
-                            <div class="stat-value">
-                                {{ rec_pend }}
-                            </div>
-
-                        </div>
-
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-truck-ramp-box"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- OCORRÊNCIAS -->
-
-            <div class="col-xl-2 col-md-4 col-sm-6">
-
-                <div class="stat-card">
-
-                    <div class="stat-card-top">
-
-                        <div>
-
-                            <div class="stat-title">
-                                Ocorrências
-                            </div>
-
-                            <div class="stat-value">
-                                {{ total_oco }}
-                            </div>
-
-                        </div>
-
-                        <div class="stat-icon">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- ATRASADOS -->
-
-            <div class="col-xl-2 col-md-4 col-sm-6">
-
-                <a
-                    href="{{ url_for('atrasados') }}"
-                    class="text-decoration-none"
-                >
-
-                    <div class="stat-card">
-
-                        <div class="stat-card-top">
-
-                            <div>
-
-                                <div class="stat-title">
-                                    Atrasados
-                                </div>
-
-                                <div class="stat-value text-danger">
-                                    {{ total_atrasados }}
-                                </div>
-
-                            </div>
-
-                            <div class="stat-icon text-danger">
-                                <i class="fa-solid fa-clock"></i>
-                            </div>
-
-                        </div>
-
-                    </div>
+                <a href="{{ url_for('logout') }}"
+                   class="logout-button"
+                   title="Sair">
+
+                    <i class="fa-solid fa-right-from-bracket"></i>
 
                 </a>
 
@@ -772,225 +200,433 @@
 
         </div>
 
+    </aside>
+
+
+    <!-- =========================================================
+         CONTEÚDO PRINCIPAL
+    ========================================================== -->
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+
+            <div>
+
+                <div class="breadcrumb-text">
+                    <span>Almoxarifado</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                    <strong>Painel Operacional</strong>
+                </div>
+
+                <h1>
+                    Painel Operacional
+                </h1>
+
+                <p>
+                    Acompanhamento das operações do almoxarifado
+                </p>
+
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="system-status">
+
+                    <span class="status-dot"></span>
+
+                    <span>Sistema online</span>
+
+                </div>
+
+                <div class="topbar-date">
+
+                    <i class="fa-regular fa-calendar"></i>
+
+                    <span id="dataAtual"></span>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- FLASH MESSAGES -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+            {% if messages %}
+
+                <div class="flash-area">
+
+                    {% for category, message in messages %}
+
+                        <div class="alert alert-{{ category }} alert-dismissible fade show modern-alert"
+                             role="alert">
+
+                            {% if category == 'success' %}
+                                <i class="fa-solid fa-circle-check"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-info"></i>
+                            {% endif %}
+
+                            <span>{{ message }}</span>
+
+                            <button type="button"
+                                    class="btn-close"
+                                    data-bs-dismiss="alert">
+                            </button>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% endif %}
+
+        {% endwith %}
+
 
         <!-- =====================================================
-             NOVA ATIVIDADE + INDICADORES
+             CARDS PRINCIPAIS
         ====================================================== -->
 
-        <div class="row g-4 mb-4">
+        <section class="dashboard-cards">
 
-            <!-- NOVA ATIVIDADE -->
+            <!-- REQUISIÇÕES -->
+            <a href="{{ url_for('modulo', nome='Requisições') }}"
+               class="dashboard-card card-blue">
 
-            <div class="col-xl-7">
+                <div class="card-top">
 
-                <div class="card-custom">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                    </div>
 
-                    <div class="card-header-custom">
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
 
-                        <h5>
-                            <i class="fa-solid fa-plus-circle me-2 text-primary"></i>
-                            Nova Atividade
-                        </h5>
+                </div>
+
+                <div class="card-value">
+                    {{ total_req }}
+                </div>
+
+                <div class="card-label">
+                    Requisições pendentes
+                </div>
+
+                <div class="card-description">
+                    Aguardando separação
+                </div>
+
+            </a>
+
+
+            <!-- INVENTÁRIO -->
+            <a href="{{ url_for('modulo', nome='Inventário') }}"
+               class="dashboard-card card-purple">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                    </div>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+
+                </div>
+
+                <div class="card-value">
+                    {{ inv_conc }}
+                </div>
+
+                <div class="card-label">
+                    Inventário concluído
+                </div>
+
+                <div class="card-description">
+                    de {{ inv_total }} atividades
+                </div>
+
+            </a>
+
+
+            <!-- EXPEDIÇÃO -->
+            <a href="{{ url_for('modulo', nome='Expedição') }}"
+               class="dashboard-card card-orange">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+
+                </div>
+
+                <div class="card-value">
+                    {{ exp_pend }}
+                </div>
+
+                <div class="card-label">
+                    Expedições pendentes
+                </div>
+
+                <div class="card-description">
+                    Aguardando conclusão
+                </div>
+
+            </a>
+
+
+            <!-- RECEBIMENTO -->
+            <a href="{{ url_for('modulo', nome='Recebimento') }}"
+               class="dashboard-card card-green">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        <i class="fa-solid fa-dolly"></i>
+                    </div>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+
+                </div>
+
+                <div class="card-value">
+                    {{ rec_pend }}
+                </div>
+
+                <div class="card-label">
+                    Recebimentos pendentes
+                </div>
+
+                <div class="card-description">
+                    Aguardando conferência
+                </div>
+
+            </a>
+
+
+            <!-- OCORRÊNCIAS -->
+            <a href="{{ url_for('relatorios', filtro='ocorrencias') }}"
+               class="dashboard-card card-red">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+
+                </div>
+
+                <div class="card-value">
+                    {{ total_oco }}
+                </div>
+
+                <div class="card-label">
+                    Ocorrências
+                </div>
+
+                <div class="card-description">
+                    Prioridade alta
+                </div>
+
+            </a>
+
+
+            <!-- ATRASADOS -->
+            <a href="{{ url_for('atrasados') }}"
+               class="dashboard-card card-danger">
+
+                <div class="card-top">
+
+                    <div class="card-icon">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+
+                    <span class="card-arrow">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </span>
+
+                </div>
+
+                <div class="card-value">
+                    {{ total_atrasados }}
+                </div>
+
+                <div class="card-label">
+                    Atividades atrasadas
+                </div>
+
+                <div class="card-description">
+                    Necessitam atenção
+                </div>
+
+            </a>
+
+        </section>
+
+
+        <!-- =====================================================
+             INDICADORES
+        ====================================================== -->
+
+        <section class="content-grid">
+
+            <div class="panel indicators-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-eyebrow">
+                            PERFORMANCE
+                        </span>
+
+                        <h2>
+                            Indicadores do dia
+                        </h2>
+
+                        <p>
+                            Acompanhamento operacional
+                        </p>
 
                     </div>
 
-                    <div class="card-body-custom">
+                    <a href="{{ url_for('modulo', nome='Indicadores') }}"
+                       class="panel-action">
 
-                        <form
-                            method="POST"
-                            action="{{ url_for('index') }}"
-                        >
+                        Ver indicadores
 
-                            <div class="row g-3">
+                        <i class="fa-solid fa-arrow-right"></i>
 
-                                <!-- REQUISIÇÃO -->
+                    </a>
 
-                                <div class="col-md-6">
-
-                                    <label class="form-label">
-                                        Nº da Requisição
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        name="num_requisicao"
-                                        class="form-control"
-                                        placeholder="Ex.: 123456"
-                                    >
-
-                                </div>
+                </div>
 
 
-                                <!-- PRIORIDADE -->
+                <div class="indicator-list">
 
-                                <div class="col-md-6">
+                    <!-- ATENDIDAS -->
+                    <div class="indicator-item">
 
-                                    <label class="form-label">
-                                        Prioridade
-                                    </label>
+                        <div class="indicator-header">
 
-                                    <select
-                                        name="prioridade"
-                                        class="form-select"
-                                    >
+                            <div class="indicator-name">
 
-                                        <option value="Baixa">
-                                            Baixa
-                                        </option>
+                                <span class="indicator-icon blue">
+                                    <i class="fa-solid fa-check"></i>
+                                </span>
 
-                                        <option value="Média">
-                                            Média
-                                        </option>
-
-                                        <option value="Alta">
-                                            Alta
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-
-                                <!-- ATIVIDADE -->
-
-                                <div class="col-md-6">
-
-                                    <label class="form-label">
-                                        Atividade
-                                    </label>
-
-                                    <input
-                                        type="text"
-                                        name="atividade"
-                                        class="form-control"
-                                        placeholder="Descreva a atividade"
-                                        required
-                                    >
-
-                                </div>
-
-
-                                <!-- CATEGORIA -->
-
-                                <div class="col-md-6">
-
-                                    <label class="form-label">
-                                        Categoria
-                                    </label>
-
-                                    <select
-                                        name="categoria"
-                                        class="form-select"
-                                        required
-                                    >
-
-                                        <option value="Separação">
-                                            Separação
-                                        </option>
-
-                                        <option value="Inventário">
-                                            Inventário
-                                        </option>
-
-                                        <option value="Expedição">
-                                            Expedição
-                                        </option>
-
-                                        <option value="Recebimento">
-                                            Recebimento
-                                        </option>
-
-                                        <option value="Estoque">
-                                            Estoque
-                                        </option>
-
-                                    </select>
-
-                                </div>
-
-
-                                <!-- RESPONSÁVEL -->
-
-                                <div class="col-md-6">
-
-                                    <label class="form-label">
-                                        Responsável
-                                    </label>
-
-                                    <select
-                                        name="responsavel"
-                                        class="form-select"
-                                    >
-
-                                        {% for usuario in usuarios %}
-
-                                            <option
-                                                value="{{ usuario.nome }}"
-                                                {% if usuario.nome == session.get('usuario_atual') %}
-                                                    selected
-                                                {% endif %}
-                                            >
-                                                {{ usuario.nome }}
-                                            </option>
-
-                                        {% endfor %}
-
-                                    </select>
-
-                                </div>
-
-
-                                <!-- PRAZO -->
-
-                                <div class="col-md-6">
-
-                                    <label class="form-label">
-                                        Prazo
-                                    </label>
-
-                                    <input
-                                        type="datetime-local"
-                                        name="prazo"
-                                        class="form-control"
-                                    >
-
-                                </div>
-
-
-                                <!-- DESCRIÇÃO -->
-
-                                <div class="col-12">
-
-                                    <label class="form-label">
-                                        Descrição
-                                    </label>
-
-                                    <textarea
-                                        name="descricao"
-                                        class="form-control"
-                                        placeholder="Detalhes da atividade..."
-                                    ></textarea>
-
-                                </div>
-
-
-                                <!-- BOTÃO -->
-
-                                <div class="col-12 text-end">
-
-                                    <button
-                                        type="submit"
-                                        class="btn btn-primary px-4"
-                                    >
-                                        <i class="fa-solid fa-plus me-1"></i>
-                                        Criar atividade
-                                    </button>
-
-                                </div>
+                                <span>
+                                    Atendidas
+                                </span>
 
                             </div>
 
-                        </form>
+                            <strong>
+                                {{ perc_atendidas }}%
+                            </strong>
+
+                        </div>
+
+                        <div class="progress-track">
+
+                            <div
+                                class="progress-bar blue"
+                                style="width: {{ perc_atendidas }}%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- INVENTÁRIO -->
+                    <div class="indicator-item">
+
+                        <div class="indicator-header">
+
+                            <div class="indicator-name">
+
+                                <span class="indicator-icon purple">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                </span>
+
+                                <span>
+                                    Inventário
+                                </span>
+
+                            </div>
+
+                            <strong>
+                                {{ perc_inventario }}%
+                            </strong>
+
+                        </div>
+
+                        <div class="progress-track">
+
+                            <div
+                                class="progress-bar purple"
+                                style="width: {{ perc_inventario }}%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- EXPEDIÇÃO -->
+                    <div class="indicator-item">
+
+                        <div class="indicator-header">
+
+                            <div class="indicator-name">
+
+                                <span class="indicator-icon orange">
+                                    <i class="fa-solid fa-truck"></i>
+                                </span>
+
+                                <span>
+                                    Expedição
+                                </span>
+
+                            </div>
+
+                            <strong>
+                                {{ perc_expedicao }}%
+                            </strong>
+
+                        </div>
+
+                        <div class="progress-track">
+
+                            <div
+                                class="progress-bar orange"
+                                style="width: {{ perc_expedicao }}%;"
+                            ></div>
+
+                        </div>
 
                     </div>
 
@@ -999,337 +635,592 @@
             </div>
 
 
-            <!-- INDICADORES -->
+            <!-- RESUMO -->
+            <div class="panel summary-panel">
 
-            <div class="col-xl-5">
+                <div class="panel-header">
 
-                <div class="card-custom h-100">
+                    <div>
 
-                    <div class="card-header-custom">
+                        <span class="panel-eyebrow">
+                            RESUMO
+                        </span>
 
-                        <h5>
-                            <i class="fa-solid fa-chart-line me-2 text-primary"></i>
-                            Indicadores do Dia
-                        </h5>
-
-                    </div>
-
-                    <div class="card-body-custom">
-
-                        <div class="row">
-
-                            <!-- ATENDIDAS -->
-
-                            <div class="col-4">
-
-                                <div class="indicator-box">
-
-                                    <div
-                                        class="indicator-circle"
-                                        style="--percent: {{ perc_atendidas }}%;"
-                                    >
-                                        {{ perc_atendidas }}%
-                                    </div>
-
-                                    <div class="indicator-label">
-                                        Atendidas
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- INVENTÁRIO -->
-
-                            <div class="col-4">
-
-                                <div class="indicator-box">
-
-                                    <div
-                                        class="indicator-circle"
-                                        style="--percent: {{ perc_inventario }}%;"
-                                    >
-                                        {{ perc_inventario }}%
-                                    </div>
-
-                                    <div class="indicator-label">
-                                        Inventário
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <!-- EXPEDIÇÃO -->
-
-                            <div class="col-4">
-
-                                <div class="indicator-box">
-
-                                    <div
-                                        class="indicator-circle"
-                                        style="--percent: {{ perc_expedicao }}%;"
-                                    >
-                                        {{ perc_expedicao }}%
-                                    </div>
-
-                                    <div class="indicator-label">
-                                        Expedição
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <hr>
-
-
-                        <div class="row text-center">
-
-                            <div class="col-4">
-
-                                <div class="fw-bold">
-                                    {{ atividades_concluidas }}
-                                </div>
-
-                                <small class="text-muted">
-                                    Atividades concluídas
-                                </small>
-
-                            </div>
-
-
-                            <div class="col-4">
-
-                                <div class="fw-bold">
-                                    {{ atividades_pendentes }}
-                                </div>
-
-                                <small class="text-muted">
-                                    Atividades pendentes
-                                </small>
-
-                            </div>
-
-
-                            <div class="col-4">
-
-                                <div class="fw-bold">
-                                    {{ atividades_arquivadas }}
-                                </div>
-
-                                <small class="text-muted">
-                                    Arquivadas
-                                </small>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             ATIVIDADES + CHAT
-        ====================================================== -->
-
-        <div class="row g-4">
-
-            <!-- ATIVIDADES -->
-
-            <div class="col-xl-8">
-
-                <div class="card-custom">
-
-                    <div class="card-header-custom">
-
-                        <h5>
-                            <i class="fa-solid fa-list-check me-2 text-primary"></i>
+                        <h2>
                             Atividades
-                        </h5>
+                        </h2>
 
-                        <span class="badge bg-primary">
-                            {{ total_atividades }}
+                        <p>
+                            Situação de hoje
+                        </p>
+
+                    </div>
+
+                    <span class="summary-icon">
+                        <i class="fa-solid fa-chart-pie"></i>
+                    </span>
+
+                </div>
+
+
+                <div class="summary-grid">
+
+                    <div class="summary-item">
+
+                        <div class="summary-number success">
+                            {{ atividades_concluidas }}
+                        </div>
+
+                        <span>
+                            Concluídas
                         </span>
 
                     </div>
 
-                    <div class="card-body-custom">
+                    <div class="summary-item">
 
-                        {% if atividades %}
+                        <div class="summary-number warning">
+                            {{ atividades_pendentes }}
+                        </div>
 
-                            {% for item in atividades %}
+                        <span>
+                            Pendentes
+                        </span>
 
-                                <div class="activity-item">
+                    </div>
 
-                                    <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div class="summary-item">
 
-                                        <div class="flex-grow-1">
+                        <div class="summary-number dark">
+                            {{ atividades_arquivadas }}
+                        </div>
 
-                                            <div class="activity-title">
+                        <span>
+                            Arquivadas
+                        </span>
 
-                                                {% if item.num_requisicao %}
-                                                    <span class="text-primary">
-                                                        #{{ item.num_requisicao }}
-                                                    </span>
-                                                    -
-                                                {% endif %}
+                    </div>
 
-                                                {{ item.atividade }}
+                    <div class="summary-item">
 
-                                            </div>
+                        <div class="summary-number primary">
+                            {{ total_atividades }}
+                        </div>
 
+                        <span>
+                            Total hoje
+                        </span>
 
-                                            <div class="activity-meta mt-1">
+                    </div>
 
-                                                <span>
-                                                    <i class="fa-solid fa-layer-group"></i>
-                                                    {{ item.categoria }}
-                                                </span>
+                </div>
 
-                                                <span class="ms-2">
-                                                    <i class="fa-solid fa-user"></i>
-                                                    {{ item.responsavel }}
-                                                </span>
+            </div>
 
-                                                {% if item.prazo %}
-
-                                                    <span class="ms-2">
-
-                                                        <i class="fa-solid fa-calendar"></i>
-
-                                                        {{ item.prazo }}
-
-                                                    </span>
-
-                                                {% endif %}
-
-                                            </div>
+        </section>
 
 
-                                            {% if item.descricao %}
+        <!-- =====================================================
+             NOVA ATIVIDADE
+        ====================================================== -->
 
-                                                <div class="small text-muted mt-2">
-                                                    {{ item.descricao }}
-                                                </div>
+        <section class="panel new-activity-panel">
 
-                                            {% endif %}
+            <div class="panel-header">
 
-                                        </div>
+                <div>
+
+                    <span class="panel-eyebrow">
+                        OPERAÇÃO
+                    </span>
+
+                    <h2>
+                        Nova atividade
+                    </h2>
+
+                    <p>
+                        Registre uma nova atividade operacional
+                    </p>
+
+                </div>
+
+                <div class="new-activity-icon">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+
+            </div>
 
 
-                                        <div class="text-end">
+            <form method="POST">
 
-                                            {% if item.prioridade == "Alta" %}
+                <div class="form-grid">
 
-                                                <span class="badge bg-danger badge-prioridade">
-                                                    Alta
-                                                </span>
+                    <div class="form-group">
 
-                                            {% elif item.prioridade == "Média" %}
+                        <label for="num_requisicao">
+                            Nº da requisição
+                        </label>
 
-                                                <span class="badge bg-warning text-dark badge-prioridade">
-                                                    Média
+                        <div class="input-icon">
+
+                            <i class="fa-solid fa-hashtag"></i>
+
+                            <input
+                                type="text"
+                                id="num_requisicao"
+                                name="num_requisicao"
+                                class="form-control"
+                                placeholder="Ex.: 123456"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="prioridade">
+                            Prioridade
+                        </label>
+
+                        <select
+                            id="prioridade"
+                            name="prioridade"
+                            class="form-select"
+                        >
+
+                            <option value="Baixa">
+                                Baixa
+                            </option>
+
+                            <option value="Média">
+                                Média
+                            </option>
+
+                            <option value="Alta">
+                                Alta
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group form-group-wide">
+
+                        <label for="atividade">
+                            Atividade
+                        </label>
+
+                        <input
+                            type="text"
+                            id="atividade"
+                            name="atividade"
+                            class="form-control"
+                            placeholder="Descreva a atividade"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="categoria">
+                            Categoria
+                        </label>
+
+                        <select
+                            id="categoria"
+                            name="categoria"
+                            class="form-select"
+                        >
+
+                            <option value="Separação">
+                                Separação
+                            </option>
+
+                            <option value="Inventário">
+                                Inventário
+                            </option>
+
+                            <option value="Expedição">
+                                Expedição
+                            </option>
+
+                            <option value="Recebimento">
+                                Recebimento
+                            </option>
+
+                            <option value="Estoque">
+                                Estoque
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="responsavel">
+                            Responsável
+                        </label>
+
+                        <select
+                            id="responsavel"
+                            name="responsavel"
+                            class="form-select"
+                        >
+
+                            {% for usuario in usuarios %}
+
+                                <option value="{{ usuario.nome }}"
+                                    {% if usuario.nome == session.get('usuario_atual') %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ usuario.nome }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="prazo">
+                            Prazo
+                        </label>
+
+                        <input
+                            type="datetime-local"
+                            id="prazo"
+                            name="prazo"
+                            class="form-control"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group form-group-full">
+
+                        <label for="descricao">
+                            Descrição
+                        </label>
+
+                        <textarea
+                            id="descricao"
+                            name="descricao"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Informações adicionais da atividade..."
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-footer">
+
+                    <div class="form-hint">
+
+                        <i class="fa-solid fa-circle-info"></i>
+
+                        <span>
+                            As atividades ficam registradas no histórico operacional.
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn-primary-modern"
+                    >
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        Criar atividade
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+
+        <!-- =====================================================
+             ATIVIDADES RECENTES + CHAT
+        ====================================================== -->
+
+        <section class="bottom-grid">
+
+            <!-- ATIVIDADES -->
+            <div class="panel activities-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="panel-eyebrow">
+                            ACOMPANHAMENTO
+                        </span>
+
+                        <h2>
+                            Atividades recentes
+                        </h2>
+
+                        <p>
+                            Últimas movimentações do almoxarifado
+                        </p>
+
+                    </div>
+
+                    <a href="{{ url_for('relatorios') }}"
+                       class="panel-action">
+
+                        Ver todas
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </a>
+
+                </div>
+
+
+                <div class="table-responsive">
+
+                    <table class="modern-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Requisição</th>
+                                <th>Atividade</th>
+                                <th>Categoria</th>
+                                <th>Responsável</th>
+                                <th>Status</th>
+                                <th>Ação</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% if atividades %}
+
+                                {% for item in atividades %}
+
+                                    <tr>
+
+                                        <td>
+
+                                            {% if item.num_requisicao %}
+
+                                                <span class="request-number">
+                                                    {{ item.num_requisicao }}
                                                 </span>
 
                                             {% else %}
 
-                                                <span class="badge bg-secondary badge-prioridade">
-                                                    Baixa
+                                                <span class="text-muted">
+                                                    —
                                                 </span>
 
                                             {% endif %}
 
+                                        </td>
 
-                                            <div class="mt-2">
 
-                                                {% if item.status == "Concluído" %}
+                                        <td>
 
-                                                    <span class="badge-status badge-concluido">
-                                                        Concluído
+                                            <div class="activity-name">
+
+                                                <strong>
+                                                    {{ item.atividade }}
+                                                </strong>
+
+                                                {% if item.descricao %}
+
+                                                    <small>
+                                                        {{ item.descricao }}
+                                                    </small>
+
+                                                {% endif %}
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="category-badge">
+
+                                                {{ item.categoria }}
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <div class="responsible">
+
+                                                <span class="mini-avatar">
+                                                    <i class="fa-solid fa-user"></i>
+                                                </span>
+
+                                                {{ item.responsavel }}
+
+                                            </div>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if item.status == 'Pendente' %}
+
+                                                <span class="status-badge status-pending">
+                                                    <span></span>
+                                                    Pendente
+                                                </span>
+
+                                            {% elif item.status == 'Em andamento' %}
+
+                                                <span class="status-badge status-progress">
+                                                    <span></span>
+                                                    Em andamento
+                                                </span>
+
+                                            {% elif item.status == 'Concluído' %}
+
+                                                <span class="status-badge status-done">
+                                                    <span></span>
+                                                    Concluído
+                                                </span>
+
+                                            {% elif item.status == 'Arquivada' %}
+
+                                                <span class="status-badge status-archived">
+                                                    <span></span>
+                                                    Arquivada
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="status-badge">
+                                                    {{ item.status }}
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <div class="action-buttons">
+
+                                                <a
+                                                    href="{{ url_for('editar_form', id=item.id) }}"
+                                                    class="table-action edit"
+                                                    title="Editar"
+                                                >
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+
+
+                                                {% if item.status == 'Pendente' %}
+
+                                                    <a
+                                                        href="{{ url_for('concluir', id=item.id) }}"
+                                                        class="table-action finish"
+                                                        title="Concluir"
+                                                        onclick="return confirm('Deseja concluir esta atividade?');"
+                                                    >
+                                                        <i class="fa-solid fa-check"></i>
+                                                    </a>
+
+                                                {% elif item.status == 'Concluído' %}
+
+                                                    <span
+                                                        class="table-action completed"
+                                                        title="Concluída"
+                                                    >
+                                                        <i class="fa-solid fa-check-double"></i>
                                                     </span>
 
-                                                {% elif item.status == "Arquivada" %}
+                                                {% elif item.status == 'Arquivada' %}
 
-                                                    <span class="badge-status badge-arquivada">
-                                                        Arquivada
+                                                    <span
+                                                        class="table-action archived"
+                                                        title="Arquivada"
+                                                    >
+                                                        <i class="fa-solid fa-box-archive"></i>
                                                     </span>
 
                                                 {% else %}
 
-                                                    <span class="badge-status badge-pendente">
-                                                        {{ item.status }}
+                                                    <span
+                                                        class="table-action progress-action"
+                                                        title="Em andamento"
+                                                    >
+                                                        <i class="fa-solid fa-spinner"></i>
                                                     </span>
 
                                                 {% endif %}
 
                                             </div>
 
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            {% else %}
+
+                                <tr>
+
+                                    <td colspan="6">
+
+                                        <div class="empty-state">
+
+                                            <div class="empty-icon">
+                                                <i class="fa-solid fa-inbox"></i>
+                                            </div>
+
+                                            <strong>
+                                                Nenhuma atividade encontrada
+                                            </strong>
+
+                                            <span>
+                                                As novas atividades aparecerão aqui.
+                                            </span>
+
                                         </div>
 
-                                    </div>
+                                    </td>
 
+                                </tr>
 
-                                    <!-- AÇÕES -->
+                            {% endif %}
 
-                                    <div class="mt-3">
+                        </tbody>
 
-                                        <a
-                                            href="{{ url_for('editar_form', id=item.id) }}"
-                                            class="btn btn-sm btn-outline-primary me-1"
-                                        >
-                                            <i class="fa-solid fa-pen"></i>
-                                            Editar
-                                        </a>
-
-
-                                        {% if item.status == "Pendente" %}
-
-                                            <a
-                                                href="{{ url_for('concluir', id=item.id) }}"
-                                                class="btn btn-sm btn-outline-success"
-                                                onclick="return confirm('Deseja realmente encerrar esta atividade?');"
-                                            >
-                                                <i class="fa-solid fa-check"></i>
-                                                Concluir
-                                            </a>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                </div>
-
-                            {% endfor %}
-
-                        {% else %}
-
-                            <div class="text-center text-muted py-4">
-
-                                <i
-                                    class="fa-solid fa-inbox fa-2x mb-3"
-                                ></i>
-
-                                <div>
-                                    Nenhuma atividade encontrada.
-                                </div>
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
+                    </table>
 
                 </div>
 
@@ -1337,157 +1228,230 @@
 
 
             <!-- CHAT -->
+            <div class="panel chat-panel">
 
-            <div class="col-xl-4">
+                <div class="panel-header">
 
-                <div class="card-custom">
+                    <div>
 
-                    <div class="card-header-custom">
+                        <span class="panel-eyebrow">
+                            COMUNICAÇÃO
+                        </span>
 
-                        <h5>
-                            <i class="fa-solid fa-comments me-2 text-primary"></i>
-                            Chat da Equipe
-                        </h5>
+                        <h2>
+                            Chat da equipe
+                        </h2>
+
+                        <p>
+                            Comunicação interna
+                        </p>
 
                     </div>
 
+                    <span class="online-badge">
+                        <span></span>
+                        Online
+                    </span>
 
-                    <div class="card-body-custom">
-
-                        <div class="chat-box mb-3">
-
-                            {% if chat %}
-
-                                {% for mensagem in chat %}
-
-                                    <div class="chat-message">
-
-                                        <div class="chat-user">
-
-                                            {{ mensagem.usuario or "Usuário" }}
-
-                                        </div>
+                </div>
 
 
-                                        <div class="chat-text">
+                <div class="chat-messages" id="chatMessages">
 
-                                            {{ mensagem.mensagem }}
+                    {% if chat %}
 
-                                        </div>
+                        {% for mensagem in chat %}
 
+                            <div class="chat-message">
 
-                                        {% if mensagem.criado_em %}
+                                <div class="chat-avatar">
 
-                                            <div class="chat-time">
+                                    <i class="fa-solid fa-user"></i>
 
-                                                {{ mensagem.criado_em }}
+                                </div>
 
-                                            </div>
+                                <div class="chat-content">
 
-                                        {% endif %}
+                                    <div class="chat-meta">
+
+                                        <strong>
+                                            {{ mensagem.usuario }}
+                                        </strong>
+
+                                        <span>
+                                            {{ converter_para_brasil(mensagem.criado_em).strftime('%d/%m %H:%M') if mensagem.criado_em else '' }}
+                                        </span>
 
                                     </div>
 
-                                {% endfor %}
-
-                            {% else %}
-
-                                <div class="text-center text-muted py-4">
-
-                                    <i
-                                        class="fa-solid fa-comments fa-2x mb-2"
-                                    ></i>
-
-                                    <div>
-                                        Nenhuma mensagem ainda.
+                                    <div class="chat-bubble">
+                                        {{ mensagem.mensagem }}
                                     </div>
 
                                 </div>
 
-                            {% endif %}
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="chat-empty">
+
+                            <div class="chat-empty-icon">
+                                <i class="fa-regular fa-comments"></i>
+                            </div>
+
+                            <strong>
+                                Nenhuma mensagem ainda
+                            </strong>
+
+                            <span>
+                                Inicie uma conversa com a equipe.
+                            </span>
 
                         </div>
 
-
-                        <!-- FORM CHAT -->
-
-                        <form
-                            method="POST"
-                            action="{{ url_for('index') }}"
-                        >
-
-                            <input
-                                type="hidden"
-                                name="acao_chat"
-                                value="enviar"
-                            >
-
-                            <div class="input-group">
-
-                                <input
-                                    type="text"
-                                    name="mensagem"
-                                    class="form-control"
-                                    placeholder="Digite uma mensagem..."
-                                    autocomplete="off"
-                                    required
-                                >
-
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                >
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                </button>
-
-                            </div>
-
-                        </form>
-
-                    </div>
+                    {% endif %}
 
                 </div>
 
+
+                <form method="POST" class="chat-form">
+
+                    <input
+                        type="hidden"
+                        name="acao_chat"
+                        value="enviar"
+                    >
+
+                    <div class="chat-input-wrapper">
+
+                        <input
+                            type="text"
+                            name="mensagem"
+                            class="chat-input"
+                            placeholder="Digite uma mensagem..."
+                            autocomplete="off"
+                            required
+                        >
+
+                        <button
+                            type="submit"
+                            class="chat-send"
+                            title="Enviar mensagem"
+                        >
+
+                            <i class="fa-solid fa-paper-plane"></i>
+
+                        </button>
+
+                    </div>
+
+                </form>
+
             </div>
 
-        </div>
+        </section>
 
-    </div>
+
+        <!-- FOOTER -->
+        <footer class="main-footer">
+
+            <span>
+                Almoxarifado Valenet
+            </span>
+
+            <span>
+                Painel Operacional
+            </span>
+
+        </footer>
+
+    </main>
 
 </div>
 
 
-<!-- =========================================================
-     BOOTSTRAP
-========================================================= -->
-
 <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-></script>
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
 
-
-<!-- =========================================================
-     AUTO FECHAR ALERTAS
-========================================================= -->
 
 <script>
 
-    setTimeout(function () {
+    // =========================================================
+    // DATA ATUAL
+    // =========================================================
 
-        const alerts = document.querySelectorAll(
-            ".alert"
+    function atualizarData() {
+
+        const elemento = document.getElementById("dataAtual");
+
+        if (!elemento) {
+            return;
+        }
+
+        const agora = new Date();
+
+        const opcoes = {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric"
+        };
+
+        let texto = agora.toLocaleDateString(
+            "pt-BR",
+            opcoes
         );
 
-        alerts.forEach(function (alert) {
+        texto = texto.charAt(0).toUpperCase() + texto.slice(1);
 
-            const instance =
-                bootstrap.Alert.getOrCreateInstance(alert);
+        elemento.textContent = texto;
+    }
 
-            instance.close();
+    atualizarData();
 
-        });
 
-    }, 5000);
+    // =========================================================
+    // CHAT — MANTER NO FINAL DA CONVERSA
+    // =========================================================
+
+    const chatMessages = document.getElementById("chatMessages");
+
+    if (chatMessages) {
+
+        chatMessages.scrollTop =
+            chatMessages.scrollHeight;
+
+    }
+
+
+    // =========================================================
+    // CONFIRMAÇÃO DOS BOTÕES DE CONCLUSÃO
+    // =========================================================
+
+    document.querySelectorAll(
+        'a[href*="/concluir/"]'
+    ).forEach(function(botao) {
+
+        botao.addEventListener(
+            "click",
+            function(evento) {
+
+                if (!confirm(
+                    "Deseja realmente concluir esta atividade?"
+                )) {
+
+                    evento.preventDefault();
+
+                }
+
+            }
+        );
+
+    });
 
 </script>
 

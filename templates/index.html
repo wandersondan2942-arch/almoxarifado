@@ -1,1780 +1,1158 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Almoxarifado VALENET</title>
 
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+<title>Almoxarifado VALENET</title>
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 
-    <style>
+<style>
+    :root {
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --success: #16a34a;
+        --warning: #ea580c;
+        --danger: #dc2626;
+        --info: #0891b2;
+        --dark: #111827;
+        --sidebar: #111827;
+        --sidebar-hover: #1f2937;
+        --bg: #f4f6f9;
+        --card: #ffffff;
+        --border: #e5e7eb;
+        --text: #1f2937;
+        --muted: #6b7280;
+    }
 
-        :root {
-            --sidebar: #111827;
-            --sidebar-hover: #1f2937;
-            --sidebar-active: #2563eb;
+    * {
+        box-sizing: border-box;
+    }
 
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
 
-            --success: #16a34a;
-            --warning: #ea580c;
-            --danger: #dc2626;
-            --info: #0891b2;
-            --purple: #7c3aed;
+    /* =========================
+       SIDEBAR
+    ========================= */
 
-            --bg: #f4f6f9;
-            --card: #ffffff;
-            --border: #e5e7eb;
-            --text: #111827;
-            --muted: #6b7280;
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 255px;
+        background: var(--sidebar);
+        color: #fff;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 3px 0 12px rgba(0,0,0,.08);
+    }
 
-            --shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+    .brand {
+        padding: 22px 20px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+    }
 
-            --radius: 14px;
+    .brand-title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: .3px;
+    }
+
+    .brand-subtitle {
+        color: #9ca3af;
+        font-size: 12px;
+        margin-top: 3px;
+    }
+
+    .menu-title {
+        color: #6b7280;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 20px 20px 8px;
+        letter-spacing: .8px;
+    }
+
+    .menu-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #d1d5db;
+        text-decoration: none;
+        padding: 10px 18px;
+        margin: 2px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: .2s;
+    }
+
+    .menu-link:hover,
+    .menu-link.active {
+        background: var(--sidebar-hover);
+        color: #fff;
+    }
+
+    .menu-link i {
+        width: 18px;
+        text-align: center;
+    }
+
+    .sidebar-user {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 15px;
+        background: rgba(0,0,0,.18);
+        border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    .sidebar-user-name {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .logout {
+        color: #fca5a5;
+        text-decoration: none;
+        font-size: 12px;
+    }
+
+    /* =========================
+       MAIN
+    ========================= */
+
+    .main {
+        margin-left: 255px;
+        min-height: 100vh;
+        padding: 22px 25px 35px;
+    }
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 22px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+    }
+
+    .page-subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .date-box {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 9px 13px;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    /* =========================
+       FLASH
+    ========================= */
+
+    .flash-container {
+        margin-bottom: 18px;
+    }
+
+    /* =========================
+       CARDS PRINCIPAIS
+    ========================= */
+
+    .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+    }
+
+    .metric-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .metric-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eff6ff;
+        color: var(--primary);
+    }
+
+    .metric-label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .metric-number {
+        font-size: 25px;
+        font-weight: 750;
+        line-height: 1;
+    }
+
+    /* =========================
+       ÁREA RESUMO + INDICADORES
+    ========================= */
+
+    .dashboard-layout {
+        display: grid;
+        grid-template-columns: 330px minmax(0, 1fr);
+        gap: 18px;
+        margin-bottom: 20px;
+        align-items: start;
+    }
+
+    .left-dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .dashboard-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+        padding: 17px;
+        width: 100%;
+    }
+
+    .dashboard-card-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+
+    .dashboard-card-title i {
+        color: var(--primary);
+    }
+
+    /* =========================
+       RESUMO DO DIA
+    ========================= */
+
+    .activity-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .summary-box {
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+    .summary-label {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .summary-number {
+        font-size: 21px;
+        font-weight: 750;
+    }
+
+    .summary-success {
+        color: var(--success);
+    }
+
+    .summary-warning {
+        color: var(--warning);
+    }
+
+    .summary-secondary {
+        color: #6b7280;
+    }
+
+    .summary-primary {
+        color: var(--primary);
+    }
+
+    /* =========================
+       INDICADORES OPERACIONAIS
+    ========================= */
+
+    .operational-card {
+        min-height: 285px;
+    }
+
+    .indicators-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .indicator-item {
+        text-align: center;
+        background: #fafafa;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 15px 8px 12px;
+    }
+
+    .indicator-circle {
+        --percent: 0%;
+        --indicator-color: #2563eb;
+
+        width: 86px;
+        height: 86px;
+        margin: 0 auto 10px;
+        border-radius: 50%;
+
+        background:
+            conic-gradient(
+                var(--indicator-color) var(--percent),
+                #e5e7eb var(--percent)
+            );
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .indicator-circle::before {
+        content: "";
+        position: absolute;
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        background: #fff;
+    }
+
+    .indicator-percent {
+        position: relative;
+        z-index: 2;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .indicator-green {
+        --indicator-color: #16a34a;
+    }
+
+    .indicator-blue {
+        --indicator-color: #2563eb;
+    }
+
+    .indicator-orange {
+        --indicator-color: #ea580c;
+    }
+
+    .indicator-title {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .indicator-description {
+        font-size: 10px;
+        color: var(--muted);
+    }
+
+    .indicator-bar {
+        height: 5px;
+        border-radius: 99px;
+        background: #e5e7eb;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+
+    .indicator-bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+    }
+
+    .bar-green {
+        background: #16a34a;
+    }
+
+    .bar-blue {
+        background: #2563eb;
+    }
+
+    .bar-orange {
+        background: #ea580c;
+    }
+
+    /* =========================
+       CONTEÚDO
+    ========================= */
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .content-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+        padding: 18px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 15px;
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .section-title i {
+        color: var(--primary);
+    }
+
+    /* =========================
+       FORMULÁRIO
+    ========================= */
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 13px;
+        border-color: #dbe0e6;
+        border-radius: 8px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        border-color: var(--primary);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    /* =========================
+       CHAT
+    ========================= */
+
+    .chat-box {
+        height: 245px;
+        overflow-y: auto;
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .chat-message {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+    }
+
+    .chat-user {
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .chat-text {
+        font-size: 12px;
+        margin-top: 2px;
+        word-break: break-word;
+    }
+
+    .chat-date {
+        font-size: 9px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    /* =========================
+       TABELA
+    ========================= */
+
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 13px;
+        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+        padding: 18px;
+        overflow: hidden;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .activity-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        min-width: 850px;
+    }
+
+    .activity-table th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        padding: 10px;
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+
+    .activity-table td {
+        padding: 10px;
+        border-bottom: 1px solid #f0f1f3;
+        vertical-align: middle;
+    }
+
+    .activity-table tbody tr:hover {
+        background: #fafafa;
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 5px 8px;
+        border-radius: 99px;
+        font-size: 10px;
+        font-weight: 700;
+    }
+
+    .status-pendente {
+        background: #fff7ed;
+        color: #c2410c;
+    }
+
+    .status-concluido {
+        background: #ecfdf5;
+        color: #15803d;
+    }
+
+    .status-arquivada {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-action {
+        border: 0;
+        background: transparent;
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+
+    .btn-edit {
+        color: var(--primary);
+    }
+
+    .btn-conclude {
+        color: var(--success);
+    }
+
+    /* =========================
+       FOOTER
+    ========================= */
+
+    .footer {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 11px;
+        margin-top: 25px;
+    }
+
+    /* =========================
+       RESPONSIVO
+    ========================= */
+
+    @media (max-width: 1250px) {
+        .metric-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
-        * {
-            box-sizing: border-box;
+        .dashboard-layout {
+            grid-template-columns: 300px minmax(0, 1fr);
         }
+    }
 
-        body {
-            margin: 0;
-            background: var(--bg);
-            color: var(--text);
-
-            font-family:
-                Inter,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Roboto,
-                Arial,
-                sans-serif;
-        }
-
-
-        /* =========================================================
-           SIDEBAR
-        ========================================================= */
-
+    @media (max-width: 1000px) {
         .sidebar {
-            position: fixed;
-
-            top: 0;
-            left: 0;
-
-            width: 255px;
-            height: 100vh;
-
-            background: var(--sidebar);
-            color: #fff;
-
-            z-index: 1000;
-
-            display: flex;
-            flex-direction: column;
-
-            overflow-y: auto;
+            width: 220px;
         }
-
-        .brand {
-            padding: 24px 20px 20px;
-
-            border-bottom:
-                1px solid rgba(255,255,255,.08);
-        }
-
-        .brand-title {
-            font-size: 19px;
-            font-weight: 800;
-            letter-spacing: .3px;
-        }
-
-        .brand-subtitle {
-            color: #9ca3af;
-            font-size: 12px;
-            margin-top: 3px;
-        }
-
-        .menu-section {
-            padding: 18px 12px 5px;
-        }
-
-        .menu-label {
-            padding: 0 10px 7px;
-
-            color: #6b7280;
-
-            font-size: 10px;
-            font-weight: 700;
-
-            text-transform: uppercase;
-
-            letter-spacing: 1px;
-        }
-
-        .menu-link {
-            display: flex;
-            align-items: center;
-
-            gap: 12px;
-
-            padding: 10px 12px;
-
-            margin: 2px 0;
-
-            color: #d1d5db;
-
-            text-decoration: none;
-
-            border-radius: 9px;
-
-            font-size: 13px;
-
-            transition: .2s;
-        }
-
-        .menu-link:hover {
-            color: #fff;
-            background: var(--sidebar-hover);
-        }
-
-        .menu-link.active {
-            color: #fff;
-            background: var(--sidebar-active);
-
-            box-shadow:
-                0 4px 12px rgba(37, 99, 235, .25);
-        }
-
-        .menu-link i {
-            width: 18px;
-            text-align: center;
-        }
-
-        .sidebar-footer {
-            margin-top: auto;
-
-            padding: 15px;
-
-            border-top:
-                1px solid rgba(255,255,255,.08);
-        }
-
-        .user-box {
-            background:
-                rgba(255,255,255,.05);
-
-            border-radius: 10px;
-
-            padding: 11px;
-        }
-
-        .user-name {
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .user-role {
-            color: #9ca3af;
-
-            font-size: 11px;
-
-            margin-top: 2px;
-        }
-
-        .logout {
-            display: inline-flex;
-            align-items: center;
-
-            gap: 7px;
-
-            color: #fca5a5;
-
-            font-size: 12px;
-
-            text-decoration: none;
-
-            margin-top: 9px;
-        }
-
-        .logout:hover {
-            color: #fecaca;
-        }
-
-
-        /* =========================================================
-           MAIN
-        ========================================================= */
 
         .main {
-            margin-left: 255px;
+            margin-left: 220px;
+        }
 
-            min-height: 100vh;
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+        }
 
-            padding: 28px;
+        .left-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 750px) {
+        .sidebar {
+            position: relative;
+            width: 100%;
+            min-height: auto;
+        }
+
+        .sidebar-user {
+            position: relative;
+        }
+
+        .main {
+            margin-left: 0;
+            padding: 15px;
+        }
+
+        .metric-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .left-dashboard {
+            grid-template-columns: 1fr;
+        }
+
+        .indicators-grid {
+            grid-template-columns: 1fr;
         }
 
         .topbar {
-            display: flex;
-
-            justify-content: space-between;
+            flex-direction: column;
             align-items: flex-start;
-
-            gap: 20px;
-
-            margin-bottom: 24px;
+            gap: 10px;
         }
+    }
 
-        .breadcrumb-custom {
-            color: var(--muted);
-
-            font-size: 12px;
-
-            margin-bottom: 5px;
-        }
-
-        .page-title {
-            font-size: 27px;
-
-            font-weight: 800;
-
-            margin: 0;
-
-            letter-spacing: -.5px;
-        }
-
-        .page-subtitle {
-            margin-top: 5px;
-
-            color: var(--muted);
-
-            font-size: 13px;
-        }
-
-        .top-actions {
-            display: flex;
-
-            gap: 8px;
-
-            align-items: center;
-        }
-
-        .system-status {
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 7px;
-
-            background: #ecfdf5;
-
-            color: #15803d;
-
-            border:
-                1px solid #bbf7d0;
-
-            padding: 8px 11px;
-
-            border-radius: 9px;
-
-            font-size: 12px;
-
-            font-weight: 600;
-        }
-
-        .system-dot {
-            width: 7px;
-            height: 7px;
-
-            background: #22c55e;
-
-            border-radius: 50%;
-        }
-
-        .date-badge {
-            background: #fff;
-
-            border:
-                1px solid var(--border);
-
-            color: var(--muted);
-
-            padding: 8px 11px;
-
-            border-radius: 9px;
-
-            font-size: 12px;
-        }
-
-
-        /* =========================================================
-           ALERTAS
-        ========================================================= */
-
-        .flash-container {
-            margin-bottom: 20px;
-        }
-
-
-        /* =========================================================
-           CARDS PRINCIPAIS
-        ========================================================= */
-
+    @media (max-width: 450px) {
         .metric-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(6, minmax(0, 1fr));
-
-            gap: 14px;
-
-            margin-bottom: 22px;
+            grid-template-columns: 1fr;
         }
-
-        .metric-card {
-            background: var(--card);
-
-            border:
-                1px solid var(--border);
-
-            border-radius: var(--radius);
-
-            padding: 17px;
-
-            box-shadow: var(--shadow);
-
-            min-width: 0;
-        }
-
-        .metric-top {
-            display: flex;
-
-            justify-content: space-between;
-            align-items: flex-start;
-
-            gap: 10px;
-        }
-
-        .metric-label {
-            color: var(--muted);
-
-            font-size: 11px;
-
-            font-weight: 600;
-
-            text-transform: uppercase;
-
-            letter-spacing: .35px;
-        }
-
-        .metric-value {
-            font-size: 27px;
-
-            font-weight: 800;
-
-            margin-top: 6px;
-
-            line-height: 1;
-        }
-
-        .metric-icon {
-            width: 38px;
-            height: 38px;
-
-            border-radius: 10px;
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            font-size: 15px;
-        }
-
-        .icon-blue {
-            background: #eff6ff;
-            color: #2563eb;
-        }
-
-        .icon-green {
-            background: #ecfdf5;
-            color: #16a34a;
-        }
-
-        .icon-orange {
-            background: #fff7ed;
-            color: #ea580c;
-        }
-
-        .icon-purple {
-            background: #f5f3ff;
-            color: #7c3aed;
-        }
-
-        .icon-red {
-            background: #fef2f2;
-            color: #dc2626;
-        }
-
-        .icon-cyan {
-            background: #ecfeff;
-            color: #0891b2;
-        }
-
-        .metric-footer {
-            margin-top: 12px;
-
-            font-size: 11px;
-
-            color: var(--muted);
-        }
-
-
-        /* =========================================================
-           RESUMO + INDICADORES
-        ========================================================= */
-
-        .dashboard-row {
-            display: grid;
-
-            /*
-             * RESUMO = pequeno
-             * INDICADORES = maior
-             */
-            grid-template-columns:
-                minmax(280px, .75fr)
-                minmax(0, 1.45fr);
-
-            gap: 18px;
-
-            margin-bottom: 22px;
-
-            align-items: stretch;
-        }
-
-
-        /* =========================================================
-           PAINÉIS
-        ========================================================= */
-
-        .panel {
-            background: #fff;
-
-            border:
-                1px solid var(--border);
-
-            border-radius: var(--radius);
-
-            box-shadow: var(--shadow);
-
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 17px 19px;
-
-            border-bottom:
-                1px solid var(--border);
-
-            display: flex;
-
-            justify-content: space-between;
-            align-items: center;
-
-            gap: 10px;
-        }
-
-        .panel-title {
-            display: flex;
-
-            align-items: center;
-
-            gap: 9px;
-
-            font-size: 14px;
-
-            font-weight: 750;
-
-            margin: 0;
-        }
-
-        .panel-title i {
-            color: var(--primary);
-        }
-
-        .panel-subtitle {
-            color: var(--muted);
-
-            font-size: 11px;
-
-            margin-top: 3px;
-        }
-
-        .panel-body {
-            padding: 18px;
-        }
-
-
-        /* =========================================================
-           RESUMO DE ATIVIDADES — COMPACTO
-        ========================================================= */
 
         .activity-summary {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap: 9px;
-        }
-
-        .summary-box {
-            border:
-                1px solid var(--border);
-
-            border-radius: 10px;
-
-            padding: 11px;
-
-            background: #fafafa;
-
-            min-height: 91px;
-
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .summary-label {
-            color: var(--muted);
-
-            font-size: 10px;
-
-            font-weight: 600;
-        }
-
-        .summary-number {
-            font-size: 21px;
-
-            font-weight: 800;
-
-            margin-top: 5px;
-        }
-
-        .summary-info {
-            margin-top: 3px;
-
-            font-size: 9px;
-
-            color: var(--muted);
-        }
-
-        .summary-box.success {
-            border-left:
-                4px solid var(--success);
-        }
-
-        .summary-box.warning {
-            border-left:
-                4px solid var(--warning);
-        }
-
-        .summary-box.archive {
-            border-left:
-                4px solid #64748b;
-        }
-
-        .summary-box.total {
-            border-left:
-                4px solid var(--primary);
-        }
-
-
-        /* =========================================================
-           INDICADORES CIRCULARES
-        ========================================================= */
-
-        .indicators-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(3, minmax(0, 1fr));
-
-            gap: 14px;
-        }
-
-        .indicator-card {
-            background: #f8fafc;
-
-            border:
-                1px solid #e5e7eb;
-
-            border-radius: 13px;
-
-            padding: 15px 12px 13px;
-
-            text-align: center;
-
-            transition: .2s ease;
-        }
-
-        .indicator-card:hover {
-            transform: translateY(-2px);
-
-            box-shadow:
-                0 5px 15px rgba(15, 23, 42, .08);
-        }
-
-        .indicator-circle {
-            --percent: 0%;
-            --indicator-color: #2563eb;
-
-            width: 92px;
-            height: 92px;
-
-            margin: 0 auto 10px;
-
-            border-radius: 50%;
-
-            background:
-                conic-gradient(
-                    var(--indicator-color) var(--percent),
-                    #e5e7eb var(--percent)
-                );
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            position: relative;
-        }
-
-        .indicator-circle::before {
-            content: "";
-
-            position: absolute;
-
-            width: 72px;
-            height: 72px;
-
-            border-radius: 50%;
-
-            background: #ffffff;
-        }
-
-        .indicator-percent {
-            position: relative;
-
-            z-index: 2;
-
-            font-size: 19px;
-
-            font-weight: 800;
-
-            color: #111827;
-        }
-
-        .indicator-name {
-            font-size: 11px;
-
-            font-weight: 750;
-
-            color: #374151;
-
-            margin-bottom: 8px;
-        }
-
-        .indicator-name i {
-            margin-right: 4px;
-        }
-
-        .indicator-bar {
-            height: 5px;
-
-            background: #e5e7eb;
-
-            border-radius: 20px;
-
-            overflow: hidden;
-        }
-
-        .indicator-bar-fill {
-            height: 100%;
-
-            width: var(--percent);
-
-            background: var(--indicator-color);
-
-            border-radius: 20px;
-
-            transition: width .5s ease;
-        }
-
-        .indicator-description {
-            margin-top: 6px;
-
-            color: #9ca3af;
-
-            font-size: 9px;
-        }
-
-        .indicator-green {
-            --indicator-color: #16a34a;
-        }
-
-        .indicator-blue {
-            --indicator-color: #2563eb;
-        }
-
-        .indicator-orange {
-            --indicator-color: #ea580c;
-        }
-
-
-        /* =========================================================
-           FORMULÁRIO + CHAT
-        ========================================================= */
-
-        .content-grid {
-            display: grid;
-
-            grid-template-columns:
-                minmax(0, 1.55fr)
-                minmax(300px, .85fr);
-
-            gap: 18px;
-
-            margin-bottom: 22px;
-        }
-
-        .form-grid {
-            display: grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap: 13px;
-        }
-
-        .form-group {
-            display: flex;
-
-            flex-direction: column;
-        }
-
-        .form-group.full {
-            grid-column: 1 / -1;
-        }
-
-        .form-label {
-            font-size: 11px;
-
-            font-weight: 700;
-
-            color: #374151;
-
-            margin-bottom: 6px;
-        }
-
-        .form-control,
-        .form-select {
-            border-color: #dfe3e8;
-
-            border-radius: 8px;
-
-            font-size: 12px;
-
-            min-height: 39px;
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            border-color: #93c5fd;
-
-            box-shadow:
-                0 0 0 3px rgba(37,99,235,.10);
-        }
-
-        textarea.form-control {
-            min-height: 82px;
-
-            resize: vertical;
-        }
-
-        .btn-primary-custom {
-            background: var(--primary);
-
-            border: none;
-
-            color: #fff;
-
-            border-radius: 8px;
-
-            padding: 10px 16px;
-
-            font-size: 12px;
-
-            font-weight: 700;
-
-            transition: .2s;
-        }
-
-        .btn-primary-custom:hover {
-            background: var(--primary-dark);
-
-            color: #fff;
-
-            transform: translateY(-1px);
-        }
-
-
-        /* =========================================================
-           CHAT
-        ========================================================= */
-
-        .chat-body {
-            padding: 14px;
-        }
-
-        .chat-messages {
-            height: 265px;
-
-            overflow-y: auto;
-
-            padding: 5px;
-
-            background: #f8fafc;
-
-            border:
-                1px solid var(--border);
-
-            border-radius: 10px;
-        }
-
-        .chat-message {
-            margin-bottom: 10px;
-        }
-
-        .chat-message:last-child {
-            margin-bottom: 0;
-        }
-
-        .chat-user {
-            font-size: 11px;
-
-            font-weight: 700;
-
-            color: #374151;
-        }
-
-        .chat-text {
-            display: inline-block;
-
-            margin-top: 3px;
-
-            background: #fff;
-
-            border:
-                1px solid var(--border);
-
-            border-radius: 8px;
-
-            padding: 7px 9px;
-
-            font-size: 11px;
-
-            color: #374151;
-
-            max-width: 92%;
-
-            word-break: break-word;
-        }
-
-        .chat-time {
-            font-size: 9px;
-
-            color: #9ca3af;
-
-            margin-left: 5px;
-        }
-
-        .chat-form {
-            display: flex;
-
-            gap: 7px;
-
-            margin-top: 10px;
-        }
-
-        .chat-form input {
-            flex: 1;
-        }
-
-        .chat-form button {
-            width: 42px;
-
-            border: none;
-
-            border-radius: 8px;
-
-            background: var(--primary);
-
-            color: #fff;
-        }
-
-
-        /* =========================================================
-           TABELA
-        ========================================================= */
-
-        .table-panel {
-            margin-bottom: 22px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        .activity-table {
-            width: 100%;
-
-            border-collapse: collapse;
-
-            margin: 0;
-        }
-
-        .activity-table th {
-            background: #f8fafc;
-
-            color: #6b7280;
-
-            font-size: 10px;
-
-            text-transform: uppercase;
-
-            letter-spacing: .35px;
-
-            font-weight: 750;
-
-            padding: 12px 14px;
-
-            border-bottom:
-                1px solid var(--border);
-
-            white-space: nowrap;
-        }
-
-        .activity-table td {
-            padding: 12px 14px;
-
-            border-bottom:
-                1px solid #eef0f2;
-
-            font-size: 11px;
-
-            vertical-align: middle;
-        }
-
-        .activity-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .activity-table tbody tr:hover {
-            background: #fafcff;
-        }
-
-        .req-number {
-            font-weight: 750;
-
-            color: var(--primary);
-        }
-
-        .category-badge {
-            display: inline-block;
-
-            background: #f1f5f9;
-
-            color: #475569;
-
-            border-radius: 6px;
-
-            padding: 4px 7px;
-
-            font-size: 9px;
-
-            font-weight: 700;
-        }
-
-        .status-badge {
-            display: inline-flex;
-
-            align-items: center;
-
-            gap: 5px;
-
-            border-radius: 20px;
-
-            padding: 5px 8px;
-
-            font-size: 9px;
-
-            font-weight: 700;
-
-            white-space: nowrap;
-        }
-
-        .status-pendente {
-            color: #92400e;
-
-            background: #fef3c7;
-        }
-
-        .status-concluido {
-            color: #166534;
-
-            background: #dcfce7;
-        }
-
-        .status-arquivada {
-            color: #475569;
-
-            background: #e2e8f0;
-        }
-
-        .status-andamento {
-            color: #1d4ed8;
-
-            background: #dbeafe;
-        }
-
-        .action-group {
-            display: flex;
-
-            gap: 5px;
-        }
-
-        .action-btn {
-            width: 29px;
-            height: 29px;
-
-            display: inline-flex;
-
-            align-items: center;
-            justify-content: center;
-
-            border-radius: 7px;
-
-            border:
-                1px solid var(--border);
-
-            background: #fff;
-
-            color: #64748b;
-
-            text-decoration: none;
-
-            font-size: 11px;
-
-            transition: .2s;
-        }
-
-        .action-btn:hover {
-            background: #f8fafc;
-
-            color: var(--primary);
-
-            border-color: #bfdbfe;
-        }
-
-        .empty-state {
-            text-align: center;
-
-            padding: 38px 20px;
-
-            color: var(--muted);
-        }
-
-        .empty-state i {
-            font-size: 30px;
-
-            margin-bottom: 10px;
-
-            color: #cbd5e1;
-        }
-
-        .empty-state p {
-            margin: 0;
-
-            font-size: 12px;
-        }
-
-
-        /* =========================================================
-           RODAPÉ
-        ========================================================= */
-
-        .footer {
-            text-align: center;
-
-            color: #9ca3af;
-
-            font-size: 10px;
-
-            padding: 8px 0 18px;
-        }
-
-
-        /* =========================================================
-           RESPONSIVO
-        ========================================================= */
-
-        @media (max-width: 1350px) {
-
-            .metric-grid {
-                grid-template-columns:
-                    repeat(3, minmax(0, 1fr));
-            }
-
-        }
-
-        @media (max-width: 1100px) {
-
-            .dashboard-row,
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-
-        }
-
-        @media (max-width: 900px) {
-
-            .sidebar {
-                width: 215px;
-            }
-
-            .main {
-                margin-left: 215px;
-
-                padding: 20px;
-            }
-
-            .activity-summary {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-            .indicators-grid {
-                grid-template-columns:
-                    repeat(3, minmax(0, 1fr));
-            }
-
-        }
-
-        @media (max-width: 700px) {
-
-            .sidebar {
-                position: relative;
-
-                width: 100%;
-
-                height: auto;
-
-                max-height: none;
-            }
-
-            .sidebar-footer {
-                margin-top: 10px;
-            }
-
-            .main {
-                margin-left: 0;
-
-                padding: 15px;
-            }
-
-            .topbar {
-                flex-direction: column;
-            }
-
-            .top-actions {
-                width: 100%;
-            }
-
-            .metric-grid {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-group.full {
-                grid-column: auto;
-            }
-
-        }
-
-        @media (max-width: 520px) {
-
-            .metric-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .activity-summary {
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-            .indicators-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-title {
-                font-size: 22px;
-            }
-
-            .top-actions {
-                flex-direction: column;
-
-                align-items: stretch;
-            }
-
-            .system-status,
-            .date-badge {
-                justify-content: center;
-            }
-
-        }
-
-    </style>
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+```
 
 </head>
 
-
 <body>
 
-
-<!-- =============================================================
+<!-- =========================================================
      SIDEBAR
-============================================================= -->
+========================================================= -->
 
 <aside class="sidebar">
 
-
-    <div class="brand">
-
-        <div class="brand-title">
-
-            <i class="fa-solid fa-boxes-stacked me-2"></i>
-
-            Almoxarifado
-
-        </div>
-
-        <div class="brand-subtitle">
-            VALENET • Painel Operacional
-        </div>
-
+```
+<div class="brand">
+    <div class="brand-title">
+        <i class="fa-solid fa-boxes-stacked me-2"></i>
+        Almoxarifado VALENET
     </div>
 
+    <div class="brand-subtitle">
+        Painel Operacional
+    </div>
+</div>
 
-    <!-- OPERAÇÃO -->
+<div class="menu-title">Operação</div>
 
-    <div class="menu-section">
+<a href="{{ url_for('index') }}" class="menu-link active">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Painel</span>
+</a>
 
-        <div class="menu-label">
-            Operação
-        </div>
+<a href="{{ url_for('modulo', nome='Requisições') }}" class="menu-link">
+    <i class="fa-solid fa-file-lines"></i>
+    <span>Requisições</span>
+</a>
 
+<a href="{{ url_for('modulo', nome='Inventário') }}" class="menu-link">
+    <i class="fa-solid fa-clipboard-check"></i>
+    <span>Inventário</span>
+</a>
 
-        <a
-            href="{{ url_for('index') }}"
-            class="menu-link active">
+<a href="{{ url_for('modulo', nome='Expedição') }}" class="menu-link">
+    <i class="fa-solid fa-truck-fast"></i>
+    <span>Expedição</span>
+</a>
 
-            <i class="fa-solid fa-gauge-high"></i>
+<a href="{{ url_for('modulo', nome='Recebimento') }}" class="menu-link">
+    <i class="fa-solid fa-dolly"></i>
+    <span>Recebimento</span>
+</a>
 
-            <span>Painel</span>
+<a href="{{ url_for('modulo', nome='Estoque') }}" class="menu-link">
+    <i class="fa-solid fa-box-open"></i>
+    <span>Estoque</span>
+</a>
 
-        </a>
+<div class="menu-title">Gestão</div>
 
+<a href="{{ url_for('modulo', nome='Cadastros') }}" class="menu-link">
+    <i class="fa-solid fa-address-book"></i>
+    <span>Cadastros</span>
+</a>
 
-        <a
-            href="{{ url_for('modulo', nome='Requisições') }}"
-            class="menu-link">
+<a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}" class="menu-link">
+    <i class="fa-solid fa-lightbulb"></i>
+    <span>Melhorias / PDCA</span>
+</a>
 
-            <i class="fa-solid fa-clipboard-list"></i>
+<a href="{{ url_for('indicadores') }}" class="menu-link">
+    <i class="fa-solid fa-chart-pie"></i>
+    <span>Indicadores</span>
+</a>
 
-            <span>Requisições</span>
+<a href="{{ url_for('relatorios') }}" class="menu-link">
+    <i class="fa-solid fa-file-chart-column"></i>
+    <span>Relatórios</span>
+</a>
 
-        </a>
+<a href="{{ url_for('modulo', nome='Configurações') }}" class="menu-link">
+    <i class="fa-solid fa-gear"></i>
+    <span>Configurações</span>
+</a>
 
-
-        <a
-            href="{{ url_for('modulo', nome='Inventário') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-boxes-stacked"></i>
-
-            <span>Inventário</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('modulo', nome='Expedição') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-truck-fast"></i>
-
-            <span>Expedição</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('modulo', nome='Recebimento') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-dolly"></i>
-
-            <span>Recebimento</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('modulo', nome='Estoque') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-warehouse"></i>
-
-            <span>Estoque</span>
-
-        </a>
-
+<div class="sidebar-user">
+    <div class="sidebar-user-name">
+        <i class="fa-solid fa-user me-1"></i>
+        {{ session.get('usuario_atual', 'Usuário') }}
     </div>
 
-
-    <!-- GESTÃO -->
-
-    <div class="menu-section">
-
-        <div class="menu-label">
-            Gestão
-        </div>
-
-
-        <a
-            href="{{ url_for('modulo', nome='Cadastros') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-address-book"></i>
-
-            <span>Cadastros</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-arrows-rotate"></i>
-
-            <span>Melhorias / PDCA</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('indicadores') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-chart-line"></i>
-
-            <span>Indicadores</span>
-
-        </a>
-
-
-        <a
-            href="{{ url_for('relatorios') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-file-lines"></i>
-
-            <span>Relatórios</span>
-
-        </a>
-
-
-        <!-- CORRIGIDO:
-             Configurações usa o endpoint modulo -->
-
-        <a
-            href="{{ url_for('modulo', nome='Configurações') }}"
-            class="menu-link">
-
-            <i class="fa-solid fa-gear"></i>
-
-            <span>Configurações</span>
-
-        </a>
-
-    </div>
-
-
-    <!-- USUÁRIO -->
-
-    <div class="sidebar-footer">
-
-        <div class="user-box">
-
-            <div class="user-name">
-
-                <i class="fa-solid fa-circle-user me-1"></i>
-
-                {{ session.get('usuario_atual', 'Usuário') }}
-
-            </div>
-
-
-            <div class="user-role">
-
-                Operação • Almoxarifado
-
-            </div>
-
-
-            <a
-                href="{{ url_for('logout') }}"
-                class="logout">
-
-                <i class="fa-solid fa-right-from-bracket"></i>
-
-                Sair do sistema
-
-            </a>
-
-        </div>
-
-    </div>
+    <a href="{{ url_for('logout') }}" class="logout">
+        <i class="fa-solid fa-right-from-bracket me-1"></i>
+        Sair
+    </a>
+</div>
+```
 
 </aside>
 
-
-<!-- =============================================================
-     CONTEÚDO PRINCIPAL
-============================================================= -->
+<!-- =========================================================
+     MAIN
+========================================================= -->
 
 <main class="main">
 
+```
+<div class="topbar">
 
-    <!-- CABEÇALHO -->
+    <div>
+        <h1 class="page-title">
+            Painel Operacional
+        </h1>
 
-    <div class="topbar">
-
-        <div>
-
-            <div class="breadcrumb-custom">
-                Almoxarifado / Painel
-            </div>
-
-
-            <h1 class="page-title">
-                Painel Operacional
-            </h1>
-
-
-            <div class="page-subtitle">
-                Acompanhamento das operações do almoxarifado
-            </div>
-
-        </div>
-
-
-        <div class="top-actions">
-
-
-            <div class="system-status">
-
-                <span class="system-dot"></span>
-
-                Sistema online
-
-            </div>
-
-
-            <div class="date-badge">
-
-                <i class="fa-regular fa-calendar me-1"></i>
-
-                <span id="dataAtual"></span>
-
-            </div>
-
-        </div>
-
+        <p class="page-subtitle">
+            Acompanhamento operacional do almoxarifado
+        </p>
     </div>
 
+    <div class="date-box">
+        <i class="fa-regular fa-calendar me-1"></i>
+        <span id="dataAtual"></span>
+    </div>
 
-    <!-- ALERTAS -->
+</div>
+
+<!-- FLASH -->
+
+<div class="flash-container">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
 
         {% if messages %}
 
-            <div class="flash-container">
+            {% for category, message in messages %}
 
-                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show py-2 small" role="alert">
 
-                    <div
-                        class="alert alert-{{ category }} alert-dismissible fade show py-2 px-3 small">
+                    {{ message }}
 
-                        {{ message }}
-
-                        <button
-                            type="button"
+                    <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert">
-                        </button>
+                    </button>
 
-                    </div>
+                </div>
 
-                {% endfor %}
-
-            </div>
+            {% endfor %}
 
         {% endif %}
 
     {% endwith %}
 
+</div>
 
-    <!-- =========================================================
-         CARDS PRINCIPAIS
-    ========================================================= -->
+<!-- =====================================================
+     INDICADORES PRINCIPAIS
+====================================================== -->
 
-    <div class="metric-grid">
+<div class="metric-grid">
 
+    <div class="metric-card">
 
-        <!-- REQUISIÇÕES -->
+        <div class="metric-top">
+            <span class="metric-label">Requisições pendentes</span>
 
-        <div class="metric-card">
+            <div class="metric-icon">
+                <i class="fa-solid fa-file-circle-exclamation"></i>
+            </div>
+        </div>
 
-            <div class="metric-top">
+        <div class="metric-number">
+            {{ total_req }}
+        </div>
 
-                <div>
-
-                    <div class="metric-label">
-                        Requisições
-                    </div>
-
-                    <div class="metric-value">
-                        {{ total_req }}
-                    </div>
-
-                </div>
+    </div>
 
 
-                <div class="metric-icon icon-blue">
+    <div class="metric-card">
 
-                    <i class="fa-solid fa-clipboard-list"></i>
+        <div class="metric-top">
+            <span class="metric-label">Inventário concluído</span>
 
-                </div>
+            <div class="metric-icon">
+                <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+        </div>
+
+        <div class="metric-number">
+            {{ inv_conc }}
+        </div>
+
+    </div>
+
+
+    <div class="metric-card">
+
+        <div class="metric-top">
+            <span class="metric-label">Expedições pendentes</span>
+
+            <div class="metric-icon">
+                <i class="fa-solid fa-truck"></i>
+            </div>
+        </div>
+
+        <div class="metric-number">
+            {{ exp_pend }}
+        </div>
+
+    </div>
+
+
+    <div class="metric-card">
+
+        <div class="metric-top">
+            <span class="metric-label">Recebimentos pendentes</span>
+
+            <div class="metric-icon">
+                <i class="fa-solid fa-box"></i>
+            </div>
+        </div>
+
+        <div class="metric-number">
+            {{ rec_pend }}
+        </div>
+
+    </div>
+
+
+    <div class="metric-card">
+
+        <div class="metric-top">
+            <span class="metric-label">Ocorrências</span>
+
+            <div class="metric-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+        </div>
+
+        <div class="metric-number">
+            {{ total_oco }}
+        </div>
+
+    </div>
+
+
+    <div class="metric-card">
+
+        <div class="metric-top">
+            <span class="metric-label">Atrasadas</span>
+
+            <div class="metric-icon">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+        </div>
+
+        <div class="metric-number">
+            {{ total_atrasados }}
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     RESUMO DO DIA + INDICADORES
+====================================================== -->
+
+<div class="dashboard-layout">
+
+    <!-- COLUNA ESQUERDA -->
+    <div class="left-dashboard">
+
+        <!-- RESUMO DO DIA -->
+
+        <div class="dashboard-card">
+
+            <div class="dashboard-card-title">
+
+                <i class="fa-solid fa-calendar-day"></i>
+
+                <span>
+                    Resumo do Dia
+                </span>
 
             </div>
 
+            <div class="activity-summary">
 
-            <div class="metric-footer">
-                Requisições pendentes
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Concluídas
+                    </div>
+
+                    <div class="summary-number summary-success">
+                        {{ atividades_concluidas }}
+                    </div>
+
+                </div>
+
+
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Pendentes
+                    </div>
+
+                    <div class="summary-number summary-warning">
+                        {{ atividades_pendentes }}
+                    </div>
+
+                </div>
+
+
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Arquivadas
+                    </div>
+
+                    <div class="summary-number summary-secondary">
+                        {{ atividades_arquivadas }}
+                    </div>
+
+                </div>
+
+
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Total
+                    </div>
+
+                    <div class="summary-number summary-primary">
+                        {{ total_atividades }}
+                    </div>
+
+                </div>
+
             </div>
 
         </div>
 
 
-        <!-- INVENTÁRIO -->
+        <!-- INDICADORES OPERACIONAIS -->
 
-        <div class="metric-card">
+        <div class="dashboard-card operational-card">
 
-            <div class="metric-top">
+            <div class="dashboard-card-title">
 
-                <div>
+                <i class="fa-solid fa-gauge-high"></i>
 
-                    <div class="metric-label">
+                <span>
+                    Indicadores
+                </span>
+
+            </div>
+
+            <div class="indicators-grid">
+
+                <!-- ATENDIDAS -->
+
+                <div class="indicator-item">
+
+                    <div class="indicator-circle indicator-green"
+                         style="--percent: {{ perc_atendidas }}%;">
+
+                        <span class="indicator-percent">
+                            {{ perc_atendidas }}%
+                        </span>
+
+                    </div>
+
+                    <div class="indicator-title">
+                        Atendidas
+                    </div>
+
+                    <div class="indicator-description">
+                        Requisições atendidas
+                    </div>
+
+                    <div class="indicator-bar">
+
+                        <span class="bar-green"
+                              style="width: {{ perc_atendidas }}%;">
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- INVENTÁRIO -->
+
+                <div class="indicator-item">
+
+                    <div class="indicator-circle indicator-blue"
+                         style="--percent: {{ perc_inventario }}%;">
+
+                        <span class="indicator-percent">
+                            {{ perc_inventario }}%
+                        </span>
+
+                    </div>
+
+                    <div class="indicator-title">
                         Inventário
                     </div>
 
-                    <div class="metric-value">
-                        {{ inv_conc }}
+                    <div class="indicator-description">
+                        Inventário realizado
+                    </div>
+
+                    <div class="indicator-bar">
+
+                        <span class="bar-blue"
+                              style="width: {{ perc_inventario }}%;">
+                        </span>
+
                     </div>
 
                 </div>
 
 
-                <div class="metric-icon icon-green">
+                <!-- EXPEDIÇÃO -->
 
-                    <i class="fa-solid fa-boxes-stacked"></i>
+                <div class="indicator-item">
 
-                </div>
+                    <div class="indicator-circle indicator-orange"
+                         style="--percent: {{ perc_expedicao }}%;">
 
-            </div>
+                        <span class="indicator-percent">
+                            {{ perc_expedicao }}%
+                        </span>
 
+                    </div>
 
-            <div class="metric-footer">
-                {{ inv_conc }} de {{ inv_total }} concluídos
-            </div>
-
-        </div>
-
-
-        <!-- EXPEDIÇÃO -->
-
-        <div class="metric-card">
-
-            <div class="metric-top">
-
-                <div>
-
-                    <div class="metric-label">
+                    <div class="indicator-title">
                         Expedição
                     </div>
 
-                    <div class="metric-value">
-                        {{ exp_pend }}
+                    <div class="indicator-description">
+                        Expedições realizadas
+                    </div>
+
+                    <div class="indicator-bar">
+
+                        <span class="bar-orange"
+                              style="width: {{ perc_expedicao }}%;">
+                        </span>
+
                     </div>
 
                 </div>
 
-
-                <div class="metric-icon icon-orange">
-
-                    <i class="fa-solid fa-truck-fast"></i>
-
-                </div>
-
-            </div>
-
-
-            <div class="metric-footer">
-                Expedições pendentes
-            </div>
-
-        </div>
-
-
-        <!-- RECEBIMENTO -->
-
-        <div class="metric-card">
-
-            <div class="metric-top">
-
-                <div>
-
-                    <div class="metric-label">
-                        Recebimento
-                    </div>
-
-                    <div class="metric-value">
-                        {{ rec_pend }}
-                    </div>
-
-                </div>
-
-
-                <div class="metric-icon icon-purple">
-
-                    <i class="fa-solid fa-dolly"></i>
-
-                </div>
-
-            </div>
-
-
-            <div class="metric-footer">
-                Recebimentos pendentes
-            </div>
-
-        </div>
-
-
-        <!-- OCORRÊNCIAS -->
-
-        <div class="metric-card">
-
-            <div class="metric-top">
-
-                <div>
-
-                    <div class="metric-label">
-                        Ocorrências
-                    </div>
-
-                    <div class="metric-value">
-                        {{ total_oco }}
-                    </div>
-
-                </div>
-
-
-                <div class="metric-icon icon-red">
-
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-
-                </div>
-
-            </div>
-
-
-            <div class="metric-footer">
-                Ocorrências registradas
-            </div>
-
-        </div>
-
-
-        <!-- ATRASADAS -->
-
-        <div class="metric-card">
-
-            <div class="metric-top">
-
-                <div>
-
-                    <div class="metric-label">
-                        Atrasadas
-                    </div>
-
-                    <div class="metric-value">
-                        {{ total_atrasados }}
-                    </div>
-
-                </div>
-
-
-                <div class="metric-icon icon-cyan">
-
-                    <i class="fa-solid fa-clock"></i>
-
-                </div>
-
-            </div>
-
-
-            <div class="metric-footer">
-                Atividades fora do prazo
             </div>
 
         </div>
@@ -1782,1201 +1160,638 @@
     </div>
 
 
-    <!-- =========================================================
-         RESUMO + INDICADORES
-    ========================================================= -->
+    <!-- COLUNA DIREITA -->
 
-    <div class="dashboard-row">
+    <div class="dashboard-card">
 
+        <div class="dashboard-card-title">
 
-        <!-- =====================================================
-             RESUMO DE ATIVIDADES — ESQUERDA
-        ====================================================== -->
+            <i class="fa-solid fa-chart-column"></i>
 
-        <section class="panel">
+            <span>
+                Acompanhamento Operacional
+            </span>
 
-            <div class="panel-header">
+        </div>
 
-                <div>
+        <div class="text-muted small mb-3">
+            Visão geral do desempenho das operações do almoxarifado.
+        </div>
 
-                    <h2 class="panel-title">
+        <div class="row g-3">
 
-                        <i class="fa-solid fa-chart-pie"></i>
+            <div class="col-md-6">
 
-                        Resumo de Atividades
+                <div class="summary-box">
 
-                    </h2>
-
-
-                    <div class="panel-subtitle">
-
-                        Atividade do dia
-
+                    <div class="summary-label">
+                        Atendimento
                     </div>
 
-                </div>
-
-
-                <span class="category-badge">
-                    HOJE
-                </span>
-
-            </div>
-
-
-            <div class="panel-body">
-
-
-                <div class="activity-summary">
-
-
-                    <!-- CONCLUÍDAS -->
-
-                    <div class="summary-box success">
-
-                        <div class="summary-label">
-                            Concluídas
-                        </div>
-
-                        <div class="summary-number">
-                            {{ atividades_concluidas }}
-                        </div>
-
-                        <div class="summary-info">
-                            Finalizadas
-                        </div>
-
+                    <div class="summary-number summary-success">
+                        {{ perc_atendidas }}%
                     </div>
 
-
-                    <!-- PENDENTES -->
-
-                    <div class="summary-box warning">
-
-                        <div class="summary-label">
-                            Pendentes
-                        </div>
-
-                        <div class="summary-number">
-                            {{ atividades_pendentes }}
-                        </div>
-
-                        <div class="summary-info">
-                            Aguardando
-                        </div>
-
+                    <div class="small text-muted mt-1">
+                        Requisições atendidas
                     </div>
-
-
-                    <!-- ARQUIVADAS -->
-
-                    <div class="summary-box archive">
-
-                        <div class="summary-label">
-                            Arquivadas
-                        </div>
-
-                        <div class="summary-number">
-                            {{ atividades_arquivadas }}
-                        </div>
-
-                        <div class="summary-info">
-                            Histórico
-                        </div>
-
-                    </div>
-
-
-                    <!-- TOTAL -->
-
-                    <div class="summary-box total">
-
-                        <div class="summary-label">
-                            Total hoje
-                        </div>
-
-                        <div class="summary-number">
-                            {{ total_atividades }}
-                        </div>
-
-                        <div class="summary-info">
-                            Registradas
-                        </div>
-
-                    </div>
-
 
                 </div>
 
             </div>
 
-        </section>
 
+            <div class="col-md-6">
 
-        <!-- =====================================================
-             INDICADORES — DIREITA
-        ====================================================== -->
+                <div class="summary-box">
 
-        <section class="panel">
-
-
-            <div class="panel-header">
-
-                <div>
-
-                    <h2 class="panel-title">
-
-                        <i class="fa-solid fa-chart-line"></i>
-
-                        Indicadores Operacionais
-
-                    </h2>
-
-
-                    <div class="panel-subtitle">
-
-                        Desempenho da operação
-
+                    <div class="summary-label">
+                        Inventário
                     </div>
 
-                </div>
-
-
-                <span class="category-badge">
-
-                    DESEMPENHO
-
-                </span>
-
-            </div>
-
-
-            <div class="panel-body">
-
-
-                <div class="indicators-grid">
-
-
-                    <!-- =================================================
-                         ATENDIDAS
-                    ================================================== -->
-
-                    <div class="indicator-card">
-
-
-                        <div
-                            class="indicator-circle indicator-green"
-                            style="--percent: {{ perc_atendidas }}%;">
-
-                            <span class="indicator-percent">
-
-                                {{ perc_atendidas }}%
-
-                            </span>
-
-                        </div>
-
-
-                        <div class="indicator-name">
-
-                            <i
-                                class="fa-solid fa-circle-check text-success">
-                            </i>
-
-                            Atendidas
-
-                        </div>
-
-
-                        <div class="indicator-bar">
-
-                            <div
-                                class="indicator-bar-fill indicator-green"
-                                style="--percent: {{ perc_atendidas }}%;">
-                            </div>
-
-                        </div>
-
-
-                        <div class="indicator-description">
-
-                            Atividades atendidas
-
-                        </div>
-
+                    <div class="summary-number summary-primary">
+                        {{ perc_inventario }}%
                     </div>
 
-
-                    <!-- =================================================
-                         INVENTÁRIO
-                    ================================================== -->
-
-                    <div class="indicator-card">
-
-
-                        <div
-                            class="indicator-circle indicator-blue"
-                            style="--percent: {{ perc_inventario }}%;">
-
-                            <span class="indicator-percent">
-
-                                {{ perc_inventario }}%
-
-                            </span>
-
-                        </div>
-
-
-                        <div class="indicator-name">
-
-                            <i
-                                class="fa-solid fa-boxes-stacked text-primary">
-                            </i>
-
-                            Inventário
-
-                        </div>
-
-
-                        <div class="indicator-bar">
-
-                            <div
-                                class="indicator-bar-fill indicator-blue"
-                                style="--percent: {{ perc_inventario }}%;">
-                            </div>
-
-                        </div>
-
-
-                        <div class="indicator-description">
-
-                            Inventário concluído
-
-                        </div>
-
+                    <div class="small text-muted mt-1">
+                        Inventário concluído
                     </div>
-
-
-                    <!-- =================================================
-                         EXPEDIÇÃO
-                    ================================================== -->
-
-                    <div class="indicator-card">
-
-
-                        <div
-                            class="indicator-circle indicator-orange"
-                            style="--percent: {{ perc_expedicao }}%;">
-
-                            <span class="indicator-percent">
-
-                                {{ perc_expedicao }}%
-
-                            </span>
-
-                        </div>
-
-
-                        <div class="indicator-name">
-
-                            <i
-                                class="fa-solid fa-truck-fast text-warning">
-                            </i>
-
-                            Expedição
-
-                        </div>
-
-
-                        <div class="indicator-bar">
-
-                            <div
-                                class="indicator-bar-fill indicator-orange"
-                                style="--percent: {{ perc_expedicao }}%;">
-                            </div>
-
-                        </div>
-
-
-                        <div class="indicator-description">
-
-                            Expedições concluídas
-
-                        </div>
-
-                    </div>
-
 
                 </div>
 
             </div>
 
-        </section>
+
+            <div class="col-md-6">
+
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Expedição
+                    </div>
+
+                    <div class="summary-number summary-warning">
+                        {{ perc_expedicao }}%
+                    </div>
+
+                    <div class="small text-muted mt-1">
+                        Expedições concluídas
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-md-6">
+
+                <div class="summary-box">
+
+                    <div class="summary-label">
+                        Atividades
+                    </div>
+
+                    <div class="summary-number summary-primary">
+                        {{ total_atividades }}
+                    </div>
+
+                    <div class="small text-muted mt-1">
+                        Total registrado hoje
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
     </div>
 
-
-    <!-- =========================================================
-         NOVA ATIVIDADE + CHAT
-    ========================================================= -->
-
-    <div class="content-grid">
+</div>
 
 
-        <!-- NOVA ATIVIDADE -->
+<!-- =====================================================
+     NOVA ATIVIDADE + CHAT
+====================================================== -->
 
-        <section class="panel">
+<div class="content-grid">
 
+    <!-- NOVA ATIVIDADE -->
 
-            <div class="panel-header">
+    <div class="content-card">
 
-                <div>
+        <div class="section-title">
 
-                    <h2 class="panel-title">
+            <i class="fa-solid fa-plus-circle"></i>
 
-                        <i class="fa-solid fa-plus-circle"></i>
+            <span>
+                Nova Atividade
+            </span>
 
-                        Nova Atividade
+        </div>
 
-                    </h2>
+        <form method="POST">
 
+            <input type="hidden"
+                   name="acao"
+                   value="nova_atividade">
 
-                    <div class="panel-subtitle">
+            <div class="row g-3">
 
-                        Registre uma nova atividade operacional
+                <div class="col-md-4">
 
-                    </div>
+                    <label class="form-label">
+                        Nº Requisição
+                    </label>
+
+                    <input type="text"
+                           name="num_requisicao"
+                           class="form-control"
+                           placeholder="Ex.: 123456">
 
                 </div>
 
-            </div>
 
+                <div class="col-md-4">
 
-            <div class="panel-body">
+                    <label class="form-label">
+                        Prioridade
+                    </label>
 
+                    <select name="prioridade"
+                            class="form-select">
 
-                <form method="POST">
+                        <option value="Baixa">
+                            Baixa
+                        </option>
 
+                        <option value="Média"
+                                selected>
+                            Média
+                        </option>
 
-                    <div class="form-grid">
+                        <option value="Alta">
+                            Alta
+                        </option>
 
-
-                        <!-- REQUISIÇÃO -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Nº da requisição
-                            </label>
-
-
-                            <input
-                                type="text"
-                                name="num_requisicao"
-                                class="form-control"
-                                placeholder="Ex.: 123456">
-
-                        </div>
-
-
-                        <!-- PRIORIDADE -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Prioridade
-                            </label>
-
-
-                            <select
-                                name="prioridade"
-                                class="form-select">
-
-                                <option value="Baixa">
-                                    Baixa
-                                </option>
-
-                                <option
-                                    value="Média"
-                                    selected>
-
-                                    Média
-
-                                </option>
-
-                                <option value="Alta">
-                                    Alta
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- ATIVIDADE -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Atividade
-                            </label>
-
-
-                            <input
-                                type="text"
-                                name="atividade"
-                                class="form-control"
-                                placeholder="Ex.: Separar equipamentos"
-                                required>
-
-                        </div>
-
-
-                        <!-- CATEGORIA -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Categoria
-                            </label>
-
-
-                            <select
-                                name="categoria"
-                                class="form-select"
-                                required>
-
-                                <option value="">
-                                    Selecione
-                                </option>
-
-                                <option value="Separação">
-                                    Separação
-                                </option>
-
-                                <option value="Inventário">
-                                    Inventário
-                                </option>
-
-                                <option value="Expedição">
-                                    Expedição
-                                </option>
-
-                                <option value="Recebimento">
-                                    Recebimento
-                                </option>
-
-                                <option value="Estoque">
-                                    Estoque
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- RESPONSÁVEL -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Responsável
-                            </label>
-
-
-                            <select
-                                name="responsavel"
-                                class="form-select">
-
-                                <option value="">
-                                    Selecione
-                                </option>
-
-
-                                {% for usuario in usuarios %}
-
-                                    <option
-                                        value="{{ usuario.nome }}">
-
-                                        {{ usuario.nome }}
-
-                                    </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- PRAZO -->
-
-                        <div class="form-group">
-
-                            <label class="form-label">
-                                Prazo
-                            </label>
-
-
-                            <input
-                                type="datetime-local"
-                                name="prazo"
-                                class="form-control">
-
-                        </div>
-
-
-                        <!-- DESCRIÇÃO -->
-
-                        <div class="form-group full">
-
-                            <label class="form-label">
-                                Descrição
-                            </label>
-
-
-                            <textarea
-                                name="descricao"
-                                class="form-control"
-                                placeholder="Descreva os detalhes da atividade..."></textarea>
-
-                        </div>
-
-
-                        <!-- BOTÃO -->
-
-                        <div class="form-group full">
-
-                            <button
-                                type="submit"
-                                class="btn-primary-custom">
-
-                                <i class="fa-solid fa-plus me-1"></i>
-
-                                Criar atividade
-
-                            </button>
-
-                        </div>
-
-
-                    </div>
-
-                </form>
-
-            </div>
-
-        </section>
-
-
-        <!-- CHAT -->
-
-        <section class="panel">
-
-
-            <div class="panel-header">
-
-                <div>
-
-                    <h2 class="panel-title">
-
-                        <i class="fa-solid fa-comments"></i>
-
-                        Chat da Equipe
-
-                    </h2>
-
-
-                    <div class="panel-subtitle">
-
-                        Comunicação operacional
-
-                    </div>
+                    </select>
 
                 </div>
 
-            </div>
 
+                <div class="col-md-4">
 
-            <div class="chat-body">
+                    <label class="form-label">
+                        Responsável
+                    </label>
 
+                    <select name="responsavel"
+                            class="form-select">
 
-                <div
-                    class="chat-messages"
-                    id="chatMessages">
+                        <option value="">
+                            Selecione
+                        </option>
 
+                        {% for usuario in usuarios %}
 
-                    {% if mensagens_chat %}
-
-
-                        {% for mensagem in mensagens_chat %}
-
-
-                            <div class="chat-message">
-
-
-                                <div class="chat-user">
-
-                                    <i
-                                        class="fa-solid fa-circle-user me-1">
-                                    </i>
-
-
-                                    {{ mensagem.usuario or 'Usuário' }}
-
-
-                                    {% if mensagem.criado_em %}
-
-                                        <span class="chat-time">
-
-                                            {{ mensagem.criado_em }}
-
-                                        </span>
-
-                                    {% endif %}
-
-                                </div>
-
-
-                                <div class="chat-text">
-
-                                    {{ mensagem.mensagem }}
-
-                                </div>
-
-
-                            </div>
-
+                            <option value="{{ usuario.nome }}">
+                                {{ usuario.nome }}
+                            </option>
 
                         {% endfor %}
 
-
-                    {% else %}
-
-
-                        <div class="empty-state">
-
-                            <i class="fa-regular fa-comments"></i>
-
-
-                            <p>
-                                Nenhuma mensagem ainda.
-                            </p>
-
-                        </div>
-
-
-                    {% endif %}
-
+                    </select>
 
                 </div>
 
 
-                <form
-                    method="POST"
-                    class="chat-form">
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Atividade
+                    </label>
+
+                    <input type="text"
+                           name="atividade"
+                           class="form-control"
+                           placeholder="Digite a atividade"
+                           required>
+
+                </div>
 
 
-                    <input
-                        type="hidden"
-                        name="acao_chat"
-                        value="enviar">
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Categoria
+                    </label>
+
+                    <select name="categoria"
+                            class="form-select"
+                            required>
+
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        <option value="Separação">
+                            Separação
+                        </option>
+
+                        <option value="Inventário">
+                            Inventário
+                        </option>
+
+                        <option value="Expedição">
+                            Expedição
+                        </option>
+
+                        <option value="Recebimento">
+                            Recebimento
+                        </option>
+
+                        <option value="Estoque">
+                            Estoque
+                        </option>
+
+                    </select>
+
+                </div>
 
 
-                    <input
-                        type="text"
-                        name="mensagem_chat"
-                        class="form-control"
-                        placeholder="Digite uma mensagem..."
-                        autocomplete="off"
-                        required>
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Prazo
+                    </label>
+
+                    <input type="datetime-local"
+                           name="prazo"
+                           class="form-control">
+
+                </div>
 
 
-                    <button type="submit">
+                <div class="col-md-6">
 
-                        <i class="fa-solid fa-paper-plane"></i>
+                    <label class="form-label">
+                        Descrição
+                    </label>
+
+                    <input type="text"
+                           name="descricao"
+                           class="form-control"
+                           placeholder="Detalhes da atividade">
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <button type="submit"
+                            class="btn btn-primary px-4">
+
+                        <i class="fa-solid fa-plus me-1"></i>
+
+                        Criar atividade
 
                     </button>
 
-
-                </form>
-
-            </div>
-
-        </section>
-
-    </div>
-
-
-    <!-- =========================================================
-         ATIVIDADES RECENTES
-    ========================================================= -->
-
-    <section class="panel table-panel">
-
-
-        <div class="panel-header">
-
-            <div>
-
-                <h2 class="panel-title">
-
-                    <i class="fa-solid fa-list-check"></i>
-
-                    Atividades Recentes
-
-                </h2>
-
-
-                <div class="panel-subtitle">
-
-                    Acompanhamento das atividades registradas
-
                 </div>
 
             </div>
 
+        </form>
 
-            <a
-                href="{{ url_for('relatorios') }}"
-                class="action-btn"
-                title="Ver relatórios">
+    </div>
 
-                <i
-                    class="fa-solid fa-arrow-up-right-from-square">
-                </i>
 
-            </a>
+    <!-- CHAT -->
+
+    <div class="content-card">
+
+        <div class="section-title">
+
+            <i class="fa-solid fa-comments"></i>
+
+            <span>
+                Chat da Equipe
+            </span>
 
         </div>
 
+        <div class="chat-box" id="chatBox">
 
-        <div class="table-wrapper">
+            {% for mensagem in mensagens_chat %}
 
+                <div class="chat-message">
 
-            {% if atividades %}
+                    <div class="chat-user">
 
+                        <i class="fa-solid fa-user me-1"></i>
 
-                <table class="activity-table">
+                        {{ mensagem.usuario }}
 
+                    </div>
 
-                    <thead>
+                    <div class="chat-text">
+                        {{ mensagem.mensagem }}
+                    </div>
 
-                        <tr>
+                    <div class="chat-date">
 
-                            <th>
-                                Requisição
-                            </th>
+                        {{ mensagem.criado_em }}
 
-                            <th>
-                                Atividade
-                            </th>
+                    </div>
 
-                            <th>
-                                Categoria
-                            </th>
-
-                            <th>
-                                Responsável
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Ação
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-
-                        {% for item in atividades %}
-
-
-                            <tr>
-
-
-                                <!-- REQUISIÇÃO -->
-
-                                <td>
-
-                                    {% if item.num_requisicao %}
-
-                                        <span class="req-number">
-
-                                            {{ item.num_requisicao }}
-
-                                        </span>
-
-                                    {% else %}
-
-                                        <span class="text-muted">
-                                            —
-                                        </span>
-
-                                    {% endif %}
-
-                                </td>
-
-
-                                <!-- ATIVIDADE -->
-
-                                <td>
-
-
-                                    <strong>
-
-                                        {{ item.atividade }}
-
-                                    </strong>
-
-
-                                    {% if item.descricao %}
-
-                                        <div
-                                            class="text-muted mt-1"
-                                            style="font-size: 10px;">
-
-                                            {{ item.descricao[:80] }}
-
-                                            {% if item.descricao|length > 80 %}
-                                                ...
-                                            {% endif %}
-
-                                        </div>
-
-                                    {% endif %}
-
-                                </td>
-
-
-                                <!-- CATEGORIA -->
-
-                                <td>
-
-                                    <span class="category-badge">
-
-                                        {{ item.categoria }}
-
-                                    </span>
-
-                                </td>
-
-
-                                <!-- RESPONSÁVEL -->
-
-                                <td>
-
-                                    {{ item.responsavel or '—' }}
-
-                                </td>
-
-
-                                <!-- STATUS -->
-
-                                <td>
-
-
-                                    {% if item.status == 'Pendente' %}
-
-
-                                        <span
-                                            class="status-badge status-pendente">
-
-                                            <i
-                                                class="fa-solid fa-clock">
-                                            </i>
-
-                                            Pendente
-
-                                        </span>
-
-
-                                    {% elif item.status == 'Concluído' %}
-
-
-                                        <span
-                                            class="status-badge status-concluido">
-
-                                            <i
-                                                class="fa-solid fa-check">
-                                            </i>
-
-                                            Concluído
-
-                                        </span>
-
-
-                                    {% elif item.status == 'Arquivada' %}
-
-
-                                        <span
-                                            class="status-badge status-arquivada">
-
-                                            <i
-                                                class="fa-solid fa-box-archive">
-                                            </i>
-
-                                            Arquivada
-
-                                        </span>
-
-
-                                    {% else %}
-
-
-                                        <span
-                                            class="status-badge status-andamento">
-
-                                            <i
-                                                class="fa-solid fa-spinner">
-                                            </i>
-
-                                            {{ item.status }}
-
-                                        </span>
-
-
-                                    {% endif %}
-
-                                </td>
-
-
-                                <!-- AÇÕES -->
-
-                                <td>
-
-                                    <div class="action-group">
-
-
-                                        <!-- EDITAR -->
-
-                                        <a
-                                            href="{{ url_for('editar_form', id=item.id) }}"
-                                            class="action-btn"
-                                            title="Editar">
-
-                                            <i
-                                                class="fa-solid fa-pen">
-                                            </i>
-
-                                        </a>
-
-
-                                        <!-- CONCLUIR -->
-
-                                        {% if item.status == 'Pendente' %}
-
-
-                                            <a
-                                                href="{{ url_for('concluir', id=item.id) }}"
-                                                class="action-btn"
-                                                title="Concluir"
-                                                onclick="return confirm('Deseja concluir esta atividade?');">
-
-                                                <i
-                                                    class="fa-solid fa-check">
-                                                </i>
-
-                                            </a>
-
-
-                                        {% endif %}
-
-
-                                        <!-- ARQUIVADA -->
-
-                                        {% if item.status == 'Arquivada' %}
-
-
-                                            <span
-                                                class="action-btn"
-                                                title="Atividade arquivada">
-
-                                                <i
-                                                    class="fa-solid fa-box-archive">
-                                                </i>
-
-                                            </span>
-
-
-                                        {% endif %}
-
-
-                                    </div>
-
-                                </td>
-
-
-                            </tr>
-
-
-                        {% endfor %}
-
-
-                    </tbody>
-
-                </table>
-
+                </div>
 
             {% else %}
 
+                <div class="text-center text-muted small py-5">
 
-                <div class="empty-state">
+                    <i class="fa-regular fa-comments fa-2x mb-2"></i>
 
-                    <i
-                        class="fa-solid fa-clipboard-check">
-                    </i>
+                    <br>
 
-
-                    <p>
-                        Nenhuma atividade registrada.
-                    </p>
+                    Nenhuma mensagem ainda.
 
                 </div>
 
-
-            {% endif %}
-
+            {% endfor %}
 
         </div>
 
-    </section>
+        <form method="POST">
 
+            <input type="hidden"
+                   name="acao_chat"
+                   value="enviar">
 
-    <!-- RODAPÉ -->
+            <div class="input-group">
 
-    <div class="footer">
+                <input type="text"
+                       name="mensagem"
+                       class="form-control"
+                       placeholder="Digite uma mensagem..."
+                       required>
 
-        Almoxarifado VALENET
-        •
-        Painel Operacional
-        •
-        Sistema interno
+                <button class="btn btn-primary"
+                        type="submit">
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 
+</div>
+
+
+<!-- =====================================================
+     ATIVIDADES RECENTES
+====================================================== -->
+
+<div class="table-card">
+
+    <div class="section-title">
+
+        <i class="fa-solid fa-list-check"></i>
+
+        <span>
+            Atividades Recentes
+        </span>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="activity-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+                    <th>Nº Req.</th>
+                    <th>Atividade</th>
+                    <th>Categoria</th>
+                    <th>Responsável</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for item in atividades_recentes %}
+
+                    <tr>
+
+                        <td>
+                            #{{ item.id }}
+                        </td>
+
+                        <td>
+                            {{ item.num_requisicao or '-' }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ item.atividade }}
+                            </strong>
+
+                            {% if item.descricao %}
+
+                                <div class="text-muted small">
+                                    {{ item.descricao }}
+                                </div>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ item.categoria or '-' }}
+                        </td>
+
+                        <td>
+                            {{ item.responsavel or '-' }}
+                        </td>
+
+                        <td>
+
+                            {% if item.status == 'Pendente' %}
+
+                                <span class="badge-status status-pendente">
+                                    Pendente
+                                </span>
+
+                            {% elif item.status == 'Concluído' %}
+
+                                <span class="badge-status status-concluido">
+                                    Concluído
+                                </span>
+
+                            {% elif item.status == 'Arquivada' %}
+
+                                <span class="badge-status status-arquivada">
+                                    Arquivada
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge-status status-pendente">
+                                    {{ item.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            <a href="{{ url_for('editar_form', id=item.id) }}"
+                               class="btn-action btn-edit"
+                               title="Editar">
+
+                                <i class="fa-solid fa-pen"></i>
+
+                            </a>
+
+
+                            {% if item.status == 'Pendente' %}
+
+                                <form method="POST"
+                                      action="{{ url_for('concluir', id=item.id) }}"
+                                      style="display:inline;">
+
+                                    <button type="submit"
+                                            class="btn-action btn-conclude"
+                                            title="Concluir"
+                                            onclick="return confirm('Concluir esta atividade?');">
+
+                                        <i class="fa-solid fa-check"></i>
+
+                                    </button>
+
+                                </form>
+
+                            {% elif item.status == 'Concluído' %}
+
+                                <span class="text-success ms-1"
+                                      title="Concluída">
+
+                                    <i class="fa-solid fa-circle-check"></i>
+
+                                </span>
+
+                            {% elif item.status == 'Arquivada' %}
+
+                                <span class="text-secondary ms-1"
+                                      title="Arquivada">
+
+                                    <i class="fa-solid fa-box-archive"></i>
+
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+
+                        <td colspan="7"
+                            class="text-center text-muted py-4">
+
+                            Nenhuma atividade registrada.
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<div class="footer">
+
+    Almoxarifado VALENET • Painel Operacional
+
+</div>
+```
 
 </main>
 
-
-<!-- =============================================================
-     JAVASCRIPT
-============================================================= -->
-
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 
+    /* DATA ATUAL */
 
-    /* =========================================================
-       DATA ATUAL
-    ========================================================= */
+    document.addEventListener("DOMContentLoaded", function () {
 
-    function atualizarData() {
+        const dataAtual = document.getElementById("dataAtual");
 
-        const agora = new Date();
+        if (dataAtual) {
 
+            const agora = new Date();
 
-        const opcoes = {
-
-            weekday: 'short',
-
-            day: '2-digit',
-
-            month: '2-digit',
-
-            year: 'numeric'
-
-        };
-
-
-        const elemento =
-            document.getElementById('dataAtual');
-
-
-        if (elemento) {
-
-            elemento.textContent =
+            dataAtual.textContent =
                 agora.toLocaleDateString(
-                    'pt-BR',
-                    opcoes
+                    "pt-BR",
+                    {
+                        weekday: "long",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric"
+                    }
                 );
 
         }
 
-    }
+        /* CHAT NO FINAL */
 
+        const chatBox = document.getElementById("chatBox");
 
-    atualizarData();
-
-
-    /* =========================================================
-       CHAT — IR PARA A ÚLTIMA MENSAGEM
-    ========================================================= */
-
-    function rolarChat() {
-
-        const chat =
-            document.getElementById('chatMessages');
-
-
-        if (chat) {
-
-            chat.scrollTop =
-                chat.scrollHeight;
-
+        if (chatBox) {
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-    }
+        /* FECHAR ALERTAS AUTOMATICAMENTE */
 
+        setTimeout(function () {
 
-    window.addEventListener(
-        'load',
-        rolarChat
-    );
+            document.querySelectorAll(".alert").forEach(function (alerta) {
 
+                const alert = bootstrap.Alert.getOrCreateInstance(alerta);
 
-    /* =========================================================
-       FECHAR ALERTAS AUTOMATICAMENTE
-    ========================================================= */
+                alert.close();
 
-    setTimeout(function () {
+            });
 
+        }, 5000);
 
-        const alerts =
-            document.querySelectorAll('.alert');
-
-
-        alerts.forEach(function(alert) {
-
-
-            const bsAlert =
-                bootstrap.Alert.getOrCreateInstance(
-                    alert
-                );
-
-
-            bsAlert.close();
-
-
-        });
-
-
-    }, 7000);
-
+    });
 
 </script>
-
 
 </body>
 </html>

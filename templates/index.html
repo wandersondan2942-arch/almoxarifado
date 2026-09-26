@@ -17,6 +17,7 @@
     >
 
     <style>
+
         :root {
             --sidebar: #111827;
             --sidebar-hover: #1f2937;
@@ -26,9 +27,10 @@
             --primary-dark: #1d4ed8;
 
             --success: #16a34a;
-            --warning: #d97706;
+            --warning: #ea580c;
             --danger: #dc2626;
             --info: #0891b2;
+            --purple: #7c3aed;
 
             --bg: #f4f6f9;
             --card: #ffffff;
@@ -37,6 +39,7 @@
             --muted: #6b7280;
 
             --shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+
             --radius: 14px;
         }
 
@@ -48,6 +51,7 @@
             margin: 0;
             background: var(--bg);
             color: var(--text);
+
             font-family:
                 Inter,
                 -apple-system,
@@ -58,27 +62,36 @@
                 sans-serif;
         }
 
+
         /* =========================================================
            SIDEBAR
         ========================================================= */
 
         .sidebar {
             position: fixed;
+
             top: 0;
             left: 0;
+
             width: 255px;
             height: 100vh;
+
             background: var(--sidebar);
             color: #fff;
+
             z-index: 1000;
+
             display: flex;
             flex-direction: column;
+
             overflow-y: auto;
         }
 
         .brand {
             padding: 24px 20px 20px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
+
+            border-bottom:
+                1px solid rgba(255,255,255,.08);
         }
 
         .brand-title {
@@ -99,23 +112,35 @@
 
         .menu-label {
             padding: 0 10px 7px;
+
             color: #6b7280;
+
             font-size: 10px;
             font-weight: 700;
+
             text-transform: uppercase;
+
             letter-spacing: 1px;
         }
 
         .menu-link {
             display: flex;
             align-items: center;
+
             gap: 12px;
+
             padding: 10px 12px;
+
             margin: 2px 0;
+
             color: #d1d5db;
+
             text-decoration: none;
+
             border-radius: 9px;
+
             font-size: 13px;
+
             transition: .2s;
         }
 
@@ -127,7 +152,9 @@
         .menu-link.active {
             color: #fff;
             background: var(--sidebar-active);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, .25);
+
+            box-shadow:
+                0 4px 12px rgba(37, 99, 235, .25);
         }
 
         .menu-link i {
@@ -137,13 +164,19 @@
 
         .sidebar-footer {
             margin-top: auto;
+
             padding: 15px;
-            border-top: 1px solid rgba(255,255,255,.08);
+
+            border-top:
+                1px solid rgba(255,255,255,.08);
         }
 
         .user-box {
-            background: rgba(255,255,255,.05);
+            background:
+                rgba(255,255,255,.05);
+
             border-radius: 10px;
+
             padding: 11px;
         }
 
@@ -154,17 +187,24 @@
 
         .user-role {
             color: #9ca3af;
+
             font-size: 11px;
+
             margin-top: 2px;
         }
 
         .logout {
             display: inline-flex;
             align-items: center;
+
             gap: 7px;
+
             color: #fca5a5;
+
             font-size: 12px;
+
             text-decoration: none;
+
             margin-top: 9px;
         }
 
@@ -172,77 +212,111 @@
             color: #fecaca;
         }
 
+
         /* =========================================================
            MAIN
         ========================================================= */
 
         .main {
             margin-left: 255px;
+
             min-height: 100vh;
+
             padding: 28px;
         }
 
         .topbar {
             display: flex;
+
             justify-content: space-between;
             align-items: flex-start;
+
             gap: 20px;
+
             margin-bottom: 24px;
         }
 
         .breadcrumb-custom {
             color: var(--muted);
+
             font-size: 12px;
+
             margin-bottom: 5px;
         }
 
         .page-title {
             font-size: 27px;
+
             font-weight: 800;
+
             margin: 0;
+
             letter-spacing: -.5px;
         }
 
         .page-subtitle {
             margin-top: 5px;
+
             color: var(--muted);
+
             font-size: 13px;
         }
 
         .top-actions {
             display: flex;
+
             gap: 8px;
+
             align-items: center;
         }
 
         .system-status {
             display: inline-flex;
+
             align-items: center;
+
             gap: 7px;
+
             background: #ecfdf5;
+
             color: #15803d;
-            border: 1px solid #bbf7d0;
+
+            border:
+                1px solid #bbf7d0;
+
             padding: 8px 11px;
+
             border-radius: 9px;
+
             font-size: 12px;
+
             font-weight: 600;
         }
 
         .system-dot {
             width: 7px;
             height: 7px;
+
             background: #22c55e;
+
             border-radius: 50%;
         }
 
         .date-badge {
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             color: var(--muted);
+
             padding: 8px 11px;
+
             border-radius: 9px;
+
             font-size: 12px;
         }
+
 
         /* =========================================================
            ALERTAS
@@ -252,55 +326,79 @@
             margin-bottom: 20px;
         }
 
+
         /* =========================================================
            CARDS PRINCIPAIS
         ========================================================= */
 
         .metric-grid {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(6, minmax(0, 1fr));
+
             gap: 14px;
+
             margin-bottom: 22px;
         }
 
         .metric-card {
             background: var(--card);
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: var(--radius);
+
             padding: 17px;
+
             box-shadow: var(--shadow);
+
             min-width: 0;
         }
 
         .metric-top {
             display: flex;
+
             justify-content: space-between;
             align-items: flex-start;
+
             gap: 10px;
         }
 
         .metric-label {
             color: var(--muted);
+
             font-size: 11px;
+
             font-weight: 600;
+
             text-transform: uppercase;
+
             letter-spacing: .35px;
         }
 
         .metric-value {
             font-size: 27px;
+
             font-weight: 800;
+
             margin-top: 6px;
+
             line-height: 1;
         }
 
         .metric-icon {
             width: 38px;
             height: 38px;
+
             border-radius: 10px;
+
             display: flex;
+
             align-items: center;
             justify-content: center;
+
             font-size: 15px;
         }
 
@@ -336,45 +434,78 @@
 
         .metric-footer {
             margin-top: 12px;
+
             font-size: 11px;
+
             color: var(--muted);
         }
 
+
         /* =========================================================
-           BLOCO RESUMO + INDICADORES
+           RESUMO + INDICADORES
         ========================================================= */
 
         .dashboard-row {
             display: grid;
-            grid-template-columns: minmax(0, 1.55fr) minmax(340px, .9fr);
+
+            /*
+             * RESUMO = pequeno
+             * INDICADORES = maior
+             */
+            grid-template-columns:
+                minmax(280px, .75fr)
+                minmax(0, 1.45fr);
+
             gap: 18px;
+
             margin-bottom: 22px;
+
             align-items: stretch;
         }
 
+
+        /* =========================================================
+           PAINÉIS
+        ========================================================= */
+
         .panel {
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: var(--radius);
+
             box-shadow: var(--shadow);
+
             overflow: hidden;
         }
 
         .panel-header {
             padding: 17px 19px;
-            border-bottom: 1px solid var(--border);
+
+            border-bottom:
+                1px solid var(--border);
+
             display: flex;
+
             justify-content: space-between;
             align-items: center;
+
             gap: 10px;
         }
 
         .panel-title {
             display: flex;
+
             align-items: center;
+
             gap: 9px;
+
             font-size: 14px;
+
             font-weight: 750;
+
             margin: 0;
         }
 
@@ -384,7 +515,9 @@
 
         .panel-subtitle {
             color: var(--muted);
+
             font-size: 11px;
+
             margin-top: 3px;
         }
 
@@ -392,114 +525,223 @@
             padding: 18px;
         }
 
+
         /* =========================================================
-           RESUMO DAS ATIVIDADES
+           RESUMO DE ATIVIDADES — COMPACTO
         ========================================================= */
 
         .activity-summary {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 11px;
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
+            gap: 9px;
         }
 
         .summary-box {
-            border: 1px solid var(--border);
-            border-radius: 11px;
-            padding: 14px;
+            border:
+                1px solid var(--border);
+
+            border-radius: 10px;
+
+            padding: 11px;
+
             background: #fafafa;
+
+            min-height: 91px;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .summary-label {
             color: var(--muted);
-            font-size: 11px;
+
+            font-size: 10px;
+
             font-weight: 600;
         }
 
         .summary-number {
-            font-size: 25px;
+            font-size: 21px;
+
             font-weight: 800;
-            margin-top: 7px;
+
+            margin-top: 5px;
         }
 
         .summary-info {
-            margin-top: 4px;
-            font-size: 10px;
+            margin-top: 3px;
+
+            font-size: 9px;
+
             color: var(--muted);
         }
 
         .summary-box.success {
-            border-left: 4px solid var(--success);
+            border-left:
+                4px solid var(--success);
         }
 
         .summary-box.warning {
-            border-left: 4px solid var(--warning);
+            border-left:
+                4px solid var(--warning);
         }
 
         .summary-box.archive {
-            border-left: 4px solid #64748b;
+            border-left:
+                4px solid #64748b;
         }
 
         .summary-box.total {
-            border-left: 4px solid var(--primary);
+            border-left:
+                4px solid var(--primary);
         }
+
 
         /* =========================================================
-           INDICADORES
+           INDICADORES CIRCULARES
         ========================================================= */
 
-        .indicator {
-            margin-bottom: 17px;
+        .indicators-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
+            gap: 14px;
         }
 
-        .indicator:last-child {
-            margin-bottom: 0;
+        .indicator-card {
+            background: #f8fafc;
+
+            border:
+                1px solid #e5e7eb;
+
+            border-radius: 13px;
+
+            padding: 15px 12px 13px;
+
+            text-align: center;
+
+            transition: .2s ease;
         }
 
-        .indicator-head {
+        .indicator-card:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 5px 15px rgba(15, 23, 42, .08);
+        }
+
+        .indicator-circle {
+            --percent: 0%;
+            --indicator-color: #2563eb;
+
+            width: 92px;
+            height: 92px;
+
+            margin: 0 auto 10px;
+
+            border-radius: 50%;
+
+            background:
+                conic-gradient(
+                    var(--indicator-color) var(--percent),
+                    #e5e7eb var(--percent)
+                );
+
             display: flex;
-            justify-content: space-between;
+
             align-items: center;
-            margin-bottom: 7px;
+            justify-content: center;
+
+            position: relative;
+        }
+
+        .indicator-circle::before {
+            content: "";
+
+            position: absolute;
+
+            width: 72px;
+            height: 72px;
+
+            border-radius: 50%;
+
+            background: #ffffff;
+        }
+
+        .indicator-percent {
+            position: relative;
+
+            z-index: 2;
+
+            font-size: 19px;
+
+            font-weight: 800;
+
+            color: #111827;
         }
 
         .indicator-name {
-            font-size: 12px;
-            font-weight: 650;
+            font-size: 11px;
+
+            font-weight: 750;
+
+            color: #374151;
+
+            margin-bottom: 8px;
         }
 
-        .indicator-value {
-            font-size: 12px;
-            font-weight: 800;
+        .indicator-name i {
+            margin-right: 4px;
         }
 
-        .progress {
-            height: 9px;
-            background: #eef0f3;
+        .indicator-bar {
+            height: 5px;
+
+            background: #e5e7eb;
+
             border-radius: 20px;
+
             overflow: hidden;
         }
 
-        .progress-bar {
+        .indicator-bar-fill {
+            height: 100%;
+
+            width: var(--percent);
+
+            background: var(--indicator-color);
+
             border-radius: 20px;
-        }
 
-        .progress-blue {
-            background: #2563eb;
-        }
-
-        .progress-green {
-            background: #16a34a;
-        }
-
-        .progress-orange {
-            background: #ea580c;
+            transition: width .5s ease;
         }
 
         .indicator-description {
-            margin-top: 5px;
-            color: var(--muted);
-            font-size: 10px;
+            margin-top: 6px;
+
+            color: #9ca3af;
+
+            font-size: 9px;
         }
+
+        .indicator-green {
+            --indicator-color: #16a34a;
+        }
+
+        .indicator-blue {
+            --indicator-color: #2563eb;
+        }
+
+        .indicator-orange {
+            --indicator-color: #ea580c;
+        }
+
 
         /* =========================================================
            FORMULÁRIO + CHAT
@@ -507,19 +749,28 @@
 
         .content-grid {
             display: grid;
-            grid-template-columns: minmax(0, 1.55fr) minmax(300px, .85fr);
+
+            grid-template-columns:
+                minmax(0, 1.55fr)
+                minmax(300px, .85fr);
+
             gap: 18px;
+
             margin-bottom: 22px;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(2, minmax(0, 1fr));
+
             gap: 13px;
         }
 
         .form-group {
             display: flex;
+
             flex-direction: column;
         }
 
@@ -529,46 +780,65 @@
 
         .form-label {
             font-size: 11px;
+
             font-weight: 700;
+
             color: #374151;
+
             margin-bottom: 6px;
         }
 
         .form-control,
         .form-select {
             border-color: #dfe3e8;
+
             border-radius: 8px;
+
             font-size: 12px;
+
             min-height: 39px;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: #93c5fd;
-            box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+
+            box-shadow:
+                0 0 0 3px rgba(37,99,235,.10);
         }
 
         textarea.form-control {
             min-height: 82px;
+
             resize: vertical;
         }
 
         .btn-primary-custom {
             background: var(--primary);
+
             border: none;
+
             color: #fff;
+
             border-radius: 8px;
+
             padding: 10px 16px;
+
             font-size: 12px;
+
             font-weight: 700;
+
             transition: .2s;
         }
 
         .btn-primary-custom:hover {
             background: var(--primary-dark);
+
             color: #fff;
+
             transform: translateY(-1px);
         }
+
 
         /* =========================================================
            CHAT
@@ -580,10 +850,16 @@
 
         .chat-messages {
             height: 265px;
+
             overflow-y: auto;
+
             padding: 5px;
+
             background: #f8fafc;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 10px;
         }
 
@@ -597,32 +873,48 @@
 
         .chat-user {
             font-size: 11px;
+
             font-weight: 700;
+
             color: #374151;
         }
 
         .chat-text {
             display: inline-block;
+
             margin-top: 3px;
+
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 8px;
+
             padding: 7px 9px;
+
             font-size: 11px;
+
             color: #374151;
+
             max-width: 92%;
+
             word-break: break-word;
         }
 
         .chat-time {
             font-size: 9px;
+
             color: #9ca3af;
+
             margin-left: 5px;
         }
 
         .chat-form {
             display: flex;
+
             gap: 7px;
+
             margin-top: 10px;
         }
 
@@ -632,11 +924,16 @@
 
         .chat-form button {
             width: 42px;
+
             border: none;
+
             border-radius: 8px;
+
             background: var(--primary);
+
             color: #fff;
         }
+
 
         /* =========================================================
            TABELA
@@ -652,26 +949,41 @@
 
         .activity-table {
             width: 100%;
+
             border-collapse: collapse;
+
             margin: 0;
         }
 
         .activity-table th {
             background: #f8fafc;
+
             color: #6b7280;
+
             font-size: 10px;
+
             text-transform: uppercase;
+
             letter-spacing: .35px;
+
             font-weight: 750;
+
             padding: 12px 14px;
-            border-bottom: 1px solid var(--border);
+
+            border-bottom:
+                1px solid var(--border);
+
             white-space: nowrap;
         }
 
         .activity-table td {
             padding: 12px 14px;
-            border-bottom: 1px solid #eef0f2;
+
+            border-bottom:
+                1px solid #eef0f2;
+
             font-size: 11px;
+
             vertical-align: middle;
         }
 
@@ -685,92 +997,129 @@
 
         .req-number {
             font-weight: 750;
+
             color: var(--primary);
         }
 
         .category-badge {
             display: inline-block;
+
             background: #f1f5f9;
+
             color: #475569;
+
             border-radius: 6px;
+
             padding: 4px 7px;
+
             font-size: 9px;
+
             font-weight: 700;
         }
 
         .status-badge {
             display: inline-flex;
+
             align-items: center;
+
             gap: 5px;
+
             border-radius: 20px;
+
             padding: 5px 8px;
+
             font-size: 9px;
+
             font-weight: 700;
+
             white-space: nowrap;
         }
 
         .status-pendente {
             color: #92400e;
+
             background: #fef3c7;
         }
 
         .status-concluido {
             color: #166534;
+
             background: #dcfce7;
         }
 
         .status-arquivada {
             color: #475569;
+
             background: #e2e8f0;
         }
 
         .status-andamento {
             color: #1d4ed8;
+
             background: #dbeafe;
         }
 
         .action-group {
             display: flex;
+
             gap: 5px;
         }
 
         .action-btn {
             width: 29px;
             height: 29px;
+
             display: inline-flex;
+
             align-items: center;
             justify-content: center;
+
             border-radius: 7px;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             background: #fff;
+
             color: #64748b;
+
             text-decoration: none;
+
             font-size: 11px;
+
             transition: .2s;
         }
 
         .action-btn:hover {
             background: #f8fafc;
+
             color: var(--primary);
+
             border-color: #bfdbfe;
         }
 
         .empty-state {
             text-align: center;
+
             padding: 38px 20px;
+
             color: var(--muted);
         }
 
         .empty-state i {
             font-size: 30px;
+
             margin-bottom: 10px;
+
             color: #cbd5e1;
         }
 
         .empty-state p {
             margin: 0;
+
             font-size: 12px;
         }
+
 
         /* =========================================================
            RODAPÉ
@@ -778,48 +1127,70 @@
 
         .footer {
             text-align: center;
+
             color: #9ca3af;
+
             font-size: 10px;
+
             padding: 8px 0 18px;
         }
+
 
         /* =========================================================
            RESPONSIVO
         ========================================================= */
 
         @media (max-width: 1350px) {
+
             .metric-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
             }
+
         }
 
         @media (max-width: 1100px) {
+
             .dashboard-row,
             .content-grid {
                 grid-template-columns: 1fr;
             }
+
         }
 
         @media (max-width: 900px) {
+
             .sidebar {
                 width: 215px;
             }
 
             .main {
                 margin-left: 215px;
+
                 padding: 20px;
             }
 
             .activity-summary {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
+
+            .indicators-grid {
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+            }
+
         }
 
         @media (max-width: 700px) {
+
             .sidebar {
                 position: relative;
+
                 width: 100%;
+
                 height: auto;
+
                 max-height: none;
             }
 
@@ -829,6 +1200,7 @@
 
             .main {
                 margin-left: 0;
+
                 padding: 15px;
             }
 
@@ -841,7 +1213,8 @@
             }
 
             .metric-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
             }
 
             .form-grid {
@@ -851,11 +1224,21 @@
             .form-group.full {
                 grid-column: auto;
             }
+
         }
 
-        @media (max-width: 480px) {
-            .metric-grid,
+        @media (max-width: 520px) {
+
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+
             .activity-summary {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .indicators-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -865,6 +1248,7 @@
 
             .top-actions {
                 flex-direction: column;
+
                 align-items: stretch;
             }
 
@@ -872,11 +1256,16 @@
             .date-badge {
                 justify-content: center;
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
 <!-- =============================================================
      SIDEBAR
@@ -884,16 +1273,25 @@
 
 <aside class="sidebar">
 
+
     <div class="brand">
+
         <div class="brand-title">
+
             <i class="fa-solid fa-boxes-stacked me-2"></i>
+
             Almoxarifado
+
         </div>
 
         <div class="brand-subtitle">
             VALENET • Painel Operacional
         </div>
+
     </div>
+
+
+    <!-- OPERAÇÃO -->
 
     <div class="menu-section">
 
@@ -901,37 +1299,76 @@
             Operação
         </div>
 
-        <a href="{{ url_for('index') }}" class="menu-link active">
+
+        <a
+            href="{{ url_for('index') }}"
+            class="menu-link active">
+
             <i class="fa-solid fa-gauge-high"></i>
+
             <span>Painel</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Requisições') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Requisições') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-clipboard-list"></i>
+
             <span>Requisições</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Inventário') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Inventário') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-boxes-stacked"></i>
+
             <span>Inventário</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Expedição') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Expedição') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-truck-fast"></i>
+
             <span>Expedição</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Recebimento') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Recebimento') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-dolly"></i>
+
             <span>Recebimento</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Estoque') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Estoque') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-warehouse"></i>
+
             <span>Estoque</span>
+
         </a>
 
     </div>
+
+
+    <!-- GESTÃO -->
 
     <div class="menu-section">
 
@@ -939,49 +1376,97 @@
             Gestão
         </div>
 
-        <a href="{{ url_for('modulo', nome='Cadastros') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Cadastros') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-address-book"></i>
+
             <span>Cadastros</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-arrows-rotate"></i>
+
             <span>Melhorias / PDCA</span>
+
         </a>
 
-        <a href="{{ url_for('indicadores') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('indicadores') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-chart-line"></i>
+
             <span>Indicadores</span>
+
         </a>
 
-        <a href="{{ url_for('relatorios') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('relatorios') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-file-lines"></i>
+
             <span>Relatórios</span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Configurações') }}" class="menu-link">
+
+        <!-- CORRIGIDO:
+             Configurações usa o endpoint modulo -->
+
+        <a
+            href="{{ url_for('modulo', nome='Configurações') }}"
+            class="menu-link">
+
             <i class="fa-solid fa-gear"></i>
+
             <span>Configurações</span>
+
         </a>
 
     </div>
+
+
+    <!-- USUÁRIO -->
 
     <div class="sidebar-footer">
 
         <div class="user-box">
 
             <div class="user-name">
+
                 <i class="fa-solid fa-circle-user me-1"></i>
+
                 {{ session.get('usuario_atual', 'Usuário') }}
+
             </div>
+
 
             <div class="user-role">
+
                 Operação • Almoxarifado
+
             </div>
 
-            <a href="{{ url_for('logout') }}" class="logout">
+
+            <a
+                href="{{ url_for('logout') }}"
+                class="logout">
+
                 <i class="fa-solid fa-right-from-bracket"></i>
+
                 Sair do sistema
+
             </a>
 
         </div>
@@ -997,6 +1482,7 @@
 
 <main class="main">
 
+
     <!-- CABEÇALHO -->
 
     <div class="topbar">
@@ -1007,9 +1493,11 @@
                 Almoxarifado / Painel
             </div>
 
+
             <h1 class="page-title">
                 Painel Operacional
             </h1>
+
 
             <div class="page-subtitle">
                 Acompanhamento das operações do almoxarifado
@@ -1017,16 +1505,25 @@
 
         </div>
 
+
         <div class="top-actions">
 
+
             <div class="system-status">
+
                 <span class="system-dot"></span>
+
                 Sistema online
+
             </div>
 
+
             <div class="date-badge">
+
                 <i class="fa-regular fa-calendar me-1"></i>
+
                 <span id="dataAtual"></span>
+
             </div>
 
         </div>
@@ -1044,7 +1541,8 @@
 
                 {% for category, message in messages %}
 
-                    <div class="alert alert-{{ category }} alert-dismissible fade show py-2 px-3 small">
+                    <div
+                        class="alert alert-{{ category }} alert-dismissible fade show py-2 px-3 small">
 
                         {{ message }}
 
@@ -1066,18 +1564,20 @@
 
 
     <!-- =========================================================
-         INDICADORES PRINCIPAIS
+         CARDS PRINCIPAIS
     ========================================================= -->
 
     <div class="metric-grid">
 
-        <!-- Requisições -->
+
+        <!-- REQUISIÇÕES -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Requisições
                     </div>
@@ -1085,13 +1585,18 @@
                     <div class="metric-value">
                         {{ total_req }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-blue">
+
                     <i class="fa-solid fa-clipboard-list"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 Requisições pendentes
@@ -1100,13 +1605,14 @@
         </div>
 
 
-        <!-- Inventário -->
+        <!-- INVENTÁRIO -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Inventário
                     </div>
@@ -1114,13 +1620,18 @@
                     <div class="metric-value">
                         {{ inv_conc }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-green">
+
                     <i class="fa-solid fa-boxes-stacked"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 {{ inv_conc }} de {{ inv_total }} concluídos
@@ -1129,13 +1640,14 @@
         </div>
 
 
-        <!-- Expedição -->
+        <!-- EXPEDIÇÃO -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Expedição
                     </div>
@@ -1143,13 +1655,18 @@
                     <div class="metric-value">
                         {{ exp_pend }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-orange">
+
                     <i class="fa-solid fa-truck-fast"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 Expedições pendentes
@@ -1158,13 +1675,14 @@
         </div>
 
 
-        <!-- Recebimento -->
+        <!-- RECEBIMENTO -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Recebimento
                     </div>
@@ -1172,13 +1690,18 @@
                     <div class="metric-value">
                         {{ rec_pend }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-purple">
+
                     <i class="fa-solid fa-dolly"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 Recebimentos pendentes
@@ -1187,13 +1710,14 @@
         </div>
 
 
-        <!-- Ocorrências -->
+        <!-- OCORRÊNCIAS -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Ocorrências
                     </div>
@@ -1201,13 +1725,18 @@
                     <div class="metric-value">
                         {{ total_oco }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-red">
+
                     <i class="fa-solid fa-triangle-exclamation"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 Ocorrências registradas
@@ -1216,13 +1745,14 @@
         </div>
 
 
-        <!-- Atrasadas -->
+        <!-- ATRASADAS -->
 
         <div class="metric-card">
 
             <div class="metric-top">
 
                 <div>
+
                     <div class="metric-label">
                         Atrasadas
                     </div>
@@ -1230,13 +1760,18 @@
                     <div class="metric-value">
                         {{ total_atrasados }}
                     </div>
+
                 </div>
 
+
                 <div class="metric-icon icon-cyan">
+
                     <i class="fa-solid fa-clock"></i>
+
                 </div>
 
             </div>
+
 
             <div class="metric-footer">
                 Atividades fora do prazo
@@ -1248,15 +1783,14 @@
 
 
     <!-- =========================================================
-         RESUMO DO DIA + INDICADORES
-         AGORA FICAM LADO A LADO
+         RESUMO + INDICADORES
     ========================================================= -->
 
     <div class="dashboard-row">
 
 
         <!-- =====================================================
-             RESUMO DE ATIVIDADES
+             RESUMO DE ATIVIDADES — ESQUERDA
         ====================================================== -->
 
         <section class="panel">
@@ -1266,15 +1800,22 @@
                 <div>
 
                     <h2 class="panel-title">
+
                         <i class="fa-solid fa-chart-pie"></i>
+
                         Resumo de Atividades
+
                     </h2>
 
+
                     <div class="panel-subtitle">
+
                         Atividade do dia
+
                     </div>
 
                 </div>
+
 
                 <span class="category-badge">
                     HOJE
@@ -1282,11 +1823,14 @@
 
             </div>
 
+
             <div class="panel-body">
+
 
                 <div class="activity-summary">
 
-                    <!-- Concluídas -->
+
+                    <!-- CONCLUÍDAS -->
 
                     <div class="summary-box success">
 
@@ -1299,13 +1843,13 @@
                         </div>
 
                         <div class="summary-info">
-                            Atividades finalizadas
+                            Finalizadas
                         </div>
 
                     </div>
 
 
-                    <!-- Pendentes -->
+                    <!-- PENDENTES -->
 
                     <div class="summary-box warning">
 
@@ -1318,13 +1862,13 @@
                         </div>
 
                         <div class="summary-info">
-                            Aguardando execução
+                            Aguardando
                         </div>
 
                     </div>
 
 
-                    <!-- Arquivadas -->
+                    <!-- ARQUIVADAS -->
 
                     <div class="summary-box archive">
 
@@ -1337,13 +1881,13 @@
                         </div>
 
                         <div class="summary-info">
-                            Histórico preservado
+                            Histórico
                         </div>
 
                     </div>
 
 
-                    <!-- Total -->
+                    <!-- TOTAL -->
 
                     <div class="summary-box total">
 
@@ -1356,10 +1900,11 @@
                         </div>
 
                         <div class="summary-info">
-                            Atividades registradas
+                            Registradas
                         </div>
 
                     </div>
+
 
                 </div>
 
@@ -1369,141 +1914,200 @@
 
 
         <!-- =====================================================
-             INDICADORES OPERACIONAIS
+             INDICADORES — DIREITA
         ====================================================== -->
 
         <section class="panel">
+
 
             <div class="panel-header">
 
                 <div>
 
                     <h2 class="panel-title">
+
                         <i class="fa-solid fa-chart-line"></i>
+
                         Indicadores Operacionais
+
                     </h2>
 
+
                     <div class="panel-subtitle">
+
                         Desempenho da operação
+
                     </div>
 
                 </div>
 
+
+                <span class="category-badge">
+
+                    DESEMPENHO
+
+                </span>
+
             </div>
+
 
             <div class="panel-body">
 
 
-                <!-- ATENDIDAS -->
+                <div class="indicators-grid">
 
-                <div class="indicator">
 
-                    <div class="indicator-head">
+                    <!-- =================================================
+                         ATENDIDAS
+                    ================================================== -->
 
-                        <span class="indicator-name">
-                            <i class="fa-solid fa-circle-check me-1 text-success"></i>
+                    <div class="indicator-card">
+
+
+                        <div
+                            class="indicator-circle indicator-green"
+                            style="--percent: {{ perc_atendidas }}%;">
+
+                            <span class="indicator-percent">
+
+                                {{ perc_atendidas }}%
+
+                            </span>
+
+                        </div>
+
+
+                        <div class="indicator-name">
+
+                            <i
+                                class="fa-solid fa-circle-check text-success">
+                            </i>
+
                             Atendidas
-                        </span>
 
-                        <span class="indicator-value">
-                            {{ perc_atendidas }}%
-                        </span>
+                        </div>
 
-                    </div>
 
-                    <div class="progress">
+                        <div class="indicator-bar">
 
-                        <div
-                            class="progress-bar progress-green"
-                            role="progressbar"
-                            style="width: {{ perc_atendidas }}%;"
-                            aria-valuenow="{{ perc_atendidas }}"
-                            aria-valuemin="0"
-                            aria-valuemax="100">
+                            <div
+                                class="indicator-bar-fill indicator-green"
+                                style="--percent: {{ perc_atendidas }}%;">
+                            </div>
+
+                        </div>
+
+
+                        <div class="indicator-description">
+
+                            Atividades atendidas
+
                         </div>
 
                     </div>
 
-                    <div class="indicator-description">
-                        Percentual de atividades atendidas
-                    </div>
 
-                </div>
+                    <!-- =================================================
+                         INVENTÁRIO
+                    ================================================== -->
+
+                    <div class="indicator-card">
 
 
-                <!-- INVENTÁRIO -->
+                        <div
+                            class="indicator-circle indicator-blue"
+                            style="--percent: {{ perc_inventario }}%;">
 
-                <div class="indicator">
+                            <span class="indicator-percent">
 
-                    <div class="indicator-head">
+                                {{ perc_inventario }}%
 
-                        <span class="indicator-name">
-                            <i class="fa-solid fa-boxes-stacked me-1 text-primary"></i>
+                            </span>
+
+                        </div>
+
+
+                        <div class="indicator-name">
+
+                            <i
+                                class="fa-solid fa-boxes-stacked text-primary">
+                            </i>
+
                             Inventário
-                        </span>
 
-                        <span class="indicator-value">
-                            {{ perc_inventario }}%
-                        </span>
+                        </div>
 
-                    </div>
 
-                    <div class="progress">
+                        <div class="indicator-bar">
 
-                        <div
-                            class="progress-bar progress-blue"
-                            role="progressbar"
-                            style="width: {{ perc_inventario }}%;"
-                            aria-valuenow="{{ perc_inventario }}"
-                            aria-valuemin="0"
-                            aria-valuemax="100">
+                            <div
+                                class="indicator-bar-fill indicator-blue"
+                                style="--percent: {{ perc_inventario }}%;">
+                            </div>
+
+                        </div>
+
+
+                        <div class="indicator-description">
+
+                            Inventário concluído
+
                         </div>
 
                     </div>
 
-                    <div class="indicator-description">
-                        Percentual de inventário concluído
-                    </div>
 
-                </div>
+                    <!-- =================================================
+                         EXPEDIÇÃO
+                    ================================================== -->
+
+                    <div class="indicator-card">
 
 
-                <!-- EXPEDIÇÃO -->
+                        <div
+                            class="indicator-circle indicator-orange"
+                            style="--percent: {{ perc_expedicao }}%;">
 
-                <div class="indicator">
+                            <span class="indicator-percent">
 
-                    <div class="indicator-head">
+                                {{ perc_expedicao }}%
 
-                        <span class="indicator-name">
-                            <i class="fa-solid fa-truck-fast me-1 text-warning"></i>
+                            </span>
+
+                        </div>
+
+
+                        <div class="indicator-name">
+
+                            <i
+                                class="fa-solid fa-truck-fast text-warning">
+                            </i>
+
                             Expedição
-                        </span>
 
-                        <span class="indicator-value">
-                            {{ perc_expedicao }}%
-                        </span>
+                        </div>
 
-                    </div>
 
-                    <div class="progress">
+                        <div class="indicator-bar">
 
-                        <div
-                            class="progress-bar progress-orange"
-                            role="progressbar"
-                            style="width: {{ perc_expedicao }}%;"
-                            aria-valuenow="{{ perc_expedicao }}"
-                            aria-valuemin="0"
-                            aria-valuemax="100">
+                            <div
+                                class="indicator-bar-fill indicator-orange"
+                                style="--percent: {{ perc_expedicao }}%;">
+                            </div>
+
+                        </div>
+
+
+                        <div class="indicator-description">
+
+                            Expedições concluídas
+
                         </div>
 
                     </div>
 
-                    <div class="indicator-description">
-                        Percentual de expedições concluídas
-                    </div>
 
                 </div>
-
 
             </div>
 
@@ -1519,37 +2123,45 @@
     <div class="content-grid">
 
 
-        <!-- =====================================================
-             NOVA ATIVIDADE
-        ====================================================== -->
+        <!-- NOVA ATIVIDADE -->
 
         <section class="panel">
+
 
             <div class="panel-header">
 
                 <div>
 
                     <h2 class="panel-title">
+
                         <i class="fa-solid fa-plus-circle"></i>
+
                         Nova Atividade
+
                     </h2>
 
+
                     <div class="panel-subtitle">
+
                         Registre uma nova atividade operacional
+
                     </div>
 
                 </div>
 
             </div>
 
+
             <div class="panel-body">
 
+
                 <form method="POST">
+
 
                     <div class="form-grid">
 
 
-                        <!-- Número da requisição -->
+                        <!-- REQUISIÇÃO -->
 
                         <div class="form-group">
 
@@ -1557,23 +2169,24 @@
                                 Nº da requisição
                             </label>
 
+
                             <input
                                 type="text"
                                 name="num_requisicao"
                                 class="form-control"
-                                placeholder="Ex.: 123456"
-                            >
+                                placeholder="Ex.: 123456">
 
                         </div>
 
 
-                        <!-- Prioridade -->
+                        <!-- PRIORIDADE -->
 
                         <div class="form-group">
 
                             <label class="form-label">
                                 Prioridade
                             </label>
+
 
                             <select
                                 name="prioridade"
@@ -1583,8 +2196,12 @@
                                     Baixa
                                 </option>
 
-                                <option value="Média" selected>
+                                <option
+                                    value="Média"
+                                    selected>
+
                                     Média
+
                                 </option>
 
                                 <option value="Alta">
@@ -1596,7 +2213,7 @@
                         </div>
 
 
-                        <!-- Atividade -->
+                        <!-- ATIVIDADE -->
 
                         <div class="form-group">
 
@@ -1604,24 +2221,25 @@
                                 Atividade
                             </label>
 
+
                             <input
                                 type="text"
                                 name="atividade"
                                 class="form-control"
                                 placeholder="Ex.: Separar equipamentos"
-                                required
-                            >
+                                required>
 
                         </div>
 
 
-                        <!-- Categoria -->
+                        <!-- CATEGORIA -->
 
                         <div class="form-group">
 
                             <label class="form-label">
                                 Categoria
                             </label>
+
 
                             <select
                                 name="categoria"
@@ -1657,13 +2275,14 @@
                         </div>
 
 
-                        <!-- Responsável -->
+                        <!-- RESPONSÁVEL -->
 
                         <div class="form-group">
 
                             <label class="form-label">
                                 Responsável
                             </label>
+
 
                             <select
                                 name="responsavel"
@@ -1673,10 +2292,14 @@
                                     Selecione
                                 </option>
 
+
                                 {% for usuario in usuarios %}
 
-                                    <option value="{{ usuario.nome }}">
+                                    <option
+                                        value="{{ usuario.nome }}">
+
                                         {{ usuario.nome }}
+
                                     </option>
 
                                 {% endfor %}
@@ -1686,7 +2309,7 @@
                         </div>
 
 
-                        <!-- Prazo -->
+                        <!-- PRAZO -->
 
                         <div class="form-group">
 
@@ -1694,16 +2317,16 @@
                                 Prazo
                             </label>
 
+
                             <input
                                 type="datetime-local"
                                 name="prazo"
-                                class="form-control"
-                            >
+                                class="form-control">
 
                         </div>
 
 
-                        <!-- Descrição -->
+                        <!-- DESCRIÇÃO -->
 
                         <div class="form-group full">
 
@@ -1711,16 +2334,16 @@
                                 Descrição
                             </label>
 
+
                             <textarea
                                 name="descricao"
                                 class="form-control"
-                                placeholder="Descreva os detalhes da atividade..."
-                            ></textarea>
+                                placeholder="Descreva os detalhes da atividade..."></textarea>
 
                         </div>
 
 
-                        <!-- Botão -->
+                        <!-- BOTÃO -->
 
                         <div class="form-group full">
 
@@ -1729,11 +2352,13 @@
                                 class="btn-primary-custom">
 
                                 <i class="fa-solid fa-plus me-1"></i>
+
                                 Criar atividade
 
                             </button>
 
                         </div>
+
 
                     </div>
 
@@ -1744,68 +2369,95 @@
         </section>
 
 
-        <!-- =====================================================
-             CHAT DA EQUIPE
-        ====================================================== -->
+        <!-- CHAT -->
 
         <section class="panel">
+
 
             <div class="panel-header">
 
                 <div>
 
                     <h2 class="panel-title">
+
                         <i class="fa-solid fa-comments"></i>
+
                         Chat da Equipe
+
                     </h2>
 
+
                     <div class="panel-subtitle">
+
                         Comunicação operacional
+
                     </div>
 
                 </div>
 
             </div>
 
+
             <div class="chat-body">
+
 
                 <div
                     class="chat-messages"
                     id="chatMessages">
 
+
                     {% if mensagens_chat %}
+
 
                         {% for mensagem in mensagens_chat %}
 
+
                             <div class="chat-message">
+
 
                                 <div class="chat-user">
 
-                                    <i class="fa-solid fa-circle-user me-1"></i>
+                                    <i
+                                        class="fa-solid fa-circle-user me-1">
+                                    </i>
+
 
                                     {{ mensagem.usuario or 'Usuário' }}
 
+
                                     {% if mensagem.criado_em %}
+
                                         <span class="chat-time">
+
                                             {{ mensagem.criado_em }}
+
                                         </span>
+
                                     {% endif %}
 
                                 </div>
 
+
                                 <div class="chat-text">
+
                                     {{ mensagem.mensagem }}
+
                                 </div>
+
 
                             </div>
 
+
                         {% endfor %}
 
+
                     {% else %}
+
 
                         <div class="empty-state">
 
                             <i class="fa-regular fa-comments"></i>
+
 
                             <p>
                                 Nenhuma mensagem ainda.
@@ -1813,7 +2465,9 @@
 
                         </div>
 
+
                     {% endif %}
+
 
                 </div>
 
@@ -1822,11 +2476,12 @@
                     method="POST"
                     class="chat-form">
 
+
                     <input
                         type="hidden"
                         name="acao_chat"
-                        value="enviar"
-                    >
+                        value="enviar">
+
 
                     <input
                         type="text"
@@ -1834,14 +2489,15 @@
                         class="form-control"
                         placeholder="Digite uma mensagem..."
                         autocomplete="off"
-                        required
-                    >
+                        required>
+
 
                     <button type="submit">
 
                         <i class="fa-solid fa-paper-plane"></i>
 
                     </button>
+
 
                 </form>
 
@@ -1858,27 +2514,37 @@
 
     <section class="panel table-panel">
 
+
         <div class="panel-header">
 
             <div>
 
                 <h2 class="panel-title">
+
                     <i class="fa-solid fa-list-check"></i>
+
                     Atividades Recentes
+
                 </h2>
 
+
                 <div class="panel-subtitle">
+
                     Acompanhamento das atividades registradas
+
                 </div>
 
             </div>
+
 
             <a
                 href="{{ url_for('relatorios') }}"
                 class="action-btn"
                 title="Ver relatórios">
 
-                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                <i
+                    class="fa-solid fa-arrow-up-right-from-square">
+                </i>
 
             </a>
 
@@ -1887,9 +2553,12 @@
 
         <div class="table-wrapper">
 
+
             {% if atividades %}
 
+
                 <table class="activity-table">
+
 
                     <thead>
 
@@ -1923,18 +2592,26 @@
 
                     </thead>
 
+
                     <tbody>
+
 
                         {% for item in atividades %}
 
+
                             <tr>
+
+
+                                <!-- REQUISIÇÃO -->
 
                                 <td>
 
                                     {% if item.num_requisicao %}
 
                                         <span class="req-number">
+
                                             {{ item.num_requisicao }}
+
                                         </span>
 
                                     {% else %}
@@ -1948,16 +2625,23 @@
                                 </td>
 
 
+                                <!-- ATIVIDADE -->
+
                                 <td>
 
+
                                     <strong>
+
                                         {{ item.atividade }}
+
                                     </strong>
+
 
                                     {% if item.descricao %}
 
-                                        <div class="text-muted mt-1"
-                                             style="font-size: 10px;">
+                                        <div
+                                            class="text-muted mt-1"
+                                            style="font-size: 10px;">
 
                                             {{ item.descricao[:80] }}
 
@@ -1972,14 +2656,20 @@
                                 </td>
 
 
+                                <!-- CATEGORIA -->
+
                                 <td>
 
                                     <span class="category-badge">
+
                                         {{ item.categoria }}
+
                                     </span>
 
                                 </td>
 
+
+                                <!-- RESPONSÁVEL -->
 
                                 <td>
 
@@ -1988,52 +2678,77 @@
                                 </td>
 
 
+                                <!-- STATUS -->
+
                                 <td>
+
 
                                     {% if item.status == 'Pendente' %}
 
-                                        <span class="status-badge status-pendente">
 
-                                            <i class="fa-solid fa-clock"></i>
+                                        <span
+                                            class="status-badge status-pendente">
+
+                                            <i
+                                                class="fa-solid fa-clock">
+                                            </i>
 
                                             Pendente
 
                                         </span>
 
+
                                     {% elif item.status == 'Concluído' %}
 
-                                        <span class="status-badge status-concluido">
 
-                                            <i class="fa-solid fa-check"></i>
+                                        <span
+                                            class="status-badge status-concluido">
+
+                                            <i
+                                                class="fa-solid fa-check">
+                                            </i>
 
                                             Concluído
 
                                         </span>
 
+
                                     {% elif item.status == 'Arquivada' %}
 
-                                        <span class="status-badge status-arquivada">
 
-                                            <i class="fa-solid fa-box-archive"></i>
+                                        <span
+                                            class="status-badge status-arquivada">
+
+                                            <i
+                                                class="fa-solid fa-box-archive">
+                                            </i>
 
                                             Arquivada
 
                                         </span>
 
+
                                     {% else %}
 
-                                        <span class="status-badge status-andamento">
 
-                                            <i class="fa-solid fa-spinner"></i>
+                                        <span
+                                            class="status-badge status-andamento">
+
+                                            <i
+                                                class="fa-solid fa-spinner">
+                                            </i>
 
                                             {{ item.status }}
 
                                         </span>
 
+
                                     {% endif %}
 
                                 </td>
 
+
+                                <!-- AÇÕES -->
 
                                 <td>
 
@@ -2047,7 +2762,9 @@
                                             class="action-btn"
                                             title="Editar">
 
-                                            <i class="fa-solid fa-pen"></i>
+                                            <i
+                                                class="fa-solid fa-pen">
+                                            </i>
 
                                         </a>
 
@@ -2056,15 +2773,19 @@
 
                                         {% if item.status == 'Pendente' %}
 
+
                                             <a
                                                 href="{{ url_for('concluir', id=item.id) }}"
                                                 class="action-btn"
                                                 title="Concluir"
                                                 onclick="return confirm('Deseja concluir esta atividade?');">
 
-                                                <i class="fa-solid fa-check"></i>
+                                                <i
+                                                    class="fa-solid fa-check">
+                                                </i>
 
                                             </a>
+
 
                                         {% endif %}
 
@@ -2073,33 +2794,46 @@
 
                                         {% if item.status == 'Arquivada' %}
 
+
                                             <span
                                                 class="action-btn"
                                                 title="Atividade arquivada">
 
-                                                <i class="fa-solid fa-box-archive"></i>
+                                                <i
+                                                    class="fa-solid fa-box-archive">
+                                                </i>
 
                                             </span>
 
+
                                         {% endif %}
+
 
                                     </div>
 
                                 </td>
 
+
                             </tr>
 
+
                         {% endfor %}
+
 
                     </tbody>
 
                 </table>
 
+
             {% else %}
+
 
                 <div class="empty-state">
 
-                    <i class="fa-solid fa-clipboard-check"></i>
+                    <i
+                        class="fa-solid fa-clipboard-check">
+                    </i>
+
 
                     <p>
                         Nenhuma atividade registrada.
@@ -2107,7 +2841,9 @@
 
                 </div>
 
+
             {% endif %}
+
 
         </div>
 
@@ -2126,6 +2862,7 @@
 
     </div>
 
+
 </main>
 
 
@@ -2140,6 +2877,7 @@
 
 <script>
 
+
     /* =========================================================
        DATA ATUAL
     ========================================================= */
@@ -2148,29 +2886,42 @@
 
         const agora = new Date();
 
+
         const opcoes = {
+
             weekday: 'short',
+
             day: '2-digit',
+
             month: '2-digit',
+
             year: 'numeric'
+
         };
 
-        const elemento = document.getElementById('dataAtual');
+
+        const elemento =
+            document.getElementById('dataAtual');
+
 
         if (elemento) {
 
             elemento.textContent =
-                agora.toLocaleDateString('pt-BR', opcoes);
+                agora.toLocaleDateString(
+                    'pt-BR',
+                    opcoes
+                );
 
         }
 
     }
 
+
     atualizarData();
 
 
     /* =========================================================
-       CHAT - ROLAR PARA A ÚLTIMA MENSAGEM
+       CHAT — IR PARA A ÚLTIMA MENSAGEM
     ========================================================= */
 
     function rolarChat() {
@@ -2178,38 +2929,54 @@
         const chat =
             document.getElementById('chatMessages');
 
+
         if (chat) {
 
-            chat.scrollTop = chat.scrollHeight;
+            chat.scrollTop =
+                chat.scrollHeight;
 
         }
 
     }
 
-    window.addEventListener('load', rolarChat);
+
+    window.addEventListener(
+        'load',
+        rolarChat
+    );
 
 
     /* =========================================================
-       AUTO FECHAR ALERTAS
+       FECHAR ALERTAS AUTOMATICAMENTE
     ========================================================= */
 
     setTimeout(function () {
 
+
         const alerts =
             document.querySelectorAll('.alert');
 
-        alerts.forEach(function (alert) {
+
+        alerts.forEach(function(alert) {
+
 
             const bsAlert =
-                bootstrap.Alert.getOrCreateInstance(alert);
+                bootstrap.Alert.getOrCreateInstance(
+                    alert
+                );
+
 
             bsAlert.close();
 
+
         });
+
 
     }, 7000);
 
+
 </script>
+
 
 </body>
 </html>

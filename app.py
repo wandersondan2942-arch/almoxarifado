@@ -3363,39 +3363,97 @@ def modulo(nome):
 
     # --------------------------------------------------------
     # MELHORIAS / PDCA
-    # --------------------------------------------------------
+    # ------------------------------------------------------
     if (
-    "melhoria" in nome_normalizado
-    or "pdca" in nome_normalizado
-):
+        "melhoria" in nome_normalizado
+        or "pdca" in nome_normalizado
+    ):
 
-    if request.method == "POST":
+        if request.method == "POST":
 
-        titulo = request.form.get(
-            "titulo",
-            ""
-        ).strip()
+            titulo = request.form.get(
+                "titulo",
+                ""
+            ).strip()
 
-        descricao = request.form.get(
-            "descricao",
-            ""
-        ).strip()
+            descricao = request.form.get(
+                "descricao",
+                ""
+            ).strip()
 
-        etapa = request.form.get(
-            "etapa",
-            "PDCA"
-        ).strip()
+            etapa = request.form.get(
+                "etapa",
+                "PDCA"
+            ).strip()
 
-        status = request.form.get(
-            "status",
-            "A Fazer"
-        ).strip()
+            status = request.form.get(
+                "status",
+                "A Fazer"
+            ).strip()
 
-        if not titulo:
+            if not titulo:
+
+                flash(
+                    "Informe o título da melhoria.",
+                    "warning"
+                )
+
+                return redirect(
+                    url_for(
+                        "modulo",
+                        nome="Melhorias / PDCA"
+                    )
+                )
+
+            agora_melhoria = (
+                agora_utc_naive()
+                if usando_postgresql()
+                else agora_sqlite()
+            )
+
+            executar(
+                """
+                INSERT INTO melhorias
+                (
+                    titulo,
+                    descricao,
+                    etapa,
+                    autor,
+                    status,
+                    criado_em
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s)
+                """
+                if usando_postgresql()
+                else
+                """
+                INSERT INTO melhorias
+                (
+                    titulo,
+                    descricao,
+                    etapa,
+                    autor,
+                    status,
+                    criado_em
+                )
+                VALUES
+                (?,?,?,?,?,?)
+                """,
+                (
+                    titulo,
+                    descricao,
+                    etapa,
+                    session["usuario_atual"],
+                    status,
+                    agora_melhoria
+                ),
+                commit=True
+            )
 
             flash(
-                "Informe o título da melhoria.",
-                "warning"
+                "Melhoria cadastrada com sucesso.",
+                "success"
             )
 
             return redirect(
@@ -3405,223 +3463,34 @@ def modulo(nome):
                 )
             )
 
-        agora_melhoria = (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
-        )
-
-        executar(
+        melhorias = executar(
             """
-            INSERT INTO melhorias
-            (
+            SELECT
+                id,
                 titulo,
                 descricao,
                 etapa,
                 autor,
                 status,
                 criado_em
-            )
-            VALUES
-            (%s,%s,%s,%s,%s,%s)
-            """
-            if usando_postgresql()
-            else
-            """
-            INSERT INTO melhorias
-            (
-                titulo,
-                descricao,
-                etapa,
-                autor,
-                status,
-                criado_em
-            )
-            VALUES
-            (?,?,?,?,?,?)
-            """,
-            (
-                titulo,
-                descricao,
-                etapa,
-                session["usuario_atual"],
-                status,
-                agora_melhoria
-            ),
-            commit=True
-        )
-
-        flash(
-            "Melhoria cadastrada com sucesso.",
-            "success"
-        )
-
-        return redirect(
-            url_for(
-                "modulo",
-                nome="Melhorias / PDCA"
-            )
-        )
-
-    melhorias = executar(
-        """
-        SELECT
-            id,
-            titulo,
-            descricao,
-            etapa,
-            autor,
-            status,
-            criado_em
-        FROM melhorias
-        WHERE LOWER(
-            COALESCE(status, '')
-        ) <> 'arquivado'
-        ORDER BY id DESC
-        """,
-        fetchall=True
-    )
-
-    return render_template(
-        "melhorias.html",
-        melhorias=linhas_para_dict(melhorias),
-        usuario_atual=session["usuario_atual"]
-    )
-    # --------------------------------------------------------
-    # ESTOQUE
-    # --------------------------------------------------------
-
-    if nome_normalizado == "estoque":
-
-        itens = executar(
-            """
-            SELECT *
-            FROM estoque
+            FROM melhorias
+            WHERE LOWER(
+                COALESCE(status, '')
+            ) <> 'arquivado'
             ORDER BY id DESC
             """,
             fetchall=True
         )
 
         return render_template(
-            "modulo.html",
-
-            nome="Estoque",
-
-            titulo="Estoque",
-
-            modulo="Estoque",
-
-            itens=linhas_para_dict(
-                itens
+            "melhorias.html",
+            melhorias=linhas_para_dict(
+                melhorias
             ),
-
             usuario_atual=session[
                 "usuario_atual"
             ]
         )
-
-    # --------------------------------------------------------
-    # MAPA DOS MÓDULOS OPERACIONAIS
-    # --------------------------------------------------------
-
-    mapa_modulos = {
-
-        "requisicoes": {
-            "titulo": "Requisições",
-            "categoria": "Separação"
-        },
-
-        "inventario": {
-            "titulo": "Inventário",
-            "categoria": "Inventário"
-        },
-
-        "expedicao": {
-            "titulo": "Expedição",
-            "categoria": "Expedição"
-        },
-
-        "recebimento": {
-            "titulo": "Recebimento",
-            "categoria": "Recebimento"
-        }
-    }
-
-    configuracao = mapa_modulos.get(
-        nome_normalizado
-    )
-
-    if configuracao:
-
-        categoria = configuracao[
-            "categoria"
-        ]
-
-        registros = executar(
-            """
-            SELECT *
-            FROM atividades
-            ORDER BY id DESC
-            """,
-            fetchall=True
-        )
-
-        itens = [
-            item
-            for item in registros
-            if (
-                categoria_eh(
-                    item,
-                    categoria
-                )
-                and status_eh_ativo(
-                    obter_valor(
-                        item,
-                        "status"
-                    )
-                )
-            )
-        ]
-
-        return render_template(
-            "modulo.html",
-
-            # IMPORTANTE:
-            # modulo.html utiliza {{ nome }}
-            nome=configuracao[
-                "titulo"
-            ],
-
-            titulo=configuracao[
-                "titulo"
-            ],
-
-            modulo=configuracao[
-                "titulo"
-            ],
-
-            itens=preparar_lista_atividades(
-                itens
-            ),
-
-            usuario_atual=session[
-                "usuario_atual"
-            ]
-        )
-
-    # --------------------------------------------------------
-    # MÓDULO NÃO ENCONTRADO
-    # --------------------------------------------------------
-
-    flash(
-        f"Módulo '{nome}' não encontrado.",
-        "warning"
-    )
-
-    return redirect(
-        url_for("index")
-    )
-
 
 # ============================================================
 # EDITAR

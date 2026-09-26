@@ -3364,97 +3364,38 @@ def modulo(nome):
     # --------------------------------------------------------
     # MELHORIAS / PDCA
     # --------------------------------------------------------
+if (
+    "melhoria" in nome_normalizado
+    or "pdca" in nome_normalizado
+):
 
-    if (
-        "melhoria" in nome_normalizado
-        or "pdca" in nome_normalizado
-    ):
+    if request.method == "POST":
 
-        if request.method == "POST":
+        titulo = request.form.get(
+            "titulo",
+            ""
+        ).strip()
 
-            titulo = request.form.get(
-                "titulo",
-                ""
-            ).strip()
+        descricao = request.form.get(
+            "descricao",
+            ""
+        ).strip()
 
-            descricao = request.form.get(
-                "descricao",
-                ""
-            ).strip()
+        etapa = request.form.get(
+            "etapa",
+            "PDCA"
+        ).strip()
 
-            etapa = request.form.get(
-                "etapa",
-                "PDCA"
-            ).strip()
+        status = request.form.get(
+            "status",
+            "A Fazer"
+        ).strip()
 
-            status = request.form.get(
-                "status",
-                "A Fazer"
-            ).strip()
-
-            if not titulo:
-
-                flash(
-                    "Informe o título da melhoria.",
-                    "warning"
-                )
-
-                return redirect(
-                    url_for(
-                        "modulo",
-                        nome="Melhorias / PDCA"
-                    )
-                )
-
-            executar(
-                """
-                INSERT INTO melhorias
-                (
-                    titulo,
-                    descricao,
-                    etapa,
-                    autor,
-                    status,
-                    criado_em
-                )
-                VALUES
-                (%s,%s,%s,%s,%s,%s)
-                """
-                if usando_postgresql()
-                else
-                """
-                INSERT INTO melhorias
-                (
-                    titulo,
-                    descricao,
-                    etapa,
-                    autor,
-                    status,
-                    criado_em
-                )
-                VALUES
-                (?,?,?,?,?,?)
-                """,
-                (
-                    titulo,
-                    descricao,
-                    etapa,
-                    session[
-                        "usuario_atual"
-                    ],
-                    status,
-                    (
-                        agora_utc_naive()
-                        if usando_postgresql()
-                        else agora_sqlite()
-                    )
-                ),
-                commit=True
-            )
+        if not titulo:
 
             flash(
-                "Melhoria cadastrada com sucesso.",
-                "success"
+                "Informe o título da melhoria.",
+                "warning"
             )
 
             return redirect(
@@ -3464,30 +3405,88 @@ def modulo(nome):
                 )
             )
 
-        melhorias = executar(
+        agora_melhoria = (
+            agora_utc_naive()
+            if usando_postgresql()
+            else agora_sqlite()
+        )
+
+        executar(
             """
-            SELECT *
-            FROM melhorias
-            WHERE LOWER(
-                COALESCE(status,'')
-            ) <> 'arquivado'
-            ORDER BY id DESC
+            INSERT INTO melhorias
+            (
+                titulo,
+                descricao,
+                etapa,
+                autor,
+                status,
+                criado_em
+            )
+            VALUES
+            (%s,%s,%s,%s,%s,%s)
+            """
+            if usando_postgresql()
+            else
+            """
+            INSERT INTO melhorias
+            (
+                titulo,
+                descricao,
+                etapa,
+                autor,
+                status,
+                criado_em
+            )
+            VALUES
+            (?,?,?,?,?,?)
             """,
-            fetchall=True
-        )
-
-        return render_template(
-            "melhorias.html",
-
-            melhorias=linhas_para_dict(
-                melhorias
+            (
+                titulo,
+                descricao,
+                etapa,
+                session["usuario_atual"],
+                status,
+                agora_melhoria
             ),
-
-            usuario_atual=session[
-                "usuario_atual"
-            ]
+            commit=True
         )
 
+        flash(
+            "Melhoria cadastrada com sucesso.",
+            "success"
+        )
+
+        return redirect(
+            url_for(
+                "modulo",
+                nome="Melhorias / PDCA"
+            )
+        )
+
+    melhorias = executar(
+        """
+        SELECT
+            id,
+            titulo,
+            descricao,
+            etapa,
+            autor,
+            status,
+            criado_em
+        FROM melhorias
+        WHERE LOWER(
+            COALESCE(status, '')
+        ) <> 'arquivado'
+        ORDER BY id DESC
+        """,
+        fetchall=True
+    )
+
+    return render_template(
+        "melhorias.html",
+        melhorias=linhas_para_dict(melhorias),
+        usuario_atual=session["usuario_atual"]
+    )
     # --------------------------------------------------------
     # ESTOQUE
     # --------------------------------------------------------

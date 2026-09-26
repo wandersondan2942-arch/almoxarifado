@@ -1,702 +1,1394 @@
 <!DOCTYPE html>
 
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<head>
+
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
 <title>Almoxarifado VALENET</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet">
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      rel="stylesheet">
+
 
 <style>
+
     :root {
         --primary: #2563eb;
         --primary-dark: #1d4ed8;
+
         --success: #16a34a;
         --warning: #ea580c;
         --danger: #dc2626;
-        --info: #0891b2;
+
         --dark: #111827;
         --sidebar: #111827;
         --sidebar-hover: #1f2937;
+
         --bg: #f4f6f9;
         --card: #ffffff;
         --border: #e5e7eb;
+
         --text: #1f2937;
         --muted: #6b7280;
     }
+
 
     * {
         box-sizing: border-box;
     }
 
+
     body {
+
         margin: 0;
+
         background: var(--bg);
+
         color: var(--text);
-        font-family: "Segoe UI", Arial, sans-serif;
+
+        font-family:
+            "Segoe UI",
+            Arial,
+            sans-serif;
     }
 
-    /* =========================
+
+    /* =====================================================
        SIDEBAR
-    ========================= */
+    ===================================================== */
 
     .sidebar {
+
         position: fixed;
+
         left: 0;
         top: 0;
         bottom: 0;
+
         width: 255px;
+
         background: var(--sidebar);
+
         color: #fff;
+
         overflow-y: auto;
-        z-index: 1000;
-        box-shadow: 3px 0 12px rgba(0,0,0,.08);
+
+        z-index: 9999;
+
+        box-shadow:
+            3px 0 12px rgba(0,0,0,.08);
     }
+
 
     .brand {
+
         padding: 22px 20px;
-        border-bottom: 1px solid rgba(255,255,255,.08);
+
+        border-bottom:
+            1px solid rgba(255,255,255,.08);
     }
 
+
     .brand-title {
+
         font-size: 18px;
+
         font-weight: 700;
+
         letter-spacing: .3px;
     }
 
+
     .brand-subtitle {
+
         color: #9ca3af;
+
         font-size: 12px;
+
         margin-top: 3px;
     }
 
+
     .menu-title {
+
         color: #6b7280;
+
         font-size: 10px;
+
         font-weight: 700;
+
         text-transform: uppercase;
+
         padding: 20px 20px 8px;
+
         letter-spacing: .8px;
     }
 
+
+    /*
+     * IMPORTANTE:
+     * Os links ficam explicitamente acima dos demais elementos
+     * e recebem os cliques normalmente.
+     */
+
     .menu-link {
+
+        position: relative;
+
+        z-index: 10000;
+
+        pointer-events: auto;
+
         display: flex;
+
         align-items: center;
+
         gap: 12px;
+
         color: #d1d5db;
+
         text-decoration: none;
+
         padding: 10px 18px;
+
         margin: 2px 10px;
+
         border-radius: 8px;
+
         font-size: 14px;
-        transition: .2s;
+
+        cursor: pointer;
+
+        transition:
+            background .2s ease,
+            color .2s ease,
+            transform .15s ease;
     }
 
-    .menu-link:hover,
-    .menu-link.active {
-        background: var(--sidebar-hover);
+
+    .menu-link:hover {
+
+        background:
+            var(--sidebar-hover);
+
         color: #fff;
+
+        transform: translateX(2px);
     }
+
+
+    .menu-link.active {
+
+        background:
+            linear-gradient(
+                90deg,
+                #2563eb,
+                #1d4ed8
+            );
+
+        color: #fff;
+
+        box-shadow:
+            0 4px 12px
+            rgba(37,99,235,.25);
+    }
+
 
     .menu-link i {
+
         width: 18px;
+
         text-align: center;
     }
 
+
     .sidebar-user {
+
         position: absolute;
+
         left: 0;
         right: 0;
         bottom: 0;
+
         padding: 15px;
-        background: rgba(0,0,0,.18);
-        border-top: 1px solid rgba(255,255,255,.08);
+
+        background:
+            rgba(0,0,0,.20);
+
+        border-top:
+            1px solid rgba(255,255,255,.08);
+
+        z-index: 10001;
     }
+
 
     .sidebar-user-name {
+
         font-size: 13px;
+
         font-weight: 600;
+
+        margin-bottom: 5px;
     }
+
 
     .logout {
+
+        position: relative;
+
+        z-index: 10002;
+
         color: #fca5a5;
+
         text-decoration: none;
+
         font-size: 12px;
+
+        cursor: pointer;
     }
 
-    /* =========================
+
+    .logout:hover {
+
+        color: #fecaca;
+    }
+
+
+    /* =====================================================
        MAIN
-    ========================= */
+    ===================================================== */
 
     .main {
+
         margin-left: 255px;
+
         min-height: 100vh;
-        padding: 22px 25px 35px;
+
+        padding:
+            22px
+            25px
+            35px;
     }
 
+
     .topbar {
+
         display: flex;
+
         justify-content: space-between;
+
         align-items: center;
+
         margin-bottom: 22px;
     }
 
+
     .page-title {
+
         margin: 0;
+
         font-size: 24px;
+
         font-weight: 700;
     }
 
+
     .page-subtitle {
+
         margin: 4px 0 0;
+
         color: var(--muted);
+
         font-size: 13px;
     }
+
 
     .date-box {
+
         background: #fff;
-        border: 1px solid var(--border);
+
+        border:
+            1px solid var(--border);
+
         border-radius: 10px;
-        padding: 9px 13px;
+
+        padding:
+            9px 13px;
+
         color: var(--muted);
+
         font-size: 13px;
+
+        box-shadow:
+            0 2px 7px rgba(0,0,0,.03);
     }
 
-    /* =========================
+
+    /* =====================================================
        FLASH
-    ========================= */
+    ===================================================== */
 
     .flash-container {
+
         margin-bottom: 18px;
     }
 
-    /* =========================
+
+    /* =====================================================
        CARDS PRINCIPAIS
-    ========================= */
+    ===================================================== */
 
     .metric-grid {
+
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+
+        grid-template-columns:
+            repeat(6, minmax(0,1fr));
+
         gap: 14px;
+
         margin-bottom: 20px;
     }
 
+
     .metric-card {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
+
+        background:
+            var(--card);
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 13px;
+
         padding: 15px;
-        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+
+        box-shadow:
+            0 3px 10px
+            rgba(0,0,0,.035);
+
+        transition:
+            transform .2s ease,
+            box-shadow .2s ease;
     }
 
+
+    .metric-card:hover {
+
+        transform:
+            translateY(-2px);
+
+        box-shadow:
+            0 7px 18px
+            rgba(0,0,0,.07);
+    }
+
+
     .metric-top {
+
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+
+        justify-content:
+            space-between;
+
+        align-items:
+            center;
+
         margin-bottom: 8px;
     }
 
+
     .metric-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 9px;
+
+        width: 35px;
+        height: 35px;
+
+        border-radius: 10px;
+
         display: flex;
+
         align-items: center;
+
         justify-content: center;
-        background: #eff6ff;
-        color: var(--primary);
+
+        background:
+            #eff6ff;
+
+        color:
+            var(--primary);
     }
 
+
     .metric-label {
+
         font-size: 12px;
+
         color: var(--muted);
+
         font-weight: 600;
     }
 
+
     .metric-number {
+
         font-size: 25px;
+
         font-weight: 750;
+
         line-height: 1;
     }
 
-    /* =========================
-       ÁREA RESUMO + INDICADORES
-    ========================= */
+
+    /* =====================================================
+       BLOCO RESUMO + INDICADORES
+    ===================================================== */
 
     .dashboard-layout {
+
         display: grid;
-        grid-template-columns: 330px minmax(0, 1fr);
-        gap: 18px;
+
+        grid-template-columns:
+            380px
+            minmax(0,1fr);
+
+        gap: 22px;
+
         margin-bottom: 20px;
+
         align-items: start;
     }
 
-    .left-dashboard {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
 
-    .dashboard-card {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 13px;
-        box-shadow: 0 2px 7px rgba(0,0,0,.035);
-        padding: 17px;
+    /*
+     * Os dois cards da esquerda ficam SEMPRE um embaixo
+     * do outro.
+     */
+
+    .left-dashboard {
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 18px;
+
         width: 100%;
     }
 
-    .dashboard-card-title {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 14px;
+
+    .dashboard-card {
+
+        background: #fff;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 14px;
+
+        box-shadow:
+            0 3px 10px
+            rgba(0,0,0,.04);
+
+        padding: 18px;
+
+        width: 100%;
     }
+
+
+    .dashboard-card-title {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        font-size: 15px;
+
+        font-weight: 700;
+
+        margin-bottom: 15px;
+    }
+
 
     .dashboard-card-title i {
-        color: var(--primary);
+
+        width: 30px;
+        height: 30px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        border-radius: 8px;
+
+        background:
+            #eff6ff;
+
+        color:
+            var(--primary);
+
+        font-size: 13px;
     }
 
-    /* =========================
+
+    /* =====================================================
        RESUMO DO DIA
-    ========================= */
+    ===================================================== */
 
     .activity-summary {
+
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 9px;
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap: 10px;
     }
+
 
     .summary-box {
-        background: #f9fafb;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 12px;
+
+        background:
+            linear-gradient(
+                145deg,
+                #ffffff,
+                #f8fafc
+            );
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 11px;
+
+        padding: 13px;
+
+        transition:
+            transform .2s ease,
+            box-shadow .2s ease;
     }
 
+
+    .summary-box:hover {
+
+        transform:
+            translateY(-2px);
+
+        box-shadow:
+            0 5px 14px
+            rgba(0,0,0,.06);
+    }
+
+
     .summary-label {
-        color: var(--muted);
+
+        color:
+            var(--muted);
+
         font-size: 11px;
+
         margin-bottom: 4px;
     }
 
+
     .summary-number {
-        font-size: 21px;
+
+        font-size: 23px;
+
         font-weight: 750;
     }
 
+
     .summary-success {
-        color: var(--success);
+
+        color:
+            var(--success);
     }
+
 
     .summary-warning {
-        color: var(--warning);
+
+        color:
+            var(--warning);
     }
+
 
     .summary-secondary {
-        color: #6b7280;
+
+        color:
+            #6b7280;
     }
+
 
     .summary-primary {
-        color: var(--primary);
+
+        color:
+            var(--primary);
     }
 
-    /* =========================
-       INDICADORES OPERACIONAIS
-    ========================= */
+
+    /* =====================================================
+       INDICADORES
+    ===================================================== */
 
     .operational-card {
+
         min-height: 285px;
     }
 
+
     .indicators-grid {
+
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
+
+        grid-template-columns:
+            repeat(3,minmax(0,1fr));
+
+        gap: 10px;
     }
+
 
     .indicator-item {
+
         text-align: center;
-        background: #fafafa;
-        border: 1px solid var(--border);
+
+        background:
+            linear-gradient(
+                145deg,
+                #ffffff,
+                #f8fafc
+            );
+
+        border:
+            1px solid var(--border);
+
         border-radius: 12px;
-        padding: 15px 8px 12px;
+
+        padding:
+            14px 7px 12px;
+
+        transition:
+            transform .2s ease,
+            box-shadow .2s ease;
     }
 
+
+    .indicator-item:hover {
+
+        transform:
+            translateY(-2px);
+
+        box-shadow:
+            0 5px 14px
+            rgba(0,0,0,.06);
+    }
+
+
     .indicator-circle {
+
         --percent: 0%;
         --indicator-color: #2563eb;
 
-        width: 86px;
-        height: 86px;
-        margin: 0 auto 10px;
+        width: 82px;
+        height: 82px;
+
+        margin:
+            0 auto 9px;
+
         border-radius: 50%;
 
         background:
             conic-gradient(
-                var(--indicator-color) var(--percent),
-                #e5e7eb var(--percent)
+                var(--indicator-color)
+                var(--percent),
+
+                #e5e7eb
+                var(--percent)
             );
 
         display: flex;
+
         align-items: center;
+
         justify-content: center;
+
         position: relative;
+
+        box-shadow:
+            0 3px 10px
+            rgba(0,0,0,.05);
     }
+
 
     .indicator-circle::before {
+
         content: "";
+
         position: absolute;
-        width: 65px;
-        height: 65px;
+
+        width: 62px;
+        height: 62px;
+
         border-radius: 50%;
-        background: #fff;
+
+        background:
+            #fff;
     }
 
+
     .indicator-percent {
+
         position: relative;
+
         z-index: 2;
+
         font-size: 15px;
+
         font-weight: 800;
     }
 
+
     .indicator-green {
-        --indicator-color: #16a34a;
+
+        --indicator-color:
+            #16a34a;
     }
+
 
     .indicator-blue {
-        --indicator-color: #2563eb;
+
+        --indicator-color:
+            #2563eb;
     }
+
 
     .indicator-orange {
-        --indicator-color: #ea580c;
+
+        --indicator-color:
+            #ea580c;
     }
+
 
     .indicator-title {
+
         font-size: 12px;
+
         font-weight: 700;
-        margin-bottom: 4px;
+
+        margin-bottom: 3px;
     }
+
 
     .indicator-description {
-        font-size: 10px;
-        color: var(--muted);
+
+        font-size: 9px;
+
+        color:
+            var(--muted);
+
+        min-height: 25px;
     }
+
 
     .indicator-bar {
+
         height: 5px;
+
         border-radius: 99px;
-        background: #e5e7eb;
+
+        background:
+            #e5e7eb;
+
         overflow: hidden;
-        margin-top: 10px;
+
+        margin-top: 9px;
     }
 
+
     .indicator-bar span {
+
         display: block;
+
         height: 100%;
+
         border-radius: inherit;
     }
 
+
     .bar-green {
-        background: #16a34a;
+
+        background:
+            #16a34a;
     }
+
 
     .bar-blue {
-        background: #2563eb;
+
+        background:
+            #2563eb;
     }
+
 
     .bar-orange {
-        background: #ea580c;
+
+        background:
+            #ea580c;
     }
 
-    /* =========================
+
+    /* =====================================================
+       ESPAÇO DIREITO
+    ===================================================== */
+
+    .dashboard-right-space {
+
+        min-height: 100%;
+
+        background:
+            linear-gradient(
+                145deg,
+                rgba(255,255,255,.45),
+                rgba(255,255,255,.15)
+            );
+
+        border-radius: 14px;
+    }
+
+
+    /* =====================================================
        CONTEÚDO
-    ========================= */
+    ===================================================== */
 
     .content-grid {
+
         display: grid;
-        grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+
+        grid-template-columns:
+            minmax(0,1.2fr)
+            minmax(320px,.8fr);
+
         gap: 18px;
+
         margin-bottom: 20px;
     }
 
+
     .content-card {
+
         background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 13px;
-        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 14px;
+
+        box-shadow:
+            0 3px 10px
+            rgba(0,0,0,.04);
+
         padding: 18px;
     }
 
+
     .section-title {
+
         display: flex;
+
         align-items: center;
+
         gap: 9px;
+
         font-size: 15px;
+
         font-weight: 700;
+
         margin-bottom: 16px;
     }
 
+
     .section-title i {
-        color: var(--primary);
+
+        color:
+            var(--primary);
     }
 
-    /* =========================
+
+    /* =====================================================
        FORMULÁRIO
-    ========================= */
+    ===================================================== */
 
     .form-label {
+
         font-size: 12px;
+
         font-weight: 600;
+
         margin-bottom: 5px;
     }
 
+
     .form-control,
     .form-select {
+
         font-size: 13px;
-        border-color: #dbe0e6;
+
+        border-color:
+            #dbe0e6;
+
         border-radius: 8px;
     }
+
 
     .form-control:focus,
     .form-select:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+
+        border-color:
+            var(--primary);
+
+        box-shadow:
+            0 0 0 3px
+            rgba(37,99,235,.10);
     }
 
+
     .btn-primary {
-        background: var(--primary);
-        border-color: var(--primary);
+
+        background:
+            var(--primary);
+
+        border-color:
+            var(--primary);
+
         border-radius: 8px;
+
         font-size: 13px;
+
         font-weight: 600;
     }
 
+
     .btn-primary:hover {
-        background: var(--primary-dark);
-        border-color: var(--primary-dark);
+
+        background:
+            var(--primary-dark);
+
+        border-color:
+            var(--primary-dark);
     }
 
-    /* =========================
+
+    /* =====================================================
        CHAT
-    ========================= */
+    ===================================================== */
 
     .chat-box {
+
         height: 245px;
+
         overflow-y: auto;
-        background: #f9fafb;
-        border: 1px solid var(--border);
+
+        background:
+            #f9fafb;
+
+        border:
+            1px solid var(--border);
+
         border-radius: 9px;
+
         padding: 10px;
+
         margin-bottom: 10px;
     }
 
+
     .chat-message {
+
         background: #fff;
-        border: 1px solid var(--border);
+
+        border:
+            1px solid var(--border);
+
         border-radius: 9px;
+
         padding: 8px 10px;
+
         margin-bottom: 8px;
     }
 
+
     .chat-user {
+
         font-size: 11px;
+
         font-weight: 700;
     }
 
+
     .chat-text {
+
         font-size: 12px;
+
         margin-top: 2px;
+
         word-break: break-word;
     }
 
+
     .chat-date {
+
         font-size: 9px;
-        color: var(--muted);
+
+        color:
+            var(--muted);
+
         margin-top: 4px;
     }
 
-    /* =========================
+
+    /* =====================================================
        TABELA
-    ========================= */
+    ===================================================== */
 
     .table-card {
+
         background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 13px;
-        box-shadow: 0 2px 7px rgba(0,0,0,.035);
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 14px;
+
+        box-shadow:
+            0 3px 10px
+            rgba(0,0,0,.04);
+
         padding: 18px;
+
         overflow: hidden;
     }
 
+
     .table-responsive {
+
         overflow-x: auto;
     }
 
+
     .activity-table {
+
         width: 100%;
-        border-collapse: collapse;
+
+        border-collapse:
+            collapse;
+
         font-size: 12px;
+
         min-width: 850px;
     }
 
+
     .activity-table th {
-        background: #f9fafb;
-        color: #6b7280;
+
+        background:
+            #f9fafb;
+
+        color:
+            #6b7280;
+
         font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: .4px;
+
+        text-transform:
+            uppercase;
+
+        letter-spacing:
+            .4px;
+
         padding: 10px;
-        border-bottom: 1px solid var(--border);
-        white-space: nowrap;
+
+        border-bottom:
+            1px solid var(--border);
+
+        white-space:
+            nowrap;
     }
+
 
     .activity-table td {
+
         padding: 10px;
-        border-bottom: 1px solid #f0f1f3;
-        vertical-align: middle;
+
+        border-bottom:
+            1px solid #f0f1f3;
+
+        vertical-align:
+            middle;
     }
+
 
     .activity-table tbody tr:hover {
-        background: #fafafa;
+
+        background:
+            #fafafa;
     }
+
 
     .badge-status {
-        display: inline-block;
-        padding: 5px 8px;
-        border-radius: 99px;
-        font-size: 10px;
-        font-weight: 700;
+
+        display:
+            inline-block;
+
+        padding:
+            5px 8px;
+
+        border-radius:
+            99px;
+
+        font-size:
+            10px;
+
+        font-weight:
+            700;
     }
+
 
     .status-pendente {
-        background: #fff7ed;
-        color: #c2410c;
+
+        background:
+            #fff7ed;
+
+        color:
+            #c2410c;
     }
+
 
     .status-concluido {
-        background: #ecfdf5;
-        color: #15803d;
+
+        background:
+            #ecfdf5;
+
+        color:
+            #15803d;
     }
+
 
     .status-arquivada {
-        background: #f3f4f6;
-        color: #6b7280;
+
+        background:
+            #f3f4f6;
+
+        color:
+            #6b7280;
     }
+
 
     .btn-action {
+
         border: 0;
-        background: transparent;
-        padding: 4px 6px;
-        font-size: 12px;
+
+        background:
+            transparent;
+
+        padding:
+            4px 6px;
+
+        font-size:
+            12px;
+
+        cursor:
+            pointer;
     }
+
 
     .btn-edit {
-        color: var(--primary);
+
+        color:
+            var(--primary);
     }
+
 
     .btn-conclude {
-        color: var(--success);
+
+        color:
+            var(--success);
     }
 
-    /* =========================
+
+    /* =====================================================
        FOOTER
-    ========================= */
+    ===================================================== */
 
     .footer {
-        text-align: center;
-        color: #9ca3af;
-        font-size: 11px;
-        margin-top: 25px;
+
+        text-align:
+            center;
+
+        color:
+            #9ca3af;
+
+        font-size:
+            11px;
+
+        margin-top:
+            25px;
     }
 
-    /* =========================
+
+    /* =====================================================
        RESPONSIVO
-    ========================= */
+    ===================================================== */
 
     @media (max-width: 1250px) {
+
         .metric-grid {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(3,minmax(0,1fr));
         }
+
 
         .dashboard-layout {
-            grid-template-columns: 300px minmax(0, 1fr);
+
+            grid-template-columns:
+                350px
+                minmax(0,1fr);
         }
+
     }
 
+
     @media (max-width: 1000px) {
+
         .sidebar {
+
             width: 220px;
         }
 
+
         .main {
+
             margin-left: 220px;
         }
 
+
         .dashboard-layout {
-            grid-template-columns: 1fr;
+
+            grid-template-columns:
+                1fr;
         }
 
-        .left-dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+
+        .dashboard-right-space {
+
+            display:
+                none;
         }
+
 
         .content-grid {
-            grid-template-columns: 1fr;
+
+            grid-template-columns:
+                1fr;
         }
+
     }
+
 
     @media (max-width: 750px) {
+
         .sidebar {
-            position: relative;
-            width: 100%;
-            min-height: auto;
+
+            position:
+                relative;
+
+            width:
+                100%;
+
+            min-height:
+                auto;
         }
+
 
         .sidebar-user {
-            position: relative;
+
+            position:
+                relative;
         }
+
 
         .main {
-            margin-left: 0;
-            padding: 15px;
+
+            margin-left:
+                0;
+
+            padding:
+                15px;
         }
+
 
         .metric-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(2,minmax(0,1fr));
         }
 
-        .left-dashboard {
-            grid-template-columns: 1fr;
-        }
 
         .indicators-grid {
-            grid-template-columns: 1fr;
+
+            grid-template-columns:
+                repeat(3,minmax(0,1fr));
         }
+
 
         .topbar {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
+
+            flex-direction:
+                column;
+
+            align-items:
+                flex-start;
+
+            gap:
+                10px;
         }
+
     }
 
-    @media (max-width: 450px) {
+
+    @media (max-width: 500px) {
+
         .metric-grid {
-            grid-template-columns: 1fr;
+
+            grid-template-columns:
+                1fr;
         }
+
+
+        .indicators-grid {
+
+            grid-template-columns:
+                1fr;
+        }
+
 
         .activity-summary {
-            grid-template-columns: 1fr 1fr;
+
+            grid-template-columns:
+                1fr 1fr;
         }
+
     }
+
 </style>
 
 
@@ -712,85 +1404,169 @@
 
 
 <div class="brand">
+
     <div class="brand-title">
+
         <i class="fa-solid fa-boxes-stacked me-2"></i>
+
         Almoxarifado VALENET
+
     </div>
+
 
     <div class="brand-subtitle">
+
         Painel Operacional
+
     </div>
+
 </div>
 
-<div class="menu-title">Operação</div>
 
-<a href="{{ url_for('index') }}" class="menu-link active">
+<div class="menu-title">
+
+    Operação
+
+</div>
+
+
+<a href="{{ url_for('index') }}"
+   class="menu-link active">
+
     <i class="fa-solid fa-chart-line"></i>
+
     <span>Painel</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Requisições') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Requisições') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-file-lines"></i>
+
     <span>Requisições</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Inventário') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Inventário') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-clipboard-check"></i>
+
     <span>Inventário</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Expedição') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Expedição') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-truck-fast"></i>
+
     <span>Expedição</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Recebimento') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Recebimento') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-dolly"></i>
+
     <span>Recebimento</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Estoque') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Estoque') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-box-open"></i>
+
     <span>Estoque</span>
+
 </a>
 
-<div class="menu-title">Gestão</div>
 
-<a href="{{ url_for('modulo', nome='Cadastros') }}" class="menu-link">
+<div class="menu-title">
+
+    Gestão
+
+</div>
+
+
+<a href="{{ url_for('modulo', nome='Cadastros') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-address-book"></i>
+
     <span>Cadastros</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-lightbulb"></i>
+
     <span>Melhorias / PDCA</span>
+
 </a>
 
-<a href="{{ url_for('indicadores') }}" class="menu-link">
+
+<a href="{{ url_for('indicadores') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-chart-pie"></i>
+
     <span>Indicadores</span>
+
 </a>
 
-<a href="{{ url_for('relatorios') }}" class="menu-link">
+
+<a href="{{ url_for('relatorios') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-file-chart-column"></i>
+
     <span>Relatórios</span>
+
 </a>
 
-<a href="{{ url_for('modulo', nome='Configurações') }}" class="menu-link">
+
+<a href="{{ url_for('modulo', nome='Configurações') }}"
+   class="menu-link">
+
     <i class="fa-solid fa-gear"></i>
+
     <span>Configurações</span>
+
 </a>
+
 
 <div class="sidebar-user">
+
     <div class="sidebar-user-name">
+
         <i class="fa-solid fa-user me-1"></i>
+
         {{ session.get('usuario_atual', 'Usuário') }}
+
     </div>
 
-    <a href="{{ url_for('logout') }}" class="logout">
+
+    <a href="{{ url_for('logout') }}"
+       class="logout">
+
         <i class="fa-solid fa-right-from-bracket me-1"></i>
+
         Sair
+
     </a>
+
 </div>
 
 
@@ -803,68 +1579,112 @@
 <main class="main">
 
 
+<!-- =====================================================
+     TOPO
+====================================================== -->
+
 <div class="topbar">
 
+
     <div>
+
         <h1 class="page-title">
+
             Painel Operacional
+
         </h1>
 
+
         <p class="page-subtitle">
+
             Acompanhamento operacional do almoxarifado
+
         </p>
+
     </div>
 
+
     <div class="date-box">
+
         <i class="fa-regular fa-calendar me-1"></i>
+
         <span id="dataAtual"></span>
+
     </div>
+
 
 </div>
 
-<!-- FLASH -->
+
+<!-- =====================================================
+     FLASH
+====================================================== -->
 
 <div class="flash-container">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% with messages =
+        get_flashed_messages(with_categories=true)
+    %}
+
 
         {% if messages %}
 
+
             {% for category, message in messages %}
 
-                <div class="alert alert-{{ category }} alert-dismissible fade show py-2 small" role="alert">
+
+                <div class="alert alert-{{ category }}
+                            alert-dismissible
+                            fade show
+                            py-2
+                            small"
+                     role="alert">
+
 
                     {{ message }}
+
 
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="alert">
                     </button>
 
+
                 </div>
+
 
             {% endfor %}
 
+
         {% endif %}
+
 
     {% endwith %}
 
+
 </div>
 
+
 <!-- =====================================================
-     INDICADORES PRINCIPAIS
+     CARDS PRINCIPAIS
 ====================================================== -->
 
 <div class="metric-grid">
 
+
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Requisições pendentes</span>
+
+            <span class="metric-label">
+                Requisições pendentes
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-file-circle-exclamation"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -877,11 +1697,15 @@
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Inventário concluído</span>
+
+            <span class="metric-label">
+                Inventário concluído
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-clipboard-check"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -894,11 +1718,15 @@
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Expedições pendentes</span>
+
+            <span class="metric-label">
+                Expedições pendentes
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-truck"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -911,11 +1739,15 @@
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Recebimentos pendentes</span>
+
+            <span class="metric-label">
+                Recebimentos pendentes
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-box"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -928,11 +1760,15 @@
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Ocorrências</span>
+
+            <span class="metric-label">
+                Ocorrências
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -945,11 +1781,15 @@
     <div class="metric-card">
 
         <div class="metric-top">
-            <span class="metric-label">Atrasadas</span>
+
+            <span class="metric-label">
+                Atrasadas
+            </span>
 
             <div class="metric-icon">
                 <i class="fa-solid fa-clock"></i>
             </div>
+
         </div>
 
         <div class="metric-number">
@@ -958,21 +1798,28 @@
 
     </div>
 
+
 </div>
 
 
 <!-- =====================================================
-     RESUMO DO DIA + INDICADORES
+     RESUMO + INDICADORES
 ====================================================== -->
 
 <div class="dashboard-layout">
 
-    <!-- COLUNA ESQUERDA -->
+
+    <!-- =================================================
+         COLUNA ESQUERDA
+    ================================================== -->
+
     <div class="left-dashboard">
+
 
         <!-- RESUMO DO DIA -->
 
         <div class="dashboard-card">
+
 
             <div class="dashboard-card-title">
 
@@ -984,7 +1831,9 @@
 
             </div>
 
+
             <div class="activity-summary">
+
 
                 <div class="summary-box">
 
@@ -1037,30 +1886,38 @@
 
                 </div>
 
+
             </div>
+
 
         </div>
 
 
-        <!-- INDICADORES OPERACIONAIS -->
+        <!-- =================================================
+             INDICADORES OPERACIONAIS
+        ================================================== -->
 
         <div class="dashboard-card operational-card">
+
 
             <div class="dashboard-card-title">
 
                 <i class="fa-solid fa-gauge-high"></i>
 
                 <span>
-                    Indicadores
+                    Indicadores Operacionais
                 </span>
 
             </div>
 
+
             <div class="indicators-grid">
+
 
                 <!-- ATENDIDAS -->
 
                 <div class="indicator-item">
+
 
                     <div class="indicator-circle indicator-green"
                          style="--percent: {{ perc_atendidas }}%;">
@@ -1071,13 +1928,20 @@
 
                     </div>
 
+
                     <div class="indicator-title">
+
                         Atendidas
+
                     </div>
 
+
                     <div class="indicator-description">
+
                         Requisições atendidas
+
                     </div>
+
 
                     <div class="indicator-bar">
 
@@ -1087,12 +1951,14 @@
 
                     </div>
 
+
                 </div>
 
 
                 <!-- INVENTÁRIO -->
 
                 <div class="indicator-item">
+
 
                     <div class="indicator-circle indicator-blue"
                          style="--percent: {{ perc_inventario }}%;">
@@ -1103,13 +1969,20 @@
 
                     </div>
 
+
                     <div class="indicator-title">
+
                         Inventário
+
                     </div>
 
+
                     <div class="indicator-description">
+
                         Inventário realizado
+
                     </div>
+
 
                     <div class="indicator-bar">
 
@@ -1119,12 +1992,14 @@
 
                     </div>
 
+
                 </div>
 
 
                 <!-- EXPEDIÇÃO -->
 
                 <div class="indicator-item">
+
 
                     <div class="indicator-circle indicator-orange"
                          style="--percent: {{ perc_expedicao }}%;">
@@ -1135,13 +2010,20 @@
 
                     </div>
 
+
                     <div class="indicator-title">
+
                         Expedição
+
                     </div>
 
+
                     <div class="indicator-description">
+
                         Expedições realizadas
+
                     </div>
+
 
                     <div class="indicator-bar">
 
@@ -1151,121 +2033,26 @@
 
                     </div>
 
+
                 </div>
+
 
             </div>
 
+
         </div>
+
 
     </div>
 
 
-    <!-- COLUNA DIREITA -->
+    <!-- =================================================
+         ÁREA DIREITA
+         Mantida limpa para não duplicar indicadores.
+    ================================================== -->
 
-    <div class="dashboard-card">
+    <div class="dashboard-right-space"></div>
 
-        <div class="dashboard-card-title">
-
-            <i class="fa-solid fa-chart-column"></i>
-
-            <span>
-                Acompanhamento Operacional
-            </span>
-
-        </div>
-
-        <div class="text-muted small mb-3">
-            Visão geral do desempenho das operações do almoxarifado.
-        </div>
-
-        <div class="row g-3">
-
-            <div class="col-md-6">
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Atendimento
-                    </div>
-
-                    <div class="summary-number summary-success">
-                        {{ perc_atendidas }}%
-                    </div>
-
-                    <div class="small text-muted mt-1">
-                        Requisições atendidas
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="col-md-6">
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Inventário
-                    </div>
-
-                    <div class="summary-number summary-primary">
-                        {{ perc_inventario }}%
-                    </div>
-
-                    <div class="small text-muted mt-1">
-                        Inventário concluído
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="col-md-6">
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Expedição
-                    </div>
-
-                    <div class="summary-number summary-warning">
-                        {{ perc_expedicao }}%
-                    </div>
-
-                    <div class="small text-muted mt-1">
-                        Expedições concluídas
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="col-md-6">
-
-                <div class="summary-box">
-
-                    <div class="summary-label">
-                        Atividades
-                    </div>
-
-                    <div class="summary-number summary-primary">
-                        {{ total_atividades }}
-                    </div>
-
-                    <div class="small text-muted mt-1">
-                        Total registrado hoje
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
 
 </div>
 
@@ -1276,9 +2063,11 @@
 
 <div class="content-grid">
 
+
     <!-- NOVA ATIVIDADE -->
 
     <div class="content-card">
+
 
         <div class="section-title">
 
@@ -1290,13 +2079,17 @@
 
         </div>
 
+
         <form method="POST">
+
 
             <input type="hidden"
                    name="acao"
                    value="nova_atividade">
 
+
             <div class="row g-3">
+
 
                 <div class="col-md-4">
 
@@ -1348,17 +2141,24 @@
                     <select name="responsavel"
                             class="form-select">
 
+
                         <option value="">
                             Selecione
                         </option>
 
+
                         {% for usuario in usuarios %}
 
+
                             <option value="{{ usuario.nome }}">
+
                                 {{ usuario.nome }}
+
                             </option>
 
+
                         {% endfor %}
+
 
                     </select>
 
@@ -1390,29 +2190,36 @@
                             class="form-select"
                             required>
 
+
                         <option value="">
                             Selecione
                         </option>
+
 
                         <option value="Separação">
                             Separação
                         </option>
 
+
                         <option value="Inventário">
                             Inventário
                         </option>
+
 
                         <option value="Expedição">
                             Expedição
                         </option>
 
+
                         <option value="Recebimento">
                             Recebimento
                         </option>
 
+
                         <option value="Estoque">
                             Estoque
                         </option>
+
 
                     </select>
 
@@ -1459,9 +2266,12 @@
 
                 </div>
 
+
             </div>
 
+
         </form>
+
 
     </div>
 
@@ -1469,6 +2279,7 @@
     <!-- CHAT -->
 
     <div class="content-card">
+
 
         <div class="section-title">
 
@@ -1480,11 +2291,16 @@
 
         </div>
 
-        <div class="chat-box" id="chatBox">
+
+        <div class="chat-box"
+             id="chatBox">
+
 
             {% for mensagem in mensagens_chat %}
 
+
                 <div class="chat-message">
+
 
                     <div class="chat-user">
 
@@ -1494,9 +2310,13 @@
 
                     </div>
 
+
                     <div class="chat-text">
+
                         {{ mensagem.mensagem }}
+
                     </div>
+
 
                     <div class="chat-date">
 
@@ -1504,9 +2324,12 @@
 
                     </div>
 
+
                 </div>
 
+
             {% else %}
+
 
                 <div class="text-center text-muted small py-5">
 
@@ -1518,23 +2341,30 @@
 
                 </div>
 
+
             {% endfor %}
+
 
         </div>
 
+
         <form method="POST">
+
 
             <input type="hidden"
                    name="acao_chat"
                    value="enviar">
 
+
             <div class="input-group">
+
 
                 <input type="text"
                        name="mensagem"
                        class="form-control"
                        placeholder="Digite uma mensagem..."
                        required>
+
 
                 <button class="btn btn-primary"
                         type="submit">
@@ -1543,11 +2373,15 @@
 
                 </button>
 
+
             </div>
+
 
         </form>
 
+
     </div>
+
 
 </div>
 
@@ -1557,6 +2391,7 @@
 ====================================================== -->
 
 <div class="table-card">
+
 
     <div class="section-title">
 
@@ -1568,94 +2403,144 @@
 
     </div>
 
+
     <div class="table-responsive">
 
+
         <table class="activity-table">
+
 
             <thead>
 
                 <tr>
 
                     <th>ID</th>
+
                     <th>Nº Req.</th>
+
                     <th>Atividade</th>
+
                     <th>Categoria</th>
+
                     <th>Responsável</th>
+
                     <th>Status</th>
+
                     <th>Ações</th>
 
                 </tr>
 
             </thead>
 
+
             <tbody>
+
 
                 {% for item in atividades_recentes %}
 
+
                     <tr>
+
 
                         <td>
                             #{{ item.id }}
                         </td>
 
+
                         <td>
                             {{ item.num_requisicao or '-' }}
                         </td>
 
+
                         <td>
+
+
                             <strong>
                                 {{ item.atividade }}
                             </strong>
 
+
                             {% if item.descricao %}
 
+
                                 <div class="text-muted small">
+
                                     {{ item.descricao }}
+
                                 </div>
+
 
                             {% endif %}
 
+
                         </td>
 
+
                         <td>
+
                             {{ item.categoria or '-' }}
+
                         </td>
 
+
                         <td>
+
                             {{ item.responsavel or '-' }}
+
                         </td>
 
+
                         <td>
+
 
                             {% if item.status == 'Pendente' %}
 
+
                                 <span class="badge-status status-pendente">
+
                                     Pendente
+
                                 </span>
+
 
                             {% elif item.status == 'Concluído' %}
 
+
                                 <span class="badge-status status-concluido">
+
                                     Concluído
+
                                 </span>
+
 
                             {% elif item.status == 'Arquivada' %}
 
+
                                 <span class="badge-status status-arquivada">
+
                                     Arquivada
+
                                 </span>
+
 
                             {% else %}
 
+
                                 <span class="badge-status status-pendente">
+
                                     {{ item.status }}
+
                                 </span>
+
 
                             {% endif %}
 
+
                         </td>
 
+
                         <td>
+
 
                             <a href="{{ url_for('editar_form', id=item.id) }}"
                                class="btn-action btn-edit"
@@ -1668,9 +2553,11 @@
 
                             {% if item.status == 'Pendente' %}
 
+
                                 <form method="POST"
                                       action="{{ url_for('concluir', id=item.id) }}"
                                       style="display:inline;">
+
 
                                     <button type="submit"
                                             class="btn-action btn-conclude"
@@ -1681,9 +2568,12 @@
 
                                     </button>
 
+
                                 </form>
 
+
                             {% elif item.status == 'Concluído' %}
+
 
                                 <span class="text-success ms-1"
                                       title="Concluída">
@@ -1692,7 +2582,9 @@
 
                                 </span>
 
+
                             {% elif item.status == 'Arquivada' %}
+
 
                                 <span class="text-secondary ms-1"
                                       title="Arquivada">
@@ -1701,15 +2593,21 @@
 
                                 </span>
 
+
                             {% endif %}
+
 
                         </td>
 
+
                     </tr>
+
 
                 {% else %}
 
+
                     <tr>
+
 
                         <td colspan="7"
                             class="text-center text-muted py-4">
@@ -1718,18 +2616,26 @@
 
                         </td>
 
+
                     </tr>
+
 
                 {% endfor %}
 
+
             </tbody>
+
 
         </table>
 
+
     </div>
+
 
 </div>
 
+
+<!-- FOOTER -->
 
 <div class="footer">
 
@@ -1740,58 +2646,108 @@
 
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
 
 <script>
 
-    /* DATA ATUAL */
 
-    document.addEventListener("DOMContentLoaded", function () {
+    /* =====================================================
+       DATA ATUAL
+    ===================================================== */
 
-        const dataAtual = document.getElementById("dataAtual");
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
 
-        if (dataAtual) {
 
-            const agora = new Date();
-
-            dataAtual.textContent =
-                agora.toLocaleDateString(
-                    "pt-BR",
-                    {
-                        weekday: "long",
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric"
-                    }
+            const dataAtual =
+                document.getElementById(
+                    "dataAtual"
                 );
 
+
+            if (dataAtual) {
+
+
+                const agora =
+                    new Date();
+
+
+                dataAtual.textContent =
+                    agora.toLocaleDateString(
+                        "pt-BR",
+                        {
+                            weekday: "long",
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric"
+                        }
+                    );
+
+            }
+
+
+            /* =================================================
+               CHAT NO FINAL
+            ================================================= */
+
+            const chatBox =
+                document.getElementById(
+                    "chatBox"
+                );
+
+
+            if (chatBox) {
+
+                chatBox.scrollTop =
+                    chatBox.scrollHeight;
+
+            }
+
+
+            /* =================================================
+               ALERTAS
+            ================================================= */
+
+            setTimeout(
+                function () {
+
+
+                    document
+                        .querySelectorAll(
+                            ".alert"
+                        )
+                        .forEach(
+                            function (alerta) {
+
+
+                                const alert =
+                                    bootstrap
+                                    .Alert
+                                    .getOrCreateInstance(
+                                        alerta
+                                    );
+
+
+                                alert.close();
+
+
+                            }
+                        );
+
+
+                },
+                5000
+            );
+
+
         }
+    );
 
-        /* CHAT NO FINAL */
-
-        const chatBox = document.getElementById("chatBox");
-
-        if (chatBox) {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        /* FECHAR ALERTAS AUTOMATICAMENTE */
-
-        setTimeout(function () {
-
-            document.querySelectorAll(".alert").forEach(function (alerta) {
-
-                const alert = bootstrap.Alert.getOrCreateInstance(alerta);
-
-                alert.close();
-
-            });
-
-        }, 5000);
-
-    });
 
 </script>
 
 </body>
+
 </html>

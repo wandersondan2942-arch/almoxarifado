@@ -243,12 +243,28 @@
 
 
         /* ========================================================= */
-        /* BOTÃO ENCERRAR */
+        /* BOTÕES DE AÇÃO */
         /* ========================================================= */
+
+        .action-buttons {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 5px;
+
+            min-width: 115px;
+        }
+
 
         .btn-encerrar {
 
-            min-width: 105px;
+            font-weight: 600;
+        }
+
+
+        .btn-editar {
 
             font-weight: 600;
         }
@@ -301,6 +317,36 @@
 
 
         /* ========================================================= */
+        /* FILTROS */
+        /* ========================================================= */
+
+        .filter-area {
+
+            background: #f8fafc;
+
+            border: 1px solid #e9ecef;
+
+            border-radius: 12px;
+
+            padding: 15px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .filter-label {
+
+            font-size: 0.78rem;
+
+            font-weight: 700;
+
+            color: #495057;
+
+            margin-bottom: 5px;
+        }
+
+
+        /* ========================================================= */
         /* RESPONSIVIDADE */
         /* ========================================================= */
 
@@ -338,7 +384,7 @@
 
             .table {
 
-                min-width: 1500px;
+                min-width: 1600px;
             }
 
         }
@@ -431,9 +477,7 @@
             </div>
 
 
-            <!-- ===================================================== -->
             <!-- VOLTAR -->
-            <!-- ===================================================== -->
 
             <a
                 href="{{ url_for('index') }}"
@@ -451,32 +495,130 @@
 
 
         <!-- ========================================================= -->
-        <!-- RESUMO -->
+        <!-- FILTROS -->
         <!-- ========================================================= -->
 
-        <div
-            class="d-flex justify-content-between align-items-center mb-3"
-        >
+        <div class="filter-area">
 
-            <div>
+            <div class="row g-3 align-items-end">
 
-                <span class="text-muted module-counter">
 
-                    <i class="fa-solid fa-list me-1"></i>
+                <!-- PESQUISA -->
 
-                    {% if itens %}
+                <div class="col-lg-5 col-md-6">
 
-                        {{ itens|length }}
+                    <label
+                        for="filtroPesquisa"
+                        class="filter-label"
+                    >
+                        Pesquisar
+                    </label>
 
-                        registro(s) encontrado(s)
+                    <div class="input-group">
 
-                    {% else %}
+                        <span class="input-group-text">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
 
-                        Nenhum registro encontrado
+                        <input
+                            type="text"
+                            id="filtroPesquisa"
+                            class="form-control"
+                            placeholder="Req., atividade, responsável..."
+                            autocomplete="off"
+                        >
 
-                    {% endif %}
+                    </div>
 
-                </span>
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div class="col-lg-3 col-md-3">
+
+                    <label
+                        for="filtroStatus"
+                        class="filter-label"
+                    >
+                        Status
+                    </label>
+
+                    <select
+                        id="filtroStatus"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Todos os status
+                        </option>
+
+                        <option value="Pendente">
+                            Pendente
+                        </option>
+
+                        <option value="Em andamento">
+                            Em andamento
+                        </option>
+
+                        <option value="Concluído">
+                            Concluído
+                        </option>
+
+                        <option value="Arquivada">
+                            Arquivada
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- LIMPAR -->
+
+                <div class="col-lg-2 col-md-3">
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-secondary w-100"
+                        onclick="limparFiltros();"
+                    >
+
+                        <i class="fa-solid fa-filter-circle-xmark me-1"></i>
+
+                        Limpar filtros
+
+                    </button>
+
+                </div>
+
+
+                <!-- CONTADOR -->
+
+                <div class="col-lg-2 col-md-12 text-lg-end">
+
+                    <span
+                        id="contadorFiltro"
+                        class="text-muted module-counter"
+                    >
+
+                        <i class="fa-solid fa-list me-1"></i>
+
+                        {% if itens %}
+
+                            {{ itens|length }}
+
+                            registro(s)
+
+                        {% else %}
+
+                            0 registros
+
+                        {% endif %}
+
+                    </span>
+
+                </div>
 
             </div>
 
@@ -492,7 +634,10 @@
 
         <div class="table-responsive">
 
-            <table class="table table-hover align-middle">
+            <table
+                class="table table-hover align-middle"
+                id="tabelaModulo"
+            >
 
                 <thead class="table-dark">
 
@@ -532,6 +677,7 @@
                     {% for item in itens %}
 
                     <tr
+                        data-status="{{ item.status or '' }}"
                         {% if item.status == 'Concluído' %}
                             class="row-concluida"
                         {% elif item.status == 'Arquivada' %}
@@ -540,9 +686,7 @@
                     >
 
 
-                        <!-- ================================================= -->
                         <!-- ID -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -554,9 +698,7 @@
 
 
 
-                        <!-- ================================================= -->
-                        <!-- NÚMERO DA REQUISIÇÃO -->
-                        <!-- ================================================= -->
+                        <!-- REQUISIÇÃO -->
 
                         <td>
 
@@ -578,20 +720,22 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- ATIVIDADE -->
-                        <!-- ================================================= -->
 
                         <td>
 
                             <div class="activity-name">
+
                                 {{ item.atividade or 'Atividade não informada' }}
+
                             </div>
 
                             {% if item.descricao %}
 
                                 <small class="text-muted activity-description">
+
                                     {{ item.descricao }}
+
                                 </small>
 
                             {% endif %}
@@ -600,9 +744,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- CATEGORIA -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -646,6 +788,16 @@
 
                                 </span>
 
+                            {% elif item.categoria == 'Estoque' %}
+
+                                <span class="badge bg-secondary">
+
+                                    <i class="fa-solid fa-boxes-stacked me-1"></i>
+
+                                    Estoque
+
+                                </span>
+
                             {% else %}
 
                                 <span class="badge bg-secondary">
@@ -660,9 +812,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- RESPONSÁVEL -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -688,9 +838,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- INÍCIO -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -718,9 +866,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- PRAZO -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -748,9 +894,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- ENCERRADO POR -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -771,25 +915,9 @@
 
                             {% else %}
 
-                                {% if item.status == 'Pendente' %}
-
-                                    <span class="text-muted">
-                                        —
-                                    </span>
-
-                                {% elif item.status == 'Arquivada' %}
-
-                                    <span class="text-muted">
-                                        Não registrado
-                                    </span>
-
-                                {% else %}
-
-                                    <span class="text-muted">
-                                        Não informado
-                                    </span>
-
-                                {% endif %}
+                                <span class="text-muted">
+                                    —
+                                </span>
 
                             {% endif %}
 
@@ -797,9 +925,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- ENCERRAMENTO -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -830,9 +956,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- DURAÇÃO -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -863,9 +987,7 @@
 
 
 
-                        <!-- ================================================= -->
                         <!-- STATUS -->
-                        <!-- ================================================= -->
 
                         <td>
 
@@ -932,78 +1054,107 @@
 
 
                         <!-- ================================================= -->
-                        <!-- AÇÃO -->
+                        <!-- AÇÕES -->
                         <!-- ================================================= -->
 
                         <td>
 
-                            {% if item.status == 'Pendente' %}
+                            <div class="action-buttons">
+
+
+                                <!-- EDITAR -->
 
                                 <a
-                                    href="{{ url_for('concluir', id=item.id) }}"
-                                    class="btn btn-success btn-sm btn-encerrar"
-                                    onclick="return confirmarConclusao('{{ item.id }}');"
-                                    title="Encerrar esta atividade"
+                                    href="{{ url_for('editar_form', id=item.id) }}"
+                                    class="btn btn-outline-primary btn-sm btn-editar"
+                                    title="Editar atividade"
                                 >
 
-                                    <i
-                                        class="fa-solid fa-circle-check me-1"
-                                    ></i>
+                                    <i class="fa-solid fa-pen me-1"></i>
 
-                                    Encerrar
+                                    Editar
 
                                 </a>
 
 
-                            {% elif item.status == 'Concluído' %}
 
-                                <span
-                                    class="text-success"
-                                    title="Atividade concluída"
-                                >
+                                <!-- CONCLUIR -->
 
-                                    <i
-                                        class="fa-solid fa-check-double status-icon"
-                                    ></i>
+                                {% if item.status == 'Pendente' %}
 
-                                </span>
+                                    <a
+                                        href="{{ url_for('concluir', id=item.id) }}"
+                                        class="btn btn-success btn-sm btn-encerrar"
+                                        onclick="return confirmarConclusao('{{ item.id }}');"
+                                        title="Encerrar esta atividade"
+                                    >
 
+                                        <i
+                                            class="fa-solid fa-circle-check me-1"
+                                        ></i>
 
-                            {% elif item.status == 'Arquivada' %}
+                                        Encerrar
 
-                                <span
-                                    class="text-muted"
-                                    title="Atividade arquivada e preservada no histórico"
-                                >
-
-                                    <i
-                                        class="fa-solid fa-box-archive status-icon"
-                                    ></i>
-
-                                </span>
+                                    </a>
 
 
-                            {% elif item.status == 'Em andamento' %}
+                                {% elif item.status == 'Concluído' %}
 
-                                <span
-                                    class="text-info"
-                                    title="Atividade em andamento"
-                                >
+                                    <span
+                                        class="text-success"
+                                        title="Atividade concluída"
+                                    >
 
-                                    <i
-                                        class="fa-solid fa-spinner status-icon"
-                                    ></i>
+                                        <i
+                                            class="fa-solid fa-check-double status-icon"
+                                        ></i>
 
-                                </span>
+                                        Concluída
+
+                                    </span>
 
 
-                            {% else %}
+                                {% elif item.status == 'Arquivada' %}
 
-                                <span class="text-muted">
-                                    —
-                                </span>
+                                    <span
+                                        class="text-muted"
+                                        title="Atividade arquivada e preservada no histórico"
+                                    >
 
-                            {% endif %}
+                                        <i
+                                            class="fa-solid fa-box-archive status-icon"
+                                        ></i>
+
+                                        Arquivada
+
+                                    </span>
+
+
+                                {% elif item.status == 'Em andamento' %}
+
+                                    <span
+                                        class="text-info"
+                                        title="Atividade em andamento"
+                                    >
+
+                                        <i
+                                            class="fa-solid fa-spinner status-icon"
+                                        ></i>
+
+                                        Em andamento
+
+                                    </span>
+
+
+                                {% else %}
+
+                                    <span class="text-muted">
+                                        —
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
 
                         </td>
 
@@ -1061,9 +1212,11 @@
 
 <script>
 
-    /**
-     * Confirmação antes de encerrar uma atividade.
-     */
+
+    /* =========================================================
+       CONFIRMAÇÃO DE CONCLUSÃO
+    ========================================================= */
+
     function confirmarConclusao(id) {
 
         return confirm(
@@ -1087,6 +1240,137 @@
         );
 
     }
+
+
+
+    /* =========================================================
+       FILTROS
+    ========================================================= */
+
+    const campoPesquisa =
+        document.getElementById("filtroPesquisa");
+
+    const campoStatus =
+        document.getElementById("filtroStatus");
+
+    const contadorFiltro =
+        document.getElementById("contadorFiltro");
+
+
+    function aplicarFiltros() {
+
+        const pesquisa =
+            (campoPesquisa?.value || "")
+                .toLowerCase()
+                .trim();
+
+        const statusSelecionado =
+            campoStatus?.value || "";
+
+
+        const tabela =
+            document.getElementById("tabelaModulo");
+
+
+        if (!tabela) {
+            return;
+        }
+
+
+        const linhas =
+            tabela.querySelectorAll("tbody tr");
+
+
+        let encontrados = 0;
+
+
+        linhas.forEach(function(linha) {
+
+            const texto =
+                linha.innerText
+                    .toLowerCase();
+
+
+            const status =
+                linha.dataset.status || "";
+
+
+            const atendePesquisa =
+                !pesquisa ||
+                texto.includes(pesquisa);
+
+
+            const atendeStatus =
+                !statusSelecionado ||
+                status === statusSelecionado;
+
+
+            if (
+                atendePesquisa &&
+                atendeStatus
+            ) {
+
+                linha.style.display = "";
+
+                encontrados++;
+
+            } else {
+
+                linha.style.display = "none";
+
+            }
+
+        });
+
+
+        if (contadorFiltro) {
+
+            contadorFiltro.innerHTML =
+                '<i class="fa-solid fa-list me-1"></i> ' +
+                encontrados +
+                ' registro(s)';
+
+        }
+
+    }
+
+
+
+    function limparFiltros() {
+
+        if (campoPesquisa) {
+            campoPesquisa.value = "";
+        }
+
+        if (campoStatus) {
+            campoStatus.value = "";
+        }
+
+        aplicarFiltros();
+
+    }
+
+
+
+    if (campoPesquisa) {
+
+        campoPesquisa.addEventListener(
+            "input",
+            aplicarFiltros
+        );
+
+    }
+
+
+    if (campoStatus) {
+
+        campoStatus.addEventListener(
+            "change",
+            aplicarFiltros
+        );
+
+    }
+
 
 </script>
 

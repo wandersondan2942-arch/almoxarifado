@@ -3287,7 +3287,9 @@ def relatorios():
 # ============================================================
 # MÓDULOS
 # ============================================================
-@app.route("/modulo/<path:nome>",
+
+@app.route(
+    "/modulo/<path:nome>",
     methods=["GET", "POST"]
 )
 def modulo(nome):
@@ -3301,9 +3303,9 @@ def modulo(nome):
         nome
     )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CONFIGURAÇÕES
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "configuracoes":
 
@@ -3314,9 +3316,9 @@ def modulo(nome):
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # INDICADORES
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "indicadores":
 
@@ -3324,9 +3326,9 @@ def modulo(nome):
             url_for("indicadores")
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # RELATÓRIOS
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "relatorios":
 
@@ -3334,15 +3336,17 @@ def modulo(nome):
             url_for("relatorios")
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # CADASTROS
-    # --------------------------------------------------------
+    # ========================================================
 
     if nome_normalizado == "cadastros":
 
         usuarios = executar(
             """
-            SELECT id, nome
+            SELECT
+                id,
+                nome
             FROM usuarios
             ORDER BY nome ASC
             """,
@@ -3351,23 +3355,26 @@ def modulo(nome):
 
         return render_template(
             "cadastros.html",
-
             usuarios=linhas_para_dict(
                 usuarios
             ),
-
             usuario_atual=session[
                 "usuario_atual"
             ]
         )
 
-    # --------------------------------------------------------
+    # ========================================================
     # MELHORIAS / PDCA
-    # ------------------------------------------------------
+    # ========================================================
+
     if (
         "melhoria" in nome_normalizado
         or "pdca" in nome_normalizado
     ):
+
+        # ----------------------------------------------------
+        # CADASTRAR MELHORIA
+        # ----------------------------------------------------
 
         if request.method == "POST":
 
@@ -3444,7 +3451,9 @@ def modulo(nome):
                     titulo,
                     descricao,
                     etapa,
-                    session["usuario_atual"],
+                    session[
+                        "usuario_atual"
+                    ],
                     status,
                     agora_melhoria
                 ),
@@ -3462,6 +3471,10 @@ def modulo(nome):
                     nome="Melhorias / PDCA"
                 )
             )
+
+        # ----------------------------------------------------
+        # LISTAR MELHORIAS
+        # ----------------------------------------------------
 
         melhorias = executar(
             """
@@ -3492,6 +3505,128 @@ def modulo(nome):
             ]
         )
 
+    # ========================================================
+    # ESTOQUE
+    # ========================================================
+
+    if nome_normalizado == "estoque":
+
+        itens = executar(
+            """
+            SELECT *
+            FROM estoque
+            ORDER BY id DESC
+            """,
+            fetchall=True
+        )
+
+        return render_template(
+            "modulo.html",
+            nome="Estoque",
+            titulo="Estoque",
+            modulo="Estoque",
+            itens=linhas_para_dict(
+                itens
+            ),
+            usuario_atual=session[
+                "usuario_atual"
+            ]
+        )
+
+    # ========================================================
+    # MÓDULOS OPERACIONAIS
+    # ========================================================
+
+    mapa_modulos = {
+
+        "requisicoes": {
+            "titulo": "Requisições",
+            "categoria": "Separação"
+        },
+
+        "inventario": {
+            "titulo": "Inventário",
+            "categoria": "Inventário"
+        },
+
+        "expedicao": {
+            "titulo": "Expedição",
+            "categoria": "Expedição"
+        },
+
+        "recebimento": {
+            "titulo": "Recebimento",
+            "categoria": "Recebimento"
+        }
+    }
+
+    configuracao = mapa_modulos.get(
+        nome_normalizado
+    )
+
+    if configuracao:
+
+        categoria = configuracao[
+            "categoria"
+        ]
+
+        registros = executar(
+            """
+            SELECT *
+            FROM atividades
+            ORDER BY id DESC
+            """,
+            fetchall=True
+        )
+
+        itens = [
+            item
+            for item in registros
+            if (
+                categoria_eh(
+                    item,
+                    categoria
+                )
+                and status_eh_ativo(
+                    obter_valor(
+                        item,
+                        "status"
+                    )
+                )
+            )
+        ]
+
+        return render_template(
+            "modulo.html",
+            nome=configuracao[
+                "titulo"
+            ],
+            titulo=configuracao[
+                "titulo"
+            ],
+            modulo=configuracao[
+                "titulo"
+            ],
+            itens=preparar_lista_atividades(
+                itens
+            ),
+            usuario_atual=session[
+                "usuario_atual"
+            ]
+        )
+
+    # ========================================================
+    # MÓDULO NÃO ENCONTRADO
+    # ========================================================
+
+    flash(
+        f"Módulo '{nome}' não encontrado.",
+        "warning"
+    )
+
+    return redirect(
+        url_for("index")
+    )
 # ============================================================
 # EDITAR
 # ============================================================

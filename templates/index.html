@@ -1,206 +1,726 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<title>Almoxarifado Valenet</title>
 
-    <title>Almoxarifado Valenet</title>
+<!-- Bootstrap -->
+<link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+>
 
-    <!-- Bootstrap -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-    >
+<!-- Font Awesome -->
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+>
 
-    <!-- Font Awesome -->
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
-    >
+<style>
 
-    <style>
+    /* =========================================================
+       BASE
+    ========================================================= */
 
-        body {
-            background: #f5f7fb;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
+    :root {
+        --sidebar: #111827;
+        --sidebar-hover: #1f2937;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --bg: #f3f6fa;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --success: #198754;
+        --warning: #f59e0b;
+        --danger: #dc3545;
+    }
 
-        /* =========================
-           SIDEBAR
-        ========================= */
+    * {
+        box-sizing: border-box;
+    }
 
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 250px;
-            height: 100vh;
-            background: #111827;
-            color: white;
-            padding: 20px 15px;
-            overflow-y: auto;
-            z-index: 1000;
-        }
+    body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, Helvetica, sans-serif;
+    }
 
-        .sidebar h4 {
-            font-weight: 700;
-            margin-bottom: 25px;
-        }
+    a {
+        text-decoration: none;
+    }
 
-        .sidebar a {
-            display: block;
-            color: #d1d5db;
-            text-decoration: none;
-            padding: 11px 13px;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
 
-        .sidebar a:hover,
-        .sidebar a.active {
-            background: #1f2937;
-            color: white;
-        }
+    /* =========================================================
+       SIDEBAR
+    ========================================================= */
 
-        .sidebar i {
-            width: 24px;
-        }
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
 
-        /* =========================
-           CONTEÚDO PRINCIPAL
-        ========================= */
+        width: 250px;
+        height: 100vh;
+
+        background: linear-gradient(
+            180deg,
+            #111827 0%,
+            #172033 100%
+        );
+
+        color: white;
+
+        padding: 22px 14px;
+
+        overflow-y: auto;
+
+        z-index: 1000;
+
+        box-shadow: 4px 0 18px rgba(0, 0, 0, .08);
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        padding: 5px 10px 25px;
+
+        border-bottom: 1px solid rgba(255,255,255,.08);
+
+        margin-bottom: 18px;
+    }
+
+    .brand-icon {
+        width: 42px;
+        height: 42px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: rgba(37, 99, 235, .18);
+
+        border-radius: 12px;
+
+        color: #60a5fa;
+
+        font-size: 20px;
+    }
+
+    .brand-title {
+        font-size: 17px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .brand-subtitle {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+
+    .menu-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #6b7280;
+
+        padding: 0 12px;
+
+        margin: 18px 0 8px;
+    }
+
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+
+        color: #cbd5e1;
+
+        padding: 10px 12px;
+
+        margin-bottom: 4px;
+
+        border-radius: 9px;
+
+        font-size: 14px;
+
+        transition: all .2s ease;
+    }
+
+    .sidebar a i {
+        width: 21px;
+        text-align: center;
+        font-size: 15px;
+    }
+
+    .sidebar a:hover {
+        background: var(--sidebar-hover);
+        color: white;
+        transform: translateX(2px);
+    }
+
+    .sidebar a.active {
+        background: #2563eb;
+        color: white;
+        box-shadow: 0 4px 12px rgba(37,99,235,.25);
+    }
+
+    .sidebar-divider {
+        border-color: rgba(255,255,255,.08);
+        margin: 18px 5px;
+    }
+
+    .logout-link {
+        color: #fca5a5 !important;
+    }
+
+    .logout-link:hover {
+        background: rgba(220,53,69,.12) !important;
+        color: #fecaca !important;
+    }
+
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    .main {
+        margin-left: 250px;
+        min-height: 100vh;
+        padding: 28px;
+    }
+
+
+    /* =========================================================
+       TOPBAR
+    ========================================================= */
+
+    .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 25px;
+    }
+
+    .page-title {
+        font-size: 27px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 4px;
+    }
+
+    .user-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        background: white;
+
+        border: 1px solid var(--border);
+
+        border-radius: 12px;
+
+        padding: 9px 13px;
+
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        background: #eff6ff;
+        color: var(--primary);
+
+        border-radius: 50%;
+    }
+
+    .user-name {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .user-label {
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+
+    /* =========================================================
+       CARDS
+    ========================================================= */
+
+    .card-dashboard {
+        border: 1px solid rgba(229,231,235,.9);
+        border-radius: 15px;
+
+        background: var(--card);
+
+        box-shadow: 0 4px 16px rgba(15,23,42,.05);
+
+        overflow: hidden;
+    }
+
+    .card-header {
+        border-bottom: 1px solid #edf0f3;
+        padding: 15px 18px;
+    }
+
+
+    /* =========================================================
+       STAT CARDS
+    ========================================================= */
+
+    .stat-card {
+        min-height: 128px;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 22px rgba(15,23,42,.09);
+    }
+
+    .stat-card-body {
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 18px;
+    }
+
+    .stat-label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+
+        margin-bottom: 5px;
+    }
+
+    .stat-number {
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .stat-description {
+        color: #9ca3af;
+        font-size: 11px;
+        margin-top: 5px;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 12px;
+
+        font-size: 19px;
+    }
+
+    .icon-blue {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+
+    .icon-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+
+    .icon-green {
+        background: #ecfdf5;
+        color: #059669;
+    }
+
+    .icon-orange {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+
+    .icon-red {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .icon-yellow {
+        background: #fffbeb;
+        color: #d97706;
+    }
+
+
+    /* =========================================================
+       SECTION TITLES
+    ========================================================= */
+
+    .section-title {
+        font-weight: 700;
+        font-size: 15px;
+    }
+
+    .section-subtitle {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 2px;
+    }
+
+
+    /* =========================================================
+       FORM
+    ========================================================= */
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-control,
+    .form-select {
+        border-color: #dfe3e8;
+        border-radius: 9px;
+
+        min-height: 42px;
+
+        font-size: 13px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #60a5fa;
+
+        box-shadow:
+            0 0 0 .2rem rgba(37,99,235,.10);
+    }
+
+    textarea.form-control {
+        min-height: auto;
+    }
+
+    .btn {
+        border-radius: 9px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+
+    /* =========================================================
+       INDICADORES
+    ========================================================= */
+
+    .indicator-card {
+        padding: 18px;
+
+        border: 1px solid #edf0f3;
+
+        border-radius: 13px;
+
+        background: #fbfcfe;
+    }
+
+    .indicator-circle {
+        width: 105px;
+        height: 105px;
+
+        border-radius: 50%;
+
+        border: 8px solid #e5e7eb;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 23px;
+        font-weight: 800;
+
+        margin: 0 auto 12px;
+
+        background: white;
+
+        color: #1f2937;
+    }
+
+    .indicator-label {
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .indicator-help {
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 3px;
+    }
+
+    .mini-stat {
+        padding: 15px;
+
+        border-radius: 11px;
+
+        background: #f8fafc;
+    }
+
+    .mini-stat-number {
+        font-size: 25px;
+        font-weight: 800;
+    }
+
+
+    /* =========================================================
+       ATIVIDADES
+    ========================================================= */
+
+    .activity-card {
+        border: 1px solid #e8ebef;
+        border-radius: 12px;
+
+        margin-bottom: 12px;
+
+        background: white;
+
+        box-shadow: 0 2px 8px rgba(0,0,0,.035);
+
+        transition: box-shadow .2s ease, transform .2s ease;
+    }
+
+    .activity-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0,0,0,.06);
+    }
+
+    .priority-alta {
+        border-left: 5px solid #dc3545;
+    }
+
+    .priority-media {
+        border-left: 5px solid #f59e0b;
+    }
+
+    .priority-baixa {
+        border-left: 5px solid #198754;
+    }
+
+    .activity-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .activity-meta {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 5px;
+    }
+
+    .activity-description {
+        font-size: 13px;
+        color: #374151;
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin-top: 10px;
+    }
+
+    .deadline-box {
+        padding: 10px;
+        border-radius: 9px;
+        background: #f8fafc;
+    }
+
+    .deadline-label {
+        font-size: 11px;
+        color: #9ca3af;
+    }
+
+    .deadline-value {
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 3px;
+    }
+
+
+    /* =========================================================
+       EMPTY STATE
+    ========================================================= */
+
+    .empty-state {
+        text-align: center;
+        padding: 45px 20px;
+        color: var(--muted);
+    }
+
+    .empty-state i {
+        color: #22c55e;
+    }
+
+
+    /* =========================================================
+       CHAT
+    ========================================================= */
+
+    .chat-box {
+        height: 310px;
+
+        overflow-y: auto;
+
+        background: #f8fafc;
+
+        border: 1px solid #edf0f3;
+
+        border-radius: 11px;
+
+        padding: 14px;
+    }
+
+    .chat-message {
+        background: white;
+
+        border: 1px solid #e8ebef;
+
+        border-radius: 10px;
+
+        padding: 10px 12px;
+
+        margin-bottom: 9px;
+
+        box-shadow: 0 1px 4px rgba(0,0,0,.025);
+    }
+
+    .chat-user {
+        font-size: 12px;
+        font-weight: 700;
+        color: #2563eb;
+    }
+
+    .chat-text {
+        font-size: 13px;
+        color: #374151;
+        margin-top: 3px;
+        word-break: break-word;
+    }
+
+    .chat-time {
+        font-size: 10px;
+        color: #9ca3af;
+        margin-top: 4px;
+    }
+
+
+    /* =========================================================
+       RESPONSIVO
+    ========================================================= */
+
+    @media (max-width: 1100px) {
 
         .main {
-            margin-left: 250px;
-            padding: 25px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 225px;
+        }
+
+        .main {
+            margin-left: 225px;
+        }
+
+    }
+
+
+    @media (max-width: 900px) {
+
+        .sidebar {
+            position: relative;
+
+            width: 100%;
+            height: auto;
+
+            padding: 15px;
+        }
+
+        .brand {
+            padding-bottom: 15px;
+        }
+
+        .main {
+            margin-left: 0;
+            padding: 18px;
         }
 
         .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
         }
 
-        /* =========================
-           CARDS
-        ========================= */
-
-        .card-dashboard {
-            border: none;
-            border-radius: 14px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, .06);
+        .user-box {
+            width: 100%;
         }
 
-        .stat-card {
-            min-height: 125px;
-        }
+    }
 
-        .stat-number {
-            font-size: 30px;
-            font-weight: 700;
-        }
 
-        /* =========================
-           ATIVIDADES
-        ========================= */
+    @media (max-width: 576px) {
 
-        .activity-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
-            margin-bottom: 12px;
-        }
-
-        .priority-alta {
-            border-left: 5px solid #dc3545;
-        }
-
-        .priority-media {
-            border-left: 5px solid #ffc107;
-        }
-
-        .priority-baixa {
-            border-left: 5px solid #198754;
-        }
-
-        /* =========================
-           INDICADORES
-        ========================= */
-
-        .indicator-circle {
-            width: 95px;
-            height: 95px;
-            border-radius: 50%;
-            border: 8px solid #e5e7eb;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-
-            font-size: 22px;
-            font-weight: bold;
-
-            margin: auto;
-        }
-
-        /* =========================
-           CHAT
-        ========================= */
-
-        .chat-box {
-            height: 300px;
-            overflow-y: auto;
-            background: #f8fafc;
-            border-radius: 10px;
+        .main {
             padding: 12px;
         }
 
-        .chat-message {
-            background: white;
-            border-radius: 8px;
-            padding: 8px 10px;
-            margin-bottom: 8px;
+        .page-title {
+            font-size: 22px;
         }
 
-        /* =========================
-           RESPONSIVO
-        ========================= */
-
-        @media (max-width: 900px) {
-
-            .sidebar {
-                position: relative;
-                width: 100%;
-                height: auto;
-            }
-
-            .main {
-                margin-left: 0;
-            }
-
-            .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
+        .stat-number {
+            font-size: 25px;
         }
 
-    </style>
+        .indicator-circle {
+            width: 90px;
+            height: 90px;
+        }
+
+    }
+
+</style>
+
 
 </head>
 
-
 <body>
-
 
 <!-- =========================================================
      SIDEBAR
@@ -208,91 +728,120 @@
 
 <div class="sidebar">
 
-    <h4>
-        <i class="fa-solid fa-box"></i>
-        Almoxarifado
-    </h4>
 
+<div class="brand">
 
-    <a
-        href="{{ url_for('index') }}"
-        class="active"
-    >
-        <i class="fa-solid fa-house"></i>
-        Início
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-file-lines"></i>
-        Requisições
-    </a>
-
-
-    <a href="#">
+    <div class="brand-icon">
         <i class="fa-solid fa-boxes-stacked"></i>
-        Inventário
-    </a>
+    </div>
 
+    <div>
 
-    <a href="#">
-        <i class="fa-solid fa-truck-fast"></i>
-        Expedição
-    </a>
+        <div class="brand-title">
+            Almoxarifado
+        </div>
 
+        <div class="brand-subtitle">
+            PAINEL OPERACIONAL VALENET
+        </div>
 
-    <a href="#">
-        <i class="fa-solid fa-truck-ramp-box"></i>
-        Recebimento
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-warehouse"></i>
-        Estoque
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-users"></i>
-        Cadastros
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-arrows-rotate"></i>
-        Melhorias / PDCA
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-chart-line"></i>
-        Indicadores
-    </a>
-
-
-    <a href="{{ url_for('relatorios') }}">
-        <i class="fa-solid fa-chart-column"></i>
-        Relatórios
-    </a>
-
-
-    <a href="#">
-        <i class="fa-solid fa-gear"></i>
-        Configurações
-    </a>
-
-
-    <hr>
-
-
-    <a href="{{ url_for('logout') }}">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Sair
-    </a>
+    </div>
 
 </div>
 
+
+<div class="menu-label">
+    Principal
+</div>
+
+
+<a
+    href="{{ url_for('index') }}"
+    class="active"
+>
+    <i class="fa-solid fa-house"></i>
+    <span>Início</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-file-lines"></i>
+    <span>Requisições</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-boxes-stacked"></i>
+    <span>Inventário</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-truck-fast"></i>
+    <span>Expedição</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-truck-ramp-box"></i>
+    <span>Recebimento</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-warehouse"></i>
+    <span>Estoque</span>
+</a>
+
+
+<div class="menu-label">
+    Gestão
+</div>
+
+
+<a href="#">
+    <i class="fa-solid fa-users"></i>
+    <span>Cadastros</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-arrows-rotate"></i>
+    <span>Melhorias / PDCA</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Indicadores</span>
+</a>
+
+
+<a href="{{ url_for('relatorios') }}">
+    <i class="fa-solid fa-chart-column"></i>
+    <span>Relatórios</span>
+</a>
+
+
+<a href="#">
+    <i class="fa-solid fa-gear"></i>
+    <span>Configurações</span>
+</a>
+
+
+<hr class="sidebar-divider">
+
+
+<a
+    href="{{ url_for('logout') }}"
+    class="logout-link"
+>
+    <i class="fa-solid fa-right-from-bracket"></i>
+    <span>Sair</span>
+</a>
+
+
+</div>
 
 <!-- =========================================================
      CONTEÚDO PRINCIPAL
@@ -301,91 +850,102 @@
 <div class="main">
 
 
-    <!-- =====================================================
-         TOPO
-    ====================================================== -->
+<!-- =====================================================
+     TOPO
+====================================================== -->
 
-    <div class="topbar">
+<div class="topbar">
 
-        <div>
+    <div>
 
-            <h2 class="fw-bold mb-1">
-                Painel do Almoxarifado
-            </h2>
+        <h1 class="page-title">
+            Painel do Almoxarifado
+        </h1>
 
-            <span class="text-muted">
-                Acompanhamento operacional
-            </span>
-
-        </div>
-
-
-        <div>
-
-            <span class="text-muted">
-
-                Olá,
-                <strong>
-                    {{ session["usuario_atual"] }}
-                </strong>
-
-            </span>
-
+        <div class="page-subtitle">
+            Acompanhamento operacional
         </div>
 
     </div>
 
 
-    <!-- =====================================================
-         MENSAGENS FLASH
-    ====================================================== -->
+    <div class="user-box">
 
-    {% with mensagens = get_flashed_messages(
-        with_categories=true
-    ) %}
+        <div class="user-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
 
-        {% if mensagens %}
+        <div>
 
-            {% for categoria, mensagem in mensagens %}
+            <div class="user-label">
+                Usuário conectado
+            </div>
 
-                <div
-                    class="alert alert-{{ categoria }} alert-dismissible fade show"
-                    role="alert"
-                >
+            <div class="user-name">
 
-                    {{ mensagem }}
+                {{ session["usuario_atual"] }}
 
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="alert"
-                    ></button>
+            </div>
 
-                </div>
+        </div>
 
-            {% endfor %}
+    </div>
 
-        {% endif %}
-
-    {% endwith %}
+</div>
 
 
-    <!-- =====================================================
-         CARDS SUPERIORES
-    ====================================================== -->
+<!-- =====================================================
+     FLASH
+====================================================== -->
 
-    <div class="row g-3 mb-4">
+{% with mensagens = get_flashed_messages(
+    with_categories=true
+) %}
+
+    {% if mensagens %}
+
+        {% for categoria, mensagem in mensagens %}
+
+            <div
+                class="alert alert-{{ categoria }} alert-dismissible fade show"
+                role="alert"
+            >
+
+                {{ mensagem }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
 
 
-        <!-- REQUISIÇÕES -->
+<!-- =====================================================
+     CARDS SUPERIORES
+====================================================== -->
 
-        <div class="col-md-2">
+<div class="row g-3 mb-4">
 
-            <div class="card card-dashboard stat-card">
 
-                <div class="card-body">
+    <!-- REQUISIÇÕES -->
 
-                    <div class="text-muted">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+
+        <div class="card card-dashboard stat-card">
+
+            <div class="stat-card-body">
+
+                <div>
+
+                    <div class="stat-label">
                         Requisições
                     </div>
 
@@ -393,22 +953,34 @@
                         {{ total_req }}
                     </div>
 
+                    <div class="stat-description">
+                        Pendentes
+                    </div>
+
+                </div>
+
+                <div class="stat-icon icon-blue">
+                    <i class="fa-solid fa-file-lines"></i>
                 </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <!-- INVENTÁRIOS -->
 
-        <div class="col-md-2">
+    <!-- INVENTÁRIOS -->
 
-            <div class="card card-dashboard stat-card">
+    <div class="col-xl-2 col-md-4 col-sm-6">
 
-                <div class="card-body">
+        <div class="card card-dashboard stat-card">
 
-                    <div class="text-muted">
+            <div class="stat-card-body">
+
+                <div>
+
+                    <div class="stat-label">
                         Inventários
                     </div>
 
@@ -416,22 +988,34 @@
                         {{ inv_conc }}/{{ inv_total }}
                     </div>
 
+                    <div class="stat-description">
+                        Concluídos
+                    </div>
+
+                </div>
+
+                <div class="stat-icon icon-purple">
+                    <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <!-- EXPEDIÇÕES -->
 
-        <div class="col-md-2">
+    <!-- EXPEDIÇÕES -->
 
-            <div class="card card-dashboard stat-card">
+    <div class="col-xl-2 col-md-4 col-sm-6">
 
-                <div class="card-body">
+        <div class="card card-dashboard stat-card">
 
-                    <div class="text-muted">
+            <div class="stat-card-body">
+
+                <div>
+
+                    <div class="stat-label">
                         Expedições
                     </div>
 
@@ -439,22 +1023,34 @@
                         {{ exp_pend }}
                     </div>
 
+                    <div class="stat-description">
+                        Pendentes
+                    </div>
+
+                </div>
+
+                <div class="stat-icon icon-green">
+                    <i class="fa-solid fa-truck-fast"></i>
                 </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <!-- RECEBIMENTOS -->
 
-        <div class="col-md-2">
+    <!-- RECEBIMENTOS -->
 
-            <div class="card card-dashboard stat-card">
+    <div class="col-xl-2 col-md-4 col-sm-6">
 
-                <div class="card-body">
+        <div class="card card-dashboard stat-card">
 
-                    <div class="text-muted">
+            <div class="stat-card-body">
+
+                <div>
+
+                    <div class="stat-label">
                         Recebimentos
                     </div>
 
@@ -462,22 +1058,34 @@
                         {{ rec_pend }}
                     </div>
 
+                    <div class="stat-description">
+                        Pendentes
+                    </div>
+
+                </div>
+
+                <div class="stat-icon icon-orange">
+                    <i class="fa-solid fa-truck-ramp-box"></i>
                 </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <!-- OCORRÊNCIAS -->
 
-        <div class="col-md-2">
+    <!-- OCORRÊNCIAS -->
 
-            <div class="card card-dashboard stat-card">
+    <div class="col-xl-2 col-md-4 col-sm-6">
 
-                <div class="card-body">
+        <div class="card card-dashboard stat-card">
 
-                    <div class="text-muted">
+            <div class="stat-card-body">
+
+                <div>
+
+                    <div class="stat-label">
                         Ocorrências
                     </div>
 
@@ -485,27 +1093,39 @@
                         {{ total_oco }}
                     </div>
 
+                    <div class="stat-description">
+                        Prioridade alta
+                    </div>
+
+                </div>
+
+                <div class="stat-icon icon-red">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
 
             </div>
 
         </div>
 
+    </div>
 
-        <!-- ATRASADOS -->
 
-        <div class="col-md-2">
+    <!-- ATRASADOS -->
 
-            <a
-                href="{{ url_for('atrasados') }}"
-                class="text-decoration-none"
-            >
+    <div class="col-xl-2 col-md-4 col-sm-6">
 
-                <div class="card card-dashboard stat-card">
+        <a
+            href="{{ url_for('atrasados') }}"
+            class="text-decoration-none"
+        >
 
-                    <div class="card-body">
+            <div class="card card-dashboard stat-card">
 
-                        <div class="text-muted">
+                <div class="stat-card-body">
+
+                    <div>
+
+                        <div class="stat-label">
                             Atrasados
                         </div>
 
@@ -513,275 +1133,294 @@
                             {{ total_atrasados }}
                         </div>
 
+                        <div class="stat-description">
+                            Ver detalhes
+                        </div>
+
+                    </div>
+
+                    <div class="stat-icon icon-yellow">
+                        <i class="fa-solid fa-clock"></i>
                     </div>
 
                 </div>
 
-            </a>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         NOVA ATIVIDADE
-    ====================================================== -->
-
-    <div class="card card-dashboard mb-4">
-
-        <div class="card-header bg-white">
-
-            <strong>
-
-                <i class="fa-solid fa-plus"></i>
-
-                Nova Atividade
-
-            </strong>
-
-        </div>
-
-
-        <div class="card-body">
-
-            <form method="POST">
-
-                <div class="row g-3">
-
-
-                    <!-- REQUISIÇÃO -->
-
-                    <div class="col-md-3">
-
-                        <label class="form-label">
-                            Nº Requisição
-                        </label>
-
-                        <input
-                            type="text"
-                            name="num_requisicao"
-                            class="form-control"
-                        >
-
-                    </div>
-
-
-                    <!-- PRIORIDADE -->
-
-                    <div class="col-md-3">
-
-                        <label class="form-label">
-                            Prioridade
-                        </label>
-
-                        <select
-                            name="prioridade"
-                            class="form-select"
-                        >
-
-                            <option value="Baixa">
-                                Baixa
-                            </option>
-
-                            <option value="Média">
-                                Média
-                            </option>
-
-                            <option value="Alta">
-                                Alta
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- CATEGORIA -->
-
-                    <div class="col-md-3">
-
-                        <label class="form-label">
-                            Categoria
-                        </label>
-
-                        <select
-                            name="categoria"
-                            class="form-select"
-                        >
-
-                            <option value="Separação">
-                                Separação
-                            </option>
-
-                            <option value="Inventário">
-                                Inventário
-                            </option>
-
-                            <option value="Expedição">
-                                Expedição
-                            </option>
-
-                            <option value="Recebimento">
-                                Recebimento
-                            </option>
-
-                            <option value="Logística Reversa">
-                                Logística Reversa
-                            </option>
-
-                            <option value="Estoque">
-                                Estoque
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- RESPONSÁVEL -->
-
-                    <div class="col-md-3">
-
-                        <label class="form-label">
-                            Responsável
-                        </label>
-
-                        <select
-                            name="responsavel"
-                            class="form-select"
-                        >
-
-                            {% for usuario in usuarios %}
-
-                                <option
-                                    value="{{ usuario.nome }}"
-                                    {% if usuario.nome == session["usuario_atual"] %}
-                                        selected
-                                    {% endif %}
-                                >
-
-                                    {{ usuario.nome }}
-
-                                </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- ATIVIDADE -->
-
-                    <div class="col-md-6">
-
-                        <label class="form-label">
-                            Atividade
-                        </label>
-
-                        <input
-                            type="text"
-                            name="atividade"
-                            class="form-control"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- PRAZO -->
-
-                    <div class="col-md-6">
-
-                        <label class="form-label">
-                            Prazo
-                        </label>
-
-                        <input
-                            type="datetime-local"
-                            name="prazo"
-                            class="form-control"
-                        >
-
-                    </div>
-
-
-                    <!-- DESCRIÇÃO -->
-
-                    <div class="col-12">
-
-                        <label class="form-label">
-                            Descrição
-                        </label>
-
-                        <textarea
-                            name="descricao"
-                            class="form-control"
-                            rows="2"
-                        ></textarea>
-
-                    </div>
-
-
-                    <!-- BOTÃO -->
-
-                    <div class="col-12 text-end">
-
-                        <button
-                            type="submit"
-                            class="btn btn-primary"
-                        >
-
-                            <i class="fa-solid fa-plus"></i>
-
-                            Criar atividade
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         INDICADORES DO DIA
-    ====================================================== -->
-
-    <div class="card card-dashboard mb-4">
-
-        <div class="card-header bg-white">
-
-            <strong>
-
-                <i class="fa-solid fa-chart-pie"></i>
-
-                Indicadores do Dia
-
-            </strong>
-
-            <div class="text-muted small">
-                Acompanhamento operacional
             </div>
 
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     NOVA ATIVIDADE
+====================================================== -->
+
+<div class="card card-dashboard mb-4">
+
+    <div class="card-header bg-white">
+
+        <div class="section-title">
+
+            <i class="fa-solid fa-plus-circle text-primary me-1"></i>
+
+            Nova Atividade
+
         </div>
 
+        <div class="section-subtitle">
+            Registre uma nova atividade operacional
+        </div>
 
-        <div class="card-body">
+    </div>
 
 
-            <div class="row text-center g-4">
+    <div class="card-body p-4">
+
+        <form method="POST">
+
+            <div class="row g-3">
 
 
-                <!-- ATENDIDAS -->
+                <!-- REQUISIÇÃO -->
 
-                <div class="col-md-4">
+                <div class="col-lg-3 col-md-6">
+
+                    <label class="form-label">
+                        Nº Requisição
+                    </label>
+
+                    <input
+                        type="text"
+                        name="num_requisicao"
+                        class="form-control"
+                        placeholder="Ex.: 123456"
+                    >
+
+                </div>
+
+
+                <!-- PRIORIDADE -->
+
+                <div class="col-lg-3 col-md-6">
+
+                    <label class="form-label">
+                        Prioridade
+                    </label>
+
+                    <select
+                        name="prioridade"
+                        class="form-select"
+                    >
+
+                        <option value="Baixa">
+                            Baixa
+                        </option>
+
+                        <option value="Média">
+                            Média
+                        </option>
+
+                        <option value="Alta">
+                            Alta
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- CATEGORIA -->
+
+                <div class="col-lg-3 col-md-6">
+
+                    <label class="form-label">
+                        Categoria
+                    </label>
+
+                    <select
+                        name="categoria"
+                        class="form-select"
+                    >
+
+                        <option value="Separação">
+                            Separação
+                        </option>
+
+                        <option value="Inventário">
+                            Inventário
+                        </option>
+
+                        <option value="Expedição">
+                            Expedição
+                        </option>
+
+                        <option value="Recebimento">
+                            Recebimento
+                        </option>
+
+                        <option value="Logística Reversa">
+                            Logística Reversa
+                        </option>
+
+                        <option value="Estoque">
+                            Estoque
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- RESPONSÁVEL -->
+
+                <div class="col-lg-3 col-md-6">
+
+                    <label class="form-label">
+                        Responsável
+                    </label>
+
+                    <select
+                        name="responsavel"
+                        class="form-select"
+                    >
+
+                        {% for usuario in usuarios %}
+
+                            <option
+                                value="{{ usuario.nome }}"
+                                {% if usuario.nome == session["usuario_atual"] %}
+                                    selected
+                                {% endif %}
+                            >
+
+                                {{ usuario.nome }}
+
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <!-- ATIVIDADE -->
+
+                <div class="col-lg-6">
+
+                    <label class="form-label">
+                        Atividade
+                    </label>
+
+                    <input
+                        type="text"
+                        name="atividade"
+                        class="form-control"
+                        placeholder="Descreva a atividade"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PRAZO -->
+
+                <div class="col-lg-6">
+
+                    <label class="form-label">
+                        Prazo
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        name="prazo"
+                        class="form-control"
+                    >
+
+                </div>
+
+
+                <!-- DESCRIÇÃO -->
+
+                <div class="col-12">
+
+                    <label class="form-label">
+                        Descrição
+                    </label>
+
+                    <textarea
+                        name="descricao"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Informações adicionais..."
+                    ></textarea>
+
+                </div>
+
+
+                <!-- BOTÃO -->
+
+                <div class="col-12 text-end pt-1">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
+
+                        <i class="fa-solid fa-plus me-1"></i>
+
+                        Criar atividade
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     INDICADORES
+====================================================== -->
+
+<div class="card card-dashboard mb-4">
+
+    <div class="card-header bg-white">
+
+        <div class="section-title">
+
+            <i class="fa-solid fa-chart-pie text-primary me-1"></i>
+
+            Indicadores do Dia
+
+        </div>
+
+        <div class="section-subtitle">
+            Acompanhamento operacional
+        </div>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+
+        <div class="row g-3">
+
+
+            <!-- ATENDIDAS -->
+
+            <div class="col-md-4">
+
+                <div class="indicator-card text-center">
 
                     <div class="indicator-circle">
 
@@ -789,42 +1428,12 @@
 
                     </div>
 
-                    <div class="mt-2 fw-bold">
+                    <div class="indicator-label">
                         Atendidas
                     </div>
 
-                </div>
-
-
-                <!-- INVENTÁRIO -->
-
-                <div class="col-md-4">
-
-                    <div class="indicator-circle">
-
-                        {{ perc_inventario }}%
-
-                    </div>
-
-                    <div class="mt-2 fw-bold">
-                        Inventário
-                    </div>
-
-                </div>
-
-
-                <!-- EXPEDIÇÃO -->
-
-                <div class="col-md-4">
-
-                    <div class="indicator-circle">
-
-                        {{ perc_expedicao }}%
-
-                    </div>
-
-                    <div class="mt-2 fw-bold">
-                        Expedição
+                    <div class="indicator-help">
+                        Atividades concluídas
                     </div>
 
                 </div>
@@ -832,41 +1441,96 @@
             </div>
 
 
-            <hr>
+            <!-- INVENTÁRIO -->
+
+            <div class="col-md-4">
+
+                <div class="indicator-card text-center">
+
+                    <div class="indicator-circle">
+
+                        {{ perc_inventario }}%
+
+                    </div>
+
+                    <div class="indicator-label">
+                        Inventário
+                    </div>
+
+                    <div class="indicator-help">
+                        Inventários concluídos
+                    </div>
+
+                </div>
+
+            </div>
 
 
-            <div class="row text-center">
+            <!-- EXPEDIÇÃO -->
+
+            <div class="col-md-4">
+
+                <div class="indicator-card text-center">
+
+                    <div class="indicator-circle">
+
+                        {{ perc_expedicao }}%
+
+                    </div>
+
+                    <div class="indicator-label">
+                        Expedição
+                    </div>
+
+                    <div class="indicator-help">
+                        Expedições concluídas
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
 
 
-                <!-- CONCLUÍDAS -->
+        <div class="row g-3 mt-1">
 
-                <div class="col-md-6">
 
-                    <div class="fs-3 fw-bold">
+            <!-- CONCLUÍDAS -->
+
+            <div class="col-md-6">
+
+                <div class="mini-stat text-center">
+
+                    <div class="mini-stat-number text-success">
 
                         {{ atividades_concluidas }}
 
                     </div>
 
-                    <div class="text-muted">
-                        Atividades concluídas
+                    <div class="text-muted small">
+                        Atividades concluídas hoje
                     </div>
 
                 </div>
 
+            </div>
 
-                <!-- PENDENTES -->
 
-                <div class="col-md-6">
+            <!-- PENDENTES -->
 
-                    <div class="fs-3 fw-bold">
+            <div class="col-md-6">
+
+                <div class="mini-stat text-center">
+
+                    <div class="mini-stat-number text-warning">
 
                         {{ atividades_pendentes }}
 
                     </div>
 
-                    <div class="text-muted">
-                        Atividades pendentes
+                    <div class="text-muted small">
+                        Atividades pendentes hoje
                     </div>
 
                 </div>
@@ -877,173 +1541,186 @@
 
     </div>
 
+</div>
 
-    <!-- =====================================================
-         ATIVIDADES
-    ====================================================== -->
 
-    <div class="card card-dashboard mb-4">
+<!-- =====================================================
+     ATIVIDADES
+====================================================== -->
 
-        <div class="card-header bg-white">
+<div class="card card-dashboard mb-4">
 
-            <strong>
+    <div class="card-header bg-white">
 
-                <i class="fa-solid fa-list-check"></i>
+        <div class="section-title">
 
-                Atividades
+            <i class="fa-solid fa-list-check text-primary me-1"></i>
 
-            </strong>
+            Atividades
 
         </div>
 
+        <div class="section-subtitle">
+            Atividades pendentes e em andamento
+        </div>
 
-        <div class="card-body">
-
-
-            {% if atividades %}
-
-
-                {% for item in atividades %}
+    </div>
 
 
-                    <div
-                        class="
-                            card
-                            activity-card
-
-                            {% if item.prioridade == 'Alta' %}
-                                priority-alta
-                            {% elif item.prioridade == 'Média' %}
-                                priority-media
-                            {% else %}
-                                priority-baixa
-                            {% endif %}
-                        "
-                    >
+    <div class="card-body p-4">
 
 
-                        <div class="card-body">
+        {% if atividades %}
 
 
-                            <div class="row align-items-center">
+            {% for item in atividades %}
 
 
-                                <!-- INFORMAÇÕES -->
+                <div
+                    class="
+                        card
+                        activity-card
 
-                                <div class="col-md-7">
-
-
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-
-                                        <strong>
-
-                                            {{ item.atividade }}
-
-                                        </strong>
-
-
-                                        {% if item.prioridade == "Alta" %}
-
-                                            <span class="badge bg-danger">
-                                                Alta
-                                            </span>
-
-                                        {% elif item.prioridade == "Média" %}
-
-                                            <span class="badge bg-warning text-dark">
-                                                Média
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="badge bg-success">
-                                                Baixa
-                                            </span>
-
-                                        {% endif %}
-
-                                    </div>
+                        {% if item.prioridade == 'Alta' %}
+                            priority-alta
+                        {% elif item.prioridade == 'Média' %}
+                            priority-media
+                        {% else %}
+                            priority-baixa
+                        {% endif %}
+                    "
+                >
 
 
-                                    {% if item.num_requisicao %}
+                    <div class="card-body p-3">
 
-                                        <div class="small text-muted">
 
-                                            <i class="fa-solid fa-file-lines"></i>
+                        <div class="row align-items-center g-3">
 
-                                            Requisição:
 
-                                            <strong>
-                                                {{ item.num_requisicao }}
-                                            </strong>
+                            <!-- INFORMAÇÕES -->
 
-                                        </div>
+                            <div class="col-lg-7">
+
+
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                                    <span class="activity-title">
+
+                                        {{ item.atividade }}
+
+                                    </span>
+
+
+                                    {% if item.prioridade == "Alta" %}
+
+                                        <span class="badge bg-danger">
+                                            Alta
+                                        </span>
+
+                                    {% elif item.prioridade == "Média" %}
+
+                                        <span class="badge bg-warning text-dark">
+                                            Média
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-success">
+                                            Baixa
+                                        </span>
 
                                     {% endif %}
-
-
-                                    <div class="small text-muted">
-
-                                        <i class="fa-solid fa-layer-group"></i>
-
-                                        {{ item.categoria }}
-
-                                    </div>
-
-
-                                    <div class="small text-muted">
-
-                                        <i class="fa-solid fa-user"></i>
-
-                                        {{ item.responsavel }}
-
-                                    </div>
-
-
-                                    {% if item.descricao %}
-
-                                        <div class="mt-2">
-
-                                            {{ item.descricao }}
-
-                                        </div>
-
-                                    {% endif %}
-
 
                                 </div>
 
 
-                                <!-- PRAZO -->
+                                {% if item.num_requisicao %}
 
-                                <div class="col-md-2">
+                                    <div class="activity-meta">
 
-                                    <div class="small text-muted">
+                                        <i class="fa-solid fa-file-lines me-1"></i>
+
+                                        Requisição:
+
+                                        <strong>
+                                            {{ item.num_requisicao }}
+                                        </strong>
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                <div class="activity-meta">
+
+                                    <i class="fa-solid fa-layer-group me-1"></i>
+
+                                    {{ item.categoria }}
+
+                                </div>
+
+
+                                <div class="activity-meta">
+
+                                    <i class="fa-solid fa-user me-1"></i>
+
+                                    {{ item.responsavel }}
+
+                                </div>
+
+
+                                {% if item.descricao %}
+
+                                    <div class="activity-description">
+
+                                        {{ item.descricao }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                            </div>
+
+
+                            <!-- PRAZO -->
+
+                            <div class="col-lg-2">
+
+                                <div class="deadline-box">
+
+                                    <div class="deadline-label">
                                         Prazo
                                     </div>
 
-                                    <strong>
+                                    <div class="deadline-value">
 
                                         {{ item.prazo_formatado or "-" }}
 
-                                    </strong>
+                                    </div>
 
                                 </div>
 
+                            </div>
 
-                                <!-- AÇÕES -->
 
-                                <div class="col-md-3 text-end">
+                            <!-- AÇÕES -->
+
+                            <div class="col-lg-3 text-lg-end">
+
+
+                                <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
 
 
                                     <!-- EDITAR -->
 
                                     <a
                                         href="{{ url_for('editar_form', id=item.id) }}"
-                                        class="btn btn-sm btn-outline-primary mb-1"
+                                        class="btn btn-sm btn-outline-primary"
                                     >
 
-                                        <i class="fa-solid fa-pen"></i>
+                                        <i class="fa-solid fa-pen me-1"></i>
 
                                         Editar
 
@@ -1056,10 +1733,10 @@
 
                                         <a
                                             href="{{ url_for('concluir', id=item.id) }}"
-                                            class="btn btn-sm btn-success mb-1"
+                                            class="btn btn-sm btn-success"
                                         >
 
-                                            <i class="fa-solid fa-check"></i>
+                                            <i class="fa-solid fa-check me-1"></i>
 
                                             Concluir
 
@@ -1070,10 +1747,120 @@
 
                                 </div>
 
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+            {% endfor %}
+
+
+        {% else %}
+
+
+            <div class="empty-state">
+
+                <i
+                    class="fa-solid fa-circle-check fa-3x mb-3"
+                ></i>
+
+                <div class="fw-bold mb-1">
+                    Nenhuma atividade pendente
+                </div>
+
+                <div class="small">
+                    Quando uma nova atividade for criada, ela aparecerá aqui.
+                </div>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     CHAT
+====================================================== -->
+
+<div class="card card-dashboard">
+
+
+    <div class="card-header bg-white">
+
+        <div class="section-title">
+
+            <i class="fa-solid fa-comments text-primary me-1"></i>
+
+            Chat da Equipe
+
+        </div>
+
+        <div class="section-subtitle">
+            Comunicação rápida do almoxarifado
+        </div>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+
+        <div class="chat-box mb-3">
+
+
+            {% if chat %}
+
+
+                {% for mensagem in chat %}
+
+
+                    <div class="chat-message">
+
+
+                        {% if mensagem.usuario %}
+
+                            <div class="chat-user">
+
+                                <i class="fa-solid fa-user me-1"></i>
+
+                                {{ mensagem.usuario }}
 
                             </div>
 
-                        </div>
+                        {% endif %}
+
+
+                        {% if mensagem.mensagem %}
+
+                            <div class="chat-text">
+
+                                {{ mensagem.mensagem }}
+
+                            </div>
+
+                        {% endif %}
+
+
+                        {% if mensagem.criado_em %}
+
+                            <div class="chat-time">
+
+                                {{ mensagem.criado_em }}
+
+                            </div>
+
+                        {% endif %}
+
 
                     </div>
 
@@ -1084,14 +1871,12 @@
             {% else %}
 
 
-                <div class="text-center text-muted py-4">
+                <div class="text-muted text-center py-5">
 
-                    <i
-                        class="fa-solid fa-circle-check fa-2x mb-2"
-                    ></i>
+                    <i class="fa-regular fa-comments fa-2x mb-2"></i>
 
                     <div>
-                        Nenhuma atividade pendente.
+                        Nenhuma mensagem ainda.
                     </div>
 
                 </div>
@@ -1102,137 +1887,61 @@
 
         </div>
 
-    </div>
+
+        <form method="POST">
 
 
-    <!-- =====================================================
-         CHAT DA EQUIPE
-    ====================================================== -->
-
-    <div class="card card-dashboard">
-
-
-        <div class="card-header bg-white">
-
-            <strong>
-
-                <i class="fa-solid fa-comments"></i>
-
-                Chat da Equipe
-
-            </strong>
-
-        </div>
+            <input
+                type="hidden"
+                name="acao_chat"
+                value="enviar"
+            >
 
 
-        <div class="card-body">
+            <div class="input-group">
 
 
-            <div class="chat-box mb-3">
+                <input
+                    type="text"
+                    name="mensagem"
+                    class="form-control"
+                    placeholder="Digite uma mensagem..."
+                    required
+                >
 
 
-                {% if chat %}
+                <button
+                    type="submit"
+                    class="btn btn-primary px-4"
+                >
 
+                    <i class="fa-solid fa-paper-plane me-1"></i>
 
-                    {% for mensagem in chat %}
+                    Enviar
 
-
-                        <div class="chat-message">
-
-
-                            <strong>
-
-                                {{ mensagem.usuario }}
-
-                            </strong>
-
-
-                            <div>
-
-                                {{ mensagem.mensagem }}
-
-                            </div>
-
-
-                        </div>
-
-
-                    {% endfor %}
-
-
-                {% else %}
-
-
-                    <div class="text-muted text-center">
-
-                        Nenhuma mensagem ainda.
-
-                    </div>
-
-
-                {% endif %}
+                </button>
 
 
             </div>
 
 
-            <form method="POST">
+        </form>
 
-
-                <input
-                    type="hidden"
-                    name="acao_chat"
-                    value="enviar"
-                >
-
-
-                <div class="input-group">
-
-
-                    <input
-                        type="text"
-                        name="mensagem"
-                        class="form-control"
-                        placeholder="Digite uma mensagem..."
-                        required
-                    >
-
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary"
-                    >
-
-                        <i class="fa-solid fa-paper-plane"></i>
-
-                        Enviar
-
-                    </button>
-
-
-                </div>
-
-
-            </form>
-
-
-        </div>
 
     </div>
-
 
 </div>
 
 
+</div>
+
 <!-- =========================================================
      BOOTSTRAP JS
-     Não temos script.js separado.
 ========================================================= -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
 ></script>
-
 
 </body>
 

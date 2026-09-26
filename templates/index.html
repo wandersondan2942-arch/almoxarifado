@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Painel Operacional Valenet</title>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Almoxarifado Valenet | Painel Operacional</title>
 
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -16,167 +22,2318 @@
         rel="stylesheet"
     >
 
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
-    >
+    <style>
+
+        /* =====================================================
+           BASE
+        ===================================================== */
+
+        :root {
+            --blue: #1769e0;
+            --blue-dark: #0f4fb8;
+            --blue-light: #eaf2ff;
+
+            --green: #16a34a;
+            --green-light: #ecfdf3;
+
+            --orange: #ea580c;
+            --orange-light: #fff4eb;
+
+            --red: #dc2626;
+            --red-light: #fef2f2;
+
+            --purple: #7c3aed;
+            --purple-light: #f4efff;
+
+            --yellow: #ca8a04;
+            --yellow-light: #fffbea;
+
+            --navy: #101828;
+            --navy-2: #172033;
+
+            --background: #f4f6fa;
+            --card: #ffffff;
+
+            --text: #182230;
+            --muted: #667085;
+            --muted-2: #98a2b3;
+
+            --border: #e4e7ec;
+
+            --shadow:
+                0 2px 8px rgba(16,24,40,.04);
+
+            --shadow-lg:
+                0 12px 30px rgba(16,24,40,.08);
+        }
+
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            background: var(--background);
+
+            color: var(--text);
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            font-size: 14px;
+
+        }
+
+
+        a {
+            text-decoration: none;
+        }
+
+
+        /* =====================================================
+           LAYOUT
+        ===================================================== */
+
+        .app {
+
+            min-height: 100vh;
+
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+
+            position: fixed;
+
+            top: 0;
+            left: 0;
+            bottom: 0;
+
+            width: 255px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #101828 0%,
+                    #0b1220 100%
+                );
+
+            color: #fff;
+
+            z-index: 1000;
+
+            display: flex;
+
+            flex-direction: column;
+
+            box-shadow:
+                8px 0 30px rgba(16,24,40,.08);
+
+        }
+
+
+        .brand {
+
+            height: 82px;
+
+            padding: 18px 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,.07);
+
+        }
+
+
+        .brand-logo {
+
+            width: 43px;
+            height: 43px;
+
+            border-radius: 12px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #1769e0,
+                    #3b82f6
+                );
+
+            color: #fff;
+
+            font-size: 19px;
+
+            box-shadow:
+                0 8px 20px rgba(23,105,224,.30);
+
+        }
+
+
+        .brand-name {
+
+            display: flex;
+
+            flex-direction: column;
+
+        }
+
+
+        .brand-name strong {
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            color: #fff;
+
+        }
+
+
+        .brand-name span {
+
+            margin-top: 2px;
+
+            color: #60a5fa;
+
+            font-size: 10px;
+
+            font-weight: 800;
+
+            letter-spacing: 2px;
+
+        }
+
+
+        .menu {
+
+            padding: 20px 12px;
+
+            overflow-y: auto;
+
+        }
+
+
+        .menu-section {
+
+            margin:
+                0 10px 9px;
+
+            color:
+                #667085;
+
+            font-size: 9px;
+
+            font-weight: 800;
+
+            letter-spacing: 1.3px;
+
+        }
+
+
+        .menu-section:not(:first-child) {
+
+            margin-top: 22px;
+
+        }
+
+
+        .menu-link {
+
+            position: relative;
+
+            height: 43px;
+
+            margin-bottom: 4px;
+
+            padding: 0 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            border-radius: 9px;
+
+            color: #98a2b3;
+
+            transition:
+                .18s ease;
+
+        }
+
+
+        .menu-link:hover {
+
+            background:
+                rgba(255,255,255,.055);
+
+            color: #fff;
+
+        }
+
+
+        .menu-link.active {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(23,105,224,.25),
+                    rgba(23,105,224,.08)
+                );
+
+            color: #fff;
+
+        }
+
+
+        .menu-link.active::before {
+
+            content: "";
+
+            position: absolute;
+
+            left: -12px;
+
+            top: 8px;
+
+            bottom: 8px;
+
+            width: 3px;
+
+            border-radius:
+                0 4px 4px 0;
+
+            background:
+                #3b82f6;
+
+        }
+
+
+        .menu-icon {
+
+            width: 25px;
+
+            text-align: center;
+
+            font-size: 14px;
+
+        }
+
+
+        .menu-link.active .menu-icon {
+
+            color: #60a5fa;
+
+        }
+
+
+        .sidebar-user {
+
+            margin-top: auto;
+
+            padding: 14px;
+
+            border-top:
+                1px solid rgba(255,255,255,.07);
+
+        }
+
+
+        .user-card {
+
+            padding: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            border-radius: 10px;
+
+            background:
+                rgba(255,255,255,.04);
+
+        }
+
+
+        .user-avatar {
+
+            width: 35px;
+            height: 35px;
+
+            flex-shrink: 0;
+
+            border-radius: 9px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            background:
+                rgba(23,105,224,.25);
+
+            color: #7db2ff;
+
+        }
+
+
+        .user-data {
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .user-data strong {
+
+            display: block;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+            color: #fff;
+
+            font-size: 11px;
+
+        }
+
+
+        .user-data span {
+
+            display: block;
+
+            margin-top: 2px;
+
+            color: #667085;
+
+            font-size: 9px;
+
+        }
+
+
+        .logout {
+
+            color: #667085;
+
+            font-size: 13px;
+
+        }
+
+
+        .logout:hover {
+
+            color: #f87171;
+
+        }
+
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+
+            margin-left: 255px;
+
+            min-height: 100vh;
+
+            padding: 0 30px 30px;
+
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .top-header {
+
+            min-height: 105px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 20px;
+
+        }
+
+
+        .breadcrumb {
+
+            margin: 0 0 5px;
+
+            font-size: 11px;
+
+            color: var(--muted-2);
+
+        }
+
+
+        .breadcrumb strong {
+
+            color: var(--blue);
+
+            font-weight: 600;
+
+        }
+
+
+        .page-title {
+
+            margin: 0;
+
+            font-size: 25px;
+
+            font-weight: 750;
+
+            letter-spacing: -.6px;
+
+            color: var(--navy);
+
+        }
+
+
+        .page-subtitle {
+
+            margin: 4px 0 0;
+
+            color: var(--muted);
+
+            font-size: 12px;
+
+        }
+
+
+        .header-right {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .online {
+
+            height: 35px;
+
+            padding: 0 11px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 9px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+        }
+
+
+        .online-dot {
+
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #22c55e;
+
+            box-shadow:
+                0 0 0 3px rgba(34,197,94,.12);
+
+        }
+
+
+        .date-box {
+
+            height: 35px;
+
+            padding: 0 11px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 9px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+        }
+
+
+        /* =====================================================
+           FLASH
+        ===================================================== */
+
+        .flash-area {
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .flash-area .alert {
+
+            border: 0;
+
+            border-radius: 10px;
+
+            box-shadow: var(--shadow);
+
+            font-size: 12px;
+
+        }
+
+
+        /* =====================================================
+           CARDS
+        ===================================================== */
+
+        .cards {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(6, 1fr);
+
+            gap: 13px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .card {
+
+            position: relative;
+
+            min-height: 150px;
+
+            padding: 17px;
+
+            overflow: hidden;
+
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 14px;
+
+            box-shadow: var(--shadow);
+
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+
+        }
+
+
+        .card:hover {
+
+            transform:
+                translateY(-3px);
+
+            box-shadow:
+                var(--shadow-lg);
+
+        }
+
+
+        .card-top {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+        }
+
+
+        .card-icon {
+
+            width: 38px;
+            height: 38px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            font-size: 15px;
+
+        }
+
+
+        .card-link {
+
+            color: #c0c7d1;
+
+            font-size: 10px;
+
+        }
+
+
+        .card-number {
+
+            margin-top: 17px;
+
+            color: var(--navy);
+
+            font-size: 27px;
+
+            line-height: 1;
+
+            font-weight: 750;
+
+        }
+
+
+        .card-title {
+
+            margin-top: 8px;
+
+            color: var(--text);
+
+            font-size: 11px;
+
+            font-weight: 650;
+
+        }
+
+
+        .card-desc {
+
+            margin-top: 4px;
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+        }
+
+
+        .blue .card-icon {
+            color: var(--blue);
+            background: var(--blue-light);
+        }
+
+        .purple .card-icon {
+            color: var(--purple);
+            background: var(--purple-light);
+        }
+
+        .orange .card-icon {
+            color: var(--orange);
+            background: var(--orange-light);
+        }
+
+        .green .card-icon {
+            color: var(--green);
+            background: var(--green-light);
+        }
+
+        .yellow .card-icon {
+            color: var(--yellow);
+            background: var(--yellow-light);
+        }
+
+        .red .card-icon {
+            color: var(--red);
+            background: var(--red-light);
+        }
+
+
+        /* =====================================================
+           GRID PRINCIPAL
+        ===================================================== */
+
+        .dashboard-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                1.6fr 1fr;
+
+            gap: 18px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .panel {
+
+            background: #fff;
+
+            border:
+                1px solid var(--border);
+
+            border-radius: 14px;
+
+            box-shadow: var(--shadow);
+
+            overflow: hidden;
+
+        }
+
+
+        .panel-header {
+
+            padding:
+                18px 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            border-bottom:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .panel-header-left {
+
+            display: flex;
+
+            flex-direction: column;
+
+        }
+
+
+        .eyebrow {
+
+            margin-bottom: 4px;
+
+            color: var(--blue);
+
+            font-size: 8px;
+
+            font-weight: 800;
+
+            letter-spacing: 1.3px;
+
+        }
+
+
+        .panel-title {
+
+            margin: 0;
+
+            color: var(--navy);
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+        }
+
+
+        .panel-subtitle {
+
+            margin: 3px 0 0;
+
+            color: var(--muted-2);
+
+            font-size: 10px;
+
+        }
+
+
+        .panel-link {
+
+            color: var(--blue);
+
+            font-size: 10px;
+
+            font-weight: 600;
+
+        }
+
+
+        /* =====================================================
+           INDICADORES
+        ===================================================== */
+
+        .indicators {
+
+            padding:
+                8px 20px 18px;
+
+        }
+
+
+        .indicator {
+
+            padding: 12px 0;
+
+        }
+
+
+        .indicator + .indicator {
+
+            border-top:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .indicator-head {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .indicator-label {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+        }
+
+
+        .indicator-mini {
+
+            width: 26px;
+            height: 26px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            font-size: 10px;
+
+        }
+
+
+        .indicator-value {
+
+            font-size: 11px;
+
+            font-weight: 750;
+
+            color: var(--navy);
+
+        }
+
+
+        .progress {
+
+            height: 7px;
+
+            overflow: hidden;
+
+            border-radius: 10px;
+
+            background: #edf0f4;
+
+        }
+
+
+        .progress-bar {
+
+            height: 100%;
+
+            border-radius: 10px;
+
+        }
+
+
+        .progress-blue {
+            background: var(--blue);
+        }
+
+        .progress-purple {
+            background: var(--purple);
+        }
+
+        .progress-orange {
+            background: var(--orange);
+        }
+
+
+        /* =====================================================
+           RESUMO
+        ===================================================== */
+
+        .summary {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(2, 1fr);
+
+        }
+
+
+        .summary-item {
+
+            padding: 20px;
+
+            border-bottom:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .summary-item:nth-child(odd) {
+
+            border-right:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .summary-item:nth-child(3),
+        .summary-item:nth-child(4) {
+
+            border-bottom: 0;
+
+        }
+
+
+        .summary-number {
+
+            font-size: 25px;
+
+            font-weight: 750;
+
+            line-height: 1;
+
+        }
+
+
+        .summary-label {
+
+            margin-top: 7px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+        }
+
+
+        .summary-green {
+            color: var(--green);
+        }
+
+        .summary-yellow {
+            color: var(--yellow);
+        }
+
+        .summary-dark {
+            color: var(--navy);
+        }
+
+        .summary-blue {
+            color: var(--blue);
+        }
+
+
+        /* =====================================================
+           FORMULÁRIO
+        ===================================================== */
+
+        .activity-form {
+
+            padding: 20px;
+
+        }
+
+
+        .form-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 14px;
+
+        }
+
+
+        .field-wide {
+
+            grid-column:
+                span 2;
+
+        }
+
+
+        .field-full {
+
+            grid-column:
+                1 / -1;
+
+        }
+
+
+        .field label {
+
+            display: block;
+
+            margin-bottom: 6px;
+
+            color: #344054;
+
+            font-size: 10px;
+
+            font-weight: 650;
+
+        }
+
+
+        .form-control,
+        .form-select {
+
+            min-height: 40px;
+
+            border:
+                1px solid #d9dee7;
+
+            border-radius: 8px;
+
+            font-size: 11px;
+
+            color: var(--text);
+
+            box-shadow: none;
+
+        }
+
+
+        .form-control:focus,
+        .form-select:focus {
+
+            border-color:
+                #84adf5;
+
+            box-shadow:
+                0 0 0 3px rgba(23,105,224,.08);
+
+        }
+
+
+        textarea.form-control {
+
+            min-height: 75px;
+
+            resize: vertical;
+
+        }
+
+
+        .form-bottom {
+
+            margin-top: 18px;
+
+            padding-top: 15px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            border-top:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .form-info {
+
+            color: var(--muted-2);
+
+            font-size: 9px;
+
+        }
+
+
+        .form-button {
+
+            min-height: 39px;
+
+            padding:
+                0 18px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            border: 0;
+
+            border-radius: 8px;
+
+            background:
+                var(--blue);
+
+            color: #fff;
+
+            font-size: 11px;
+
+            font-weight: 650;
+
+            transition:
+                .18s ease;
+
+        }
+
+
+        .form-button:hover {
+
+            background:
+                var(--blue-dark);
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        /* =====================================================
+           ATIVIDADES + CHAT
+        ===================================================== */
+
+        .bottom-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1.7fr)
+                minmax(320px, .8fr);
+
+            gap: 18px;
+
+        }
+
+
+        /* TABLE */
+
+        .table-wrap {
+
+            overflow-x: auto;
+
+        }
+
+
+        .table {
+
+            margin: 0;
+
+            min-width: 720px;
+
+        }
+
+
+        .table thead th {
+
+            padding:
+                11px 13px;
+
+            background:
+                #fafbfc;
+
+            border-bottom:
+                1px solid var(--border);
+
+            color:
+                #667085;
+
+            font-size: 8px;
+
+            font-weight: 800;
+
+            letter-spacing: .5px;
+
+            text-transform: uppercase;
+
+        }
+
+
+        .table tbody td {
+
+            padding:
+                12px 13px;
+
+            border-bottom:
+                1px solid #f0f2f5;
+
+            color:
+                var(--muted);
+
+            font-size: 10px;
+
+            vertical-align: middle;
+
+        }
+
+
+        .table tbody tr:last-child td {
+
+            border-bottom: 0;
+
+        }
+
+
+        .req-number {
+
+            padding:
+                5px 7px;
+
+            border-radius: 5px;
+
+            background:
+                var(--blue-light);
+
+            color:
+                var(--blue);
+
+            font-weight: 700;
+
+            font-size: 9px;
+
+        }
+
+
+        .activity-name strong {
+
+            display: block;
+
+            color: var(--text);
+
+            font-size: 10px;
+
+        }
+
+
+        .activity-name small {
+
+            display: block;
+
+            max-width: 230px;
+
+            margin-top: 3px;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+            color: var(--muted-2);
+
+            font-size: 8px;
+
+        }
+
+
+        .category {
+
+            padding:
+                4px 7px;
+
+            border:
+                1px solid #e4e7ec;
+
+            border-radius: 5px;
+
+            background:
+                #f8fafc;
+
+            color:
+                #475467;
+
+            font-size: 8px;
+
+        }
+
+
+        .responsible {
+
+            white-space: nowrap;
+
+            color:
+                #475467;
+
+        }
+
+
+        .mini-user {
+
+            display: inline-flex;
+
+            width: 24px;
+            height: 24px;
+
+            margin-right: 5px;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 7px;
+
+            background:
+                #f2f4f7;
+
+            color:
+                #667085;
+
+            font-size: 8px;
+
+        }
+
+
+        /* STATUS */
+
+        .status {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            padding:
+                5px 8px;
+
+            border-radius: 20px;
+
+            font-size: 8px;
+
+            font-weight: 650;
+
+            white-space: nowrap;
+
+        }
+
+
+        .status i {
+
+            font-size: 6px;
+
+        }
+
+
+        .status-pendente {
+
+            background: #fffbea;
+
+            color: #a16207;
+
+        }
+
+
+        .status-andamento {
+
+            background: #eff6ff;
+
+            color: #1d4ed8;
+
+        }
+
+
+        .status-concluido {
+
+            background: #ecfdf3;
+
+            color: #15803d;
+
+        }
+
+
+        .status-arquivada {
+
+            background: #f2f4f7;
+
+            color: #475467;
+
+        }
+
+
+        /* ACTIONS */
+
+        .actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 4px;
+
+        }
+
+
+        .action {
+
+            width: 27px;
+            height: 27px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 7px;
+
+            font-size: 9px;
+
+        }
+
+
+        .action-edit {
+
+            color:
+                var(--blue);
+
+            background:
+                var(--blue-light);
+
+        }
+
+
+        .action-finish {
+
+            color:
+                var(--green);
+
+            background:
+                var(--green-light);
+
+        }
+
+
+        .action-done {
+
+            color:
+                var(--green);
+
+            background:
+                var(--green-light);
+
+        }
+
+
+        .action-archive {
+
+            color:
+                #667085;
+
+            background:
+                #f2f4f7;
+
+        }
+
+
+        /* =====================================================
+           CHAT
+        ===================================================== */
+
+        .chat {
+
+            display: flex;
+
+            flex-direction: column;
+
+        }
+
+
+        .chat-messages {
+
+            height: 340px;
+
+            padding: 15px;
+
+            overflow-y: auto;
+
+        }
+
+
+        .message {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 8px;
+
+            margin-bottom: 14px;
+
+        }
+
+
+        .message-avatar {
+
+            width: 28px;
+            height: 28px;
+
+            flex-shrink: 0;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 8px;
+
+            background:
+                var(--blue-light);
+
+            color:
+                var(--blue);
+
+            font-size: 9px;
+
+        }
+
+
+        .message-content {
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .message-head {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 8px;
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .message-head strong {
+
+            color: var(--text);
+
+            font-size: 9px;
+
+        }
+
+
+        .message-head span {
+
+            color: var(--muted-2);
+
+            font-size: 7px;
+
+        }
+
+
+        .bubble {
+
+            display: inline-block;
+
+            max-width: 100%;
+
+            padding:
+                7px 9px;
+
+            border-radius:
+                4px 9px 9px 9px;
+
+            background:
+                #f8fafc;
+
+            color:
+                #475467;
+
+            font-size: 9px;
+
+            line-height: 1.45;
+
+        }
+
+
+        .chat-empty {
+
+            height: 100%;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            color: var(--muted-2);
+
+        }
+
+
+        .chat-empty i {
+
+            margin-bottom: 10px;
+
+            font-size: 25px;
+
+            color:
+                #cbd5e1;
+
+        }
+
+
+        .chat-empty strong {
+
+            color:
+                #667085;
+
+            font-size: 10px;
+
+        }
+
+
+        .chat-empty span {
+
+            margin-top: 3px;
+
+            font-size: 8px;
+
+        }
+
+
+        .chat-form {
+
+            padding: 11px;
+
+            border-top:
+                1px solid #f0f2f5;
+
+        }
+
+
+        .chat-input-box {
+
+            display: flex;
+
+            gap: 5px;
+
+            padding: 3px;
+
+            border:
+                1px solid #d9dee7;
+
+            border-radius: 8px;
+
+        }
+
+
+        .chat-input {
+
+            min-width: 0;
+
+            flex: 1;
+
+            height: 31px;
+
+            padding: 0 8px;
+
+            border: 0;
+
+            outline: 0;
+
+            font-size: 9px;
+
+        }
+
+
+        .chat-send {
+
+            width: 32px;
+            height: 31px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            border: 0;
+
+            border-radius: 6px;
+
+            background:
+                var(--blue);
+
+            color: #fff;
+
+        }
+
+
+        /* =====================================================
+           EMPTY
+        ===================================================== */
+
+        .empty {
+
+            padding:
+                40px 15px;
+
+            text-align: center;
+
+            color:
+                var(--muted-2);
+
+        }
+
+
+        .empty i {
+
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 24px;
+
+        }
+
+
+        .empty strong {
+
+            display: block;
+
+            color:
+                #667085;
+
+            font-size: 10px;
+
+        }
+
+
+        .empty span {
+
+            display: block;
+
+            margin-top: 3px;
+
+            font-size: 8px;
+
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        footer {
+
+            margin-top: 22px;
+
+            padding:
+                15px 2px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            color:
+                var(--muted-2);
+
+            border-top:
+                1px solid var(--border);
+
+            font-size: 9px;
+
+        }
+
+
+        /* =====================================================
+           RESPONSIVO
+        ===================================================== */
+
+        @media (max-width: 1400px) {
+
+            .cards {
+
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+        }
+
+
+        @media (max-width: 1050px) {
+
+            .dashboard-grid,
+            .bottom-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+
+
+        @media (max-width: 850px) {
+
+            .sidebar {
+
+                width: 70px;
+
+            }
+
+
+            .main {
+
+                margin-left: 70px;
+
+            }
+
+
+            .brand {
+
+                justify-content:
+                    center;
+
+                padding:
+                    15px 8px;
+
+            }
+
+
+            .brand-name,
+            .menu-section,
+            .menu-link span,
+            .user-data,
+            .logout {
+
+                display:
+                    none;
+
+            }
+
+
+            .menu-link {
+
+                justify-content:
+                    center;
+
+                padding:
+                    0;
+
+            }
+
+
+            .cards {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+
+            .form-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+
+            .field-wide {
+
+                grid-column:
+                    span 2;
+
+            }
+
+        }
+
+
+        @media (max-width: 600px) {
+
+            .main {
+
+                padding:
+                    0 12px 20px;
+
+            }
+
+
+            .top-header {
+
+                min-height:
+                    90px;
+
+            }
+
+
+            .header-right {
+
+                display:
+                    none;
+
+            }
+
+
+            .cards {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .form-grid {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .field-wide,
+            .field-full {
+
+                grid-column:
+                    auto;
+
+            }
+
+
+            .form-bottom {
+
+                align-items:
+                    stretch;
+
+                flex-direction:
+                    column;
+
+            }
+
+
+            .form-button {
+
+                justify-content:
+                    center;
+
+            }
+
+
+            footer {
+
+                flex-direction:
+                    column;
+
+                gap: 5px;
+
+            }
+
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
-<div class="app-container">
 
-    <!-- =========================================================
+<div class="app">
+
+
+    <!-- =====================================================
          SIDEBAR
-    ========================================================== -->
+    ====================================================== -->
+
     <aside class="sidebar">
 
-        <div class="sidebar-brand">
 
-            <div class="brand-icon">
+        <div class="brand">
+
+            <div class="brand-logo">
+
                 <i class="fa-solid fa-boxes-stacked"></i>
+
             </div>
 
-            <div class="brand-text">
+            <div class="brand-name">
+
                 <strong>Almoxarifado</strong>
+
                 <span>VALENET</span>
+
             </div>
 
         </div>
 
-        <div class="sidebar-divider"></div>
 
-        <div class="menu-title">
-            OPERAÇÃO
-        </div>
+        <nav class="menu">
 
-        <nav class="sidebar-menu">
 
-            <a href="{{ url_for('index') }}"
-               class="menu-item active">
+            <div class="menu-section">
+                OPERAÇÃO
+            </div>
+
+
+            <a
+                href="{{ url_for('index') }}"
+                class="menu-link active"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-house"></i>
                 </span>
 
                 <span>Painel</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Requisições') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Requisições') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-clipboard-list"></i>
                 </span>
 
                 <span>Requisições</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Inventário') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Inventário') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-boxes-stacked"></i>
                 </span>
 
                 <span>Inventário</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Expedição') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Expedição') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-truck-fast"></i>
                 </span>
 
                 <span>Expedição</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Recebimento') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Recebimento') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-dolly"></i>
                 </span>
 
                 <span>Recebimento</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Estoque') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Estoque') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-warehouse"></i>
                 </span>
 
                 <span>Estoque</span>
+
             </a>
 
-            <div class="menu-title menu-title-space">
+
+            <div class="menu-section">
                 GESTÃO
             </div>
 
-            <a href="{{ url_for('modulo', nome='Cadastros') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Cadastros') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-users"></i>
                 </span>
 
                 <span>Cadastros</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-lightbulb"></i>
                 </span>
 
                 <span>Melhorias / PDCA</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Indicadores') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Indicadores') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-chart-line"></i>
                 </span>
 
                 <span>Indicadores</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Relatórios') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Relatórios') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-file-lines"></i>
                 </span>
 
                 <span>Relatórios</span>
+
             </a>
 
-            <a href="{{ url_for('modulo', nome='Configurações') }}"
-               class="menu-item">
+
+            <a
+                href="{{ url_for('modulo', nome='Configurações') }}"
+                class="menu-link"
+            >
 
                 <span class="menu-icon">
                     <i class="fa-solid fa-gear"></i>
                 </span>
 
                 <span>Configurações</span>
+
             </a>
+
 
         </nav>
 
-        <div class="sidebar-bottom">
 
-            <div class="user-box">
+        <div class="sidebar-user">
+
+            <div class="user-card">
 
                 <div class="user-avatar">
+
                     <i class="fa-solid fa-user"></i>
+
                 </div>
 
-                <div class="user-info">
+
+                <div class="user-data">
 
                     <strong>
                         {{ session.get('usuario_atual', 'Usuário') }}
@@ -188,9 +2345,12 @@
 
                 </div>
 
-                <a href="{{ url_for('logout') }}"
-                   class="logout-button"
-                   title="Sair">
+
+                <a
+                    href="{{ url_for('logout') }}"
+                    class="logout"
+                    title="Sair"
+                >
 
                     <i class="fa-solid fa-right-from-bracket"></i>
 
@@ -200,46 +2360,64 @@
 
         </div>
 
+
     </aside>
 
 
-    <!-- =========================================================
-         CONTEÚDO PRINCIPAL
-    ========================================================== -->
-    <main class="main-content">
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
 
-        <!-- TOPBAR -->
-        <header class="topbar">
+    <main class="main">
+
+
+        <!-- HEADER -->
+
+        <header class="top-header">
+
 
             <div>
 
-                <div class="breadcrumb-text">
-                    <span>Almoxarifado</span>
-                    <i class="fa-solid fa-chevron-right"></i>
-                    <strong>Painel Operacional</strong>
+                <div class="breadcrumb">
+
+                    Almoxarifado
+
+                    <span class="mx-1">
+                        /
+                    </span>
+
+                    <strong>
+                        Painel Operacional
+                    </strong>
+
                 </div>
 
-                <h1>
+
+                <h1 class="page-title">
                     Painel Operacional
                 </h1>
 
-                <p>
+
+                <p class="page-subtitle">
                     Acompanhamento das operações do almoxarifado
                 </p>
 
             </div>
 
-            <div class="topbar-right">
 
-                <div class="system-status">
+            <div class="header-right">
 
-                    <span class="status-dot"></span>
 
-                    <span>Sistema online</span>
+                <div class="online">
+
+                    <span class="online-dot"></span>
+
+                    Sistema online
 
                 </div>
 
-                <div class="topbar-date">
+
+                <div class="date-box">
 
                     <i class="fa-regular fa-calendar"></i>
 
@@ -247,12 +2425,15 @@
 
                 </div>
 
+
             </div>
+
 
         </header>
 
 
-        <!-- FLASH MESSAGES -->
+        <!-- FLASH -->
+
         {% with messages = get_flashed_messages(with_categories=true) %}
 
             {% if messages %}
@@ -261,25 +2442,38 @@
 
                     {% for category, message in messages %}
 
-                        <div class="alert alert-{{ category }} alert-dismissible fade show modern-alert"
-                             role="alert">
+                        <div
+                            class="alert alert-{{ category }} alert-dismissible fade show"
+                            role="alert"
+                        >
 
                             {% if category == 'success' %}
-                                <i class="fa-solid fa-circle-check"></i>
+
+                                <i class="fa-solid fa-circle-check me-2"></i>
+
                             {% elif category == 'warning' %}
-                                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                                <i class="fa-solid fa-triangle-exclamation me-2"></i>
+
                             {% elif category == 'danger' %}
-                                <i class="fa-solid fa-circle-xmark"></i>
+
+                                <i class="fa-solid fa-circle-xmark me-2"></i>
+
                             {% else %}
-                                <i class="fa-solid fa-circle-info"></i>
+
+                                <i class="fa-solid fa-circle-info me-2"></i>
+
                             {% endif %}
 
-                            <span>{{ message }}</span>
 
-                            <button type="button"
-                                    class="btn-close"
-                                    data-bs-dismiss="alert">
-                            </button>
+                            {{ message }}
+
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                            ></button>
 
                         </div>
 
@@ -292,267 +2486,297 @@
         {% endwith %}
 
 
-        <!-- =====================================================
-             CARDS PRINCIPAIS
-        ====================================================== -->
+        <!-- =================================================
+             CARDS
+        ================================================== -->
 
-        <section class="dashboard-cards">
+        <section class="cards">
 
-            <!-- REQUISIÇÕES -->
-            <a href="{{ url_for('modulo', nome='Requisições') }}"
-               class="dashboard-card card-blue">
+
+            <a
+                href="{{ url_for('modulo', nome='Requisições') }}"
+                class="card blue"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-clipboard-list"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ total_req }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Requisições pendentes
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     Aguardando separação
                 </div>
 
             </a>
 
 
-            <!-- INVENTÁRIO -->
-            <a href="{{ url_for('modulo', nome='Inventário') }}"
-               class="dashboard-card card-purple">
+            <a
+                href="{{ url_for('modulo', nome='Inventário') }}"
+                class="card purple"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-boxes-stacked"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ inv_conc }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Inventário concluído
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     de {{ inv_total }} atividades
                 </div>
 
             </a>
 
 
-            <!-- EXPEDIÇÃO -->
-            <a href="{{ url_for('modulo', nome='Expedição') }}"
-               class="dashboard-card card-orange">
+            <a
+                href="{{ url_for('modulo', nome='Expedição') }}"
+                class="card orange"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-truck-fast"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ exp_pend }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Expedições pendentes
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     Aguardando conclusão
                 </div>
 
             </a>
 
 
-            <!-- RECEBIMENTO -->
-            <a href="{{ url_for('modulo', nome='Recebimento') }}"
-               class="dashboard-card card-green">
+            <a
+                href="{{ url_for('modulo', nome='Recebimento') }}"
+                class="card green"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-dolly"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ rec_pend }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Recebimentos pendentes
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     Aguardando conferência
                 </div>
 
             </a>
 
 
-            <!-- OCORRÊNCIAS -->
-            <a href="{{ url_for('relatorios', filtro='ocorrencias') }}"
-               class="dashboard-card card-red">
+            <a
+                href="{{ url_for('relatorios', filtro='ocorrencias') }}"
+                class="card yellow"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-triangle-exclamation"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ total_oco }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Ocorrências
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     Prioridade alta
                 </div>
 
             </a>
 
 
-            <!-- ATRASADOS -->
-            <a href="{{ url_for('atrasados') }}"
-               class="dashboard-card card-danger">
+            <a
+                href="{{ url_for('atrasados') }}"
+                class="card red"
+            >
 
                 <div class="card-top">
 
                     <div class="card-icon">
+
                         <i class="fa-solid fa-clock"></i>
+
                     </div>
 
-                    <span class="card-arrow">
+                    <span class="card-link">
                         <i class="fa-solid fa-arrow-up-right-from-square"></i>
                     </span>
 
                 </div>
 
-                <div class="card-value">
+                <div class="card-number">
                     {{ total_atrasados }}
                 </div>
 
-                <div class="card-label">
+                <div class="card-title">
                     Atividades atrasadas
                 </div>
 
-                <div class="card-description">
+                <div class="card-desc">
                     Necessitam atenção
                 </div>
 
             </a>
 
+
         </section>
 
 
-        <!-- =====================================================
+        <!-- =================================================
              INDICADORES
-        ====================================================== -->
+        ================================================== -->
 
-        <section class="content-grid">
+        <section class="dashboard-grid">
 
-            <div class="panel indicators-panel">
+
+            <div class="panel">
+
 
                 <div class="panel-header">
 
-                    <div>
+                    <div class="panel-header-left">
 
-                        <span class="panel-eyebrow">
+                        <span class="eyebrow">
                             PERFORMANCE
                         </span>
 
-                        <h2>
+                        <h2 class="panel-title">
                             Indicadores do dia
                         </h2>
 
-                        <p>
+                        <p class="panel-subtitle">
                             Acompanhamento operacional
                         </p>
 
                     </div>
 
-                    <a href="{{ url_for('modulo', nome='Indicadores') }}"
-                       class="panel-action">
+
+                    <a
+                        href="{{ url_for('modulo', nome='Indicadores') }}"
+                        class="panel-link"
+                    >
 
                         Ver indicadores
 
-                        <i class="fa-solid fa-arrow-right"></i>
+                        <i class="fa-solid fa-arrow-right ms-1"></i>
 
                     </a>
 
                 </div>
 
 
-                <div class="indicator-list">
+                <div class="indicators">
 
-                    <!-- ATENDIDAS -->
-                    <div class="indicator-item">
 
-                        <div class="indicator-header">
+                    <div class="indicator">
 
-                            <div class="indicator-name">
+                        <div class="indicator-head">
 
-                                <span class="indicator-icon blue">
+                            <div class="indicator-label">
+
+                                <span
+                                    class="indicator-mini"
+                                    style="
+                                        background:#eaf2ff;
+                                        color:#1769e0;
+                                    "
+                                >
                                     <i class="fa-solid fa-check"></i>
                                 </span>
 
-                                <span>
-                                    Atendidas
-                                </span>
+                                Atendidas
 
                             </div>
 
-                            <strong>
+                            <span class="indicator-value">
                                 {{ perc_atendidas }}%
-                            </strong>
+                            </span>
 
                         </div>
 
-                        <div class="progress-track">
+
+                        <div class="progress">
 
                             <div
-                                class="progress-bar blue"
+                                class="progress-bar progress-blue"
                                 style="width: {{ perc_atendidas }}%;"
                             ></div>
 
@@ -561,33 +2785,37 @@
                     </div>
 
 
-                    <!-- INVENTÁRIO -->
-                    <div class="indicator-item">
+                    <div class="indicator">
 
-                        <div class="indicator-header">
+                        <div class="indicator-head">
 
-                            <div class="indicator-name">
+                            <div class="indicator-label">
 
-                                <span class="indicator-icon purple">
+                                <span
+                                    class="indicator-mini"
+                                    style="
+                                        background:#f4efff;
+                                        color:#7c3aed;
+                                    "
+                                >
                                     <i class="fa-solid fa-boxes-stacked"></i>
                                 </span>
 
-                                <span>
-                                    Inventário
-                                </span>
+                                Inventário
 
                             </div>
 
-                            <strong>
+                            <span class="indicator-value">
                                 {{ perc_inventario }}%
-                            </strong>
+                            </span>
 
                         </div>
 
-                        <div class="progress-track">
+
+                        <div class="progress">
 
                             <div
-                                class="progress-bar purple"
+                                class="progress-bar progress-purple"
                                 style="width: {{ perc_inventario }}%;"
                             ></div>
 
@@ -596,33 +2824,37 @@
                     </div>
 
 
-                    <!-- EXPEDIÇÃO -->
-                    <div class="indicator-item">
+                    <div class="indicator">
 
-                        <div class="indicator-header">
+                        <div class="indicator-head">
 
-                            <div class="indicator-name">
+                            <div class="indicator-label">
 
-                                <span class="indicator-icon orange">
+                                <span
+                                    class="indicator-mini"
+                                    style="
+                                        background:#fff4eb;
+                                        color:#ea580c;
+                                    "
+                                >
                                     <i class="fa-solid fa-truck"></i>
                                 </span>
 
-                                <span>
-                                    Expedição
-                                </span>
+                                Expedição
 
                             </div>
 
-                            <strong>
+                            <span class="indicator-value">
                                 {{ perc_expedicao }}%
-                            </strong>
+                            </span>
 
                         </div>
 
-                        <div class="progress-track">
+
+                        <div class="progress">
 
                             <div
-                                class="progress-bar orange"
+                                class="progress-bar progress-orange"
                                 style="width: {{ perc_expedicao }}%;"
                             ></div>
 
@@ -630,163 +2862,176 @@
 
                     </div>
 
+
                 </div>
 
             </div>
 
 
             <!-- RESUMO -->
-            <div class="panel summary-panel">
+
+            <div class="panel">
+
 
                 <div class="panel-header">
 
-                    <div>
+                    <div class="panel-header-left">
 
-                        <span class="panel-eyebrow">
+                        <span class="eyebrow">
                             RESUMO
                         </span>
 
-                        <h2>
+                        <h2 class="panel-title">
                             Atividades
                         </h2>
 
-                        <p>
+                        <p class="panel-subtitle">
                             Situação de hoje
                         </p>
 
                     </div>
 
-                    <span class="summary-icon">
-                        <i class="fa-solid fa-chart-pie"></i>
-                    </span>
+
+                    <i
+                        class="fa-solid fa-chart-pie"
+                        style="color:#1769e0"
+                    ></i>
 
                 </div>
 
 
-                <div class="summary-grid">
+                <div class="summary">
+
 
                     <div class="summary-item">
 
-                        <div class="summary-number success">
+                        <div class="summary-number summary-green">
                             {{ atividades_concluidas }}
                         </div>
 
-                        <span>
+                        <div class="summary-label">
                             Concluídas
-                        </span>
+                        </div>
 
                     </div>
 
+
                     <div class="summary-item">
 
-                        <div class="summary-number warning">
+                        <div class="summary-number summary-yellow">
                             {{ atividades_pendentes }}
                         </div>
 
-                        <span>
+                        <div class="summary-label">
                             Pendentes
-                        </span>
+                        </div>
 
                     </div>
 
+
                     <div class="summary-item">
 
-                        <div class="summary-number dark">
+                        <div class="summary-number summary-dark">
                             {{ atividades_arquivadas }}
                         </div>
 
-                        <span>
+                        <div class="summary-label">
                             Arquivadas
-                        </span>
+                        </div>
 
                     </div>
+
 
                     <div class="summary-item">
 
-                        <div class="summary-number primary">
+                        <div class="summary-number summary-blue">
                             {{ total_atividades }}
                         </div>
 
-                        <span>
+                        <div class="summary-label">
                             Total hoje
-                        </span>
+                        </div>
 
                     </div>
+
 
                 </div>
 
             </div>
 
+
         </section>
 
 
-        <!-- =====================================================
+        <!-- =================================================
              NOVA ATIVIDADE
-        ====================================================== -->
+        ================================================== -->
 
-        <section class="panel new-activity-panel">
+        <section class="panel mb-3">
+
 
             <div class="panel-header">
 
-                <div>
+                <div class="panel-header-left">
 
-                    <span class="panel-eyebrow">
+                    <span class="eyebrow">
                         OPERAÇÃO
                     </span>
 
-                    <h2>
+                    <h2 class="panel-title">
                         Nova atividade
                     </h2>
 
-                    <p>
+                    <p class="panel-subtitle">
                         Registre uma nova atividade operacional
                     </p>
 
                 </div>
 
-                <div class="new-activity-icon">
-                    <i class="fa-solid fa-plus"></i>
-                </div>
+
+                <i
+                    class="fa-solid fa-plus"
+                    style="color:#1769e0"
+                ></i>
 
             </div>
 
 
-            <form method="POST">
+            <form
+                method="POST"
+                class="activity-form"
+            >
+
 
                 <div class="form-grid">
 
-                    <div class="form-group">
+
+                    <div class="field">
 
                         <label for="num_requisicao">
                             Nº da requisição
                         </label>
 
-                        <div class="input-icon">
-
-                            <i class="fa-solid fa-hashtag"></i>
-
-                            <input
-                                type="text"
-                                id="num_requisicao"
-                                name="num_requisicao"
-                                class="form-control"
-                                placeholder="Ex.: 123456"
-                            >
-
-                        </div>
+                        <input
+                            type="text"
+                            name="num_requisicao"
+                            id="num_requisicao"
+                            class="form-control"
+                            placeholder="Ex.: 123456"
+                        >
 
                     </div>
 
 
-                    <div class="form-group">
+                    <div class="field">
 
                         <label for="prioridade">
                             Prioridade
                         </label>
 
                         <select
-                            id="prioridade"
                             name="prioridade"
+                            id="prioridade"
                             class="form-select"
                         >
 
@@ -807,7 +3052,7 @@
                     </div>
 
 
-                    <div class="form-group form-group-wide">
+                    <div class="field field-wide">
 
                         <label for="atividade">
                             Atividade
@@ -815,8 +3060,8 @@
 
                         <input
                             type="text"
-                            id="atividade"
                             name="atividade"
+                            id="atividade"
                             class="form-control"
                             placeholder="Descreva a atividade"
                             required
@@ -825,15 +3070,15 @@
                     </div>
 
 
-                    <div class="form-group">
+                    <div class="field">
 
                         <label for="categoria">
                             Categoria
                         </label>
 
                         <select
-                            id="categoria"
                             name="categoria"
+                            id="categoria"
                             class="form-select"
                         >
 
@@ -862,21 +3107,22 @@
                     </div>
 
 
-                    <div class="form-group">
+                    <div class="field">
 
                         <label for="responsavel">
                             Responsável
                         </label>
 
                         <select
-                            id="responsavel"
                             name="responsavel"
+                            id="responsavel"
                             class="form-select"
                         >
 
                             {% for usuario in usuarios %}
 
-                                <option value="{{ usuario.nome }}"
+                                <option
+                                    value="{{ usuario.nome }}"
                                     {% if usuario.nome == session.get('usuario_atual') %}
                                         selected
                                     {% endif %}
@@ -891,7 +3137,7 @@
                     </div>
 
 
-                    <div class="form-group">
+                    <div class="field">
 
                         <label for="prazo">
                             Prazo
@@ -899,48 +3145,47 @@
 
                         <input
                             type="datetime-local"
-                            id="prazo"
                             name="prazo"
+                            id="prazo"
                             class="form-control"
                         >
 
                     </div>
 
 
-                    <div class="form-group form-group-full">
+                    <div class="field field-full">
 
                         <label for="descricao">
                             Descrição
                         </label>
 
                         <textarea
-                            id="descricao"
                             name="descricao"
+                            id="descricao"
                             class="form-control"
-                            rows="3"
-                            placeholder="Informações adicionais da atividade..."
+                            placeholder="Informações adicionais..."
                         ></textarea>
 
                     </div>
 
+
                 </div>
 
 
-                <div class="form-footer">
+                <div class="form-bottom">
 
-                    <div class="form-hint">
+                    <div class="form-info">
 
-                        <i class="fa-solid fa-circle-info"></i>
+                        <i class="fa-solid fa-circle-info me-1"></i>
 
-                        <span>
-                            As atividades ficam registradas no histórico operacional.
-                        </span>
+                        As atividades ficam registradas no histórico operacional.
 
                     </div>
 
+
                     <button
                         type="submit"
-                        class="btn-primary-modern"
+                        class="form-button"
                     >
 
                         <i class="fa-solid fa-plus"></i>
@@ -951,90 +3196,119 @@
 
                 </div>
 
+
             </form>
 
         </section>
 
 
-        <!-- =====================================================
-             ATIVIDADES RECENTES + CHAT
-        ====================================================== -->
+        <!-- =================================================
+             ATIVIDADES + CHAT
+        ================================================== -->
 
         <section class="bottom-grid">
 
+
             <!-- ATIVIDADES -->
-            <div class="panel activities-panel">
+
+            <div class="panel">
+
 
                 <div class="panel-header">
 
-                    <div>
+                    <div class="panel-header-left">
 
-                        <span class="panel-eyebrow">
+                        <span class="eyebrow">
                             ACOMPANHAMENTO
                         </span>
 
-                        <h2>
+                        <h2 class="panel-title">
                             Atividades recentes
                         </h2>
 
-                        <p>
+                        <p class="panel-subtitle">
                             Últimas movimentações do almoxarifado
                         </p>
 
                     </div>
 
-                    <a href="{{ url_for('relatorios') }}"
-                       class="panel-action">
+
+                    <a
+                        href="{{ url_for('relatorios') }}"
+                        class="panel-link"
+                    >
 
                         Ver todas
 
-                        <i class="fa-solid fa-arrow-right"></i>
+                        <i class="fa-solid fa-arrow-right ms-1"></i>
 
                     </a>
 
                 </div>
 
 
-                <div class="table-responsive">
+                <div class="table-wrap">
 
-                    <table class="modern-table">
+
+                    <table class="table">
+
 
                         <thead>
 
                             <tr>
 
-                                <th>Requisição</th>
-                                <th>Atividade</th>
-                                <th>Categoria</th>
-                                <th>Responsável</th>
-                                <th>Status</th>
-                                <th>Ação</th>
+                                <th>
+                                    Requisição
+                                </th>
+
+                                <th>
+                                    Atividade
+                                </th>
+
+                                <th>
+                                    Categoria
+                                </th>
+
+                                <th>
+                                    Responsável
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th>
+                                    Ação
+                                </th>
 
                             </tr>
 
                         </thead>
 
+
                         <tbody>
+
 
                             {% if atividades %}
 
+
                                 {% for item in atividades %}
 
+
                                     <tr>
+
 
                                         <td>
 
                                             {% if item.num_requisicao %}
 
-                                                <span class="request-number">
+                                                <span class="req-number">
                                                     {{ item.num_requisicao }}
                                                 </span>
 
                                             {% else %}
 
-                                                <span class="text-muted">
-                                                    —
-                                                </span>
+                                                —
 
                                             {% endif %}
 
@@ -1064,9 +3338,24 @@
 
                                         <td>
 
-                                            <span class="category-badge">
-
+                                            <span class="category">
                                                 {{ item.categoria }}
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="responsible">
+
+                                                <span class="mini-user">
+
+                                                    <i class="fa-solid fa-user"></i>
+
+                                                </span>
+
+                                                {{ item.responsavel }}
 
                                             </span>
 
@@ -1075,132 +3364,144 @@
 
                                         <td>
 
-                                            <div class="responsible">
-
-                                                <span class="mini-avatar">
-                                                    <i class="fa-solid fa-user"></i>
-                                                </span>
-
-                                                {{ item.responsavel }}
-
-                                            </div>
-
-                                        </td>
-
-
-                                        <td>
 
                                             {% if item.status == 'Pendente' %}
 
-                                                <span class="status-badge status-pending">
-                                                    <span></span>
+                                                <span class="status status-pendente">
+
+                                                    <i class="fa-solid fa-circle"></i>
+
                                                     Pendente
+
                                                 </span>
+
 
                                             {% elif item.status == 'Em andamento' %}
 
-                                                <span class="status-badge status-progress">
-                                                    <span></span>
+                                                <span class="status status-andamento">
+
+                                                    <i class="fa-solid fa-circle"></i>
+
                                                     Em andamento
+
                                                 </span>
+
 
                                             {% elif item.status == 'Concluído' %}
 
-                                                <span class="status-badge status-done">
-                                                    <span></span>
+                                                <span class="status status-concluido">
+
+                                                    <i class="fa-solid fa-circle"></i>
+
                                                     Concluído
+
                                                 </span>
+
 
                                             {% elif item.status == 'Arquivada' %}
 
-                                                <span class="status-badge status-archived">
-                                                    <span></span>
+                                                <span class="status status-arquivada">
+
+                                                    <i class="fa-solid fa-circle"></i>
+
                                                     Arquivada
+
                                                 </span>
+
 
                                             {% else %}
 
-                                                <span class="status-badge">
-                                                    {{ item.status }}
-                                                </span>
+                                                {{ item.status }}
 
                                             {% endif %}
+
 
                                         </td>
 
 
                                         <td>
 
-                                            <div class="action-buttons">
+
+                                            <div class="actions">
+
 
                                                 <a
                                                     href="{{ url_for('editar_form', id=item.id) }}"
-                                                    class="table-action edit"
+                                                    class="action action-edit"
                                                     title="Editar"
                                                 >
+
                                                     <i class="fa-solid fa-pen"></i>
+
                                                 </a>
 
 
                                                 {% if item.status == 'Pendente' %}
 
+
                                                     <a
                                                         href="{{ url_for('concluir', id=item.id) }}"
-                                                        class="table-action finish"
+                                                        class="action action-finish"
                                                         title="Concluir"
-                                                        onclick="return confirm('Deseja concluir esta atividade?');"
+                                                        onclick="return confirm('Deseja realmente concluir esta atividade?');"
                                                     >
+
                                                         <i class="fa-solid fa-check"></i>
+
                                                     </a>
+
 
                                                 {% elif item.status == 'Concluído' %}
 
+
                                                     <span
-                                                        class="table-action completed"
+                                                        class="action action-done"
                                                         title="Concluída"
                                                     >
+
                                                         <i class="fa-solid fa-check-double"></i>
+
                                                     </span>
+
 
                                                 {% elif item.status == 'Arquivada' %}
 
+
                                                     <span
-                                                        class="table-action archived"
+                                                        class="action action-archive"
                                                         title="Arquivada"
                                                     >
+
                                                         <i class="fa-solid fa-box-archive"></i>
+
                                                     </span>
 
-                                                {% else %}
-
-                                                    <span
-                                                        class="table-action progress-action"
-                                                        title="Em andamento"
-                                                    >
-                                                        <i class="fa-solid fa-spinner"></i>
-                                                    </span>
 
                                                 {% endif %}
 
+
                                             </div>
+
 
                                         </td>
 
+
                                     </tr>
+
 
                                 {% endfor %}
 
+
                             {% else %}
+
 
                                 <tr>
 
                                     <td colspan="6">
 
-                                        <div class="empty-state">
+                                        <div class="empty">
 
-                                            <div class="empty-icon">
-                                                <i class="fa-solid fa-inbox"></i>
-                                            </div>
+                                            <i class="fa-solid fa-inbox"></i>
 
                                             <strong>
                                                 Nenhuma atividade encontrada
@@ -1216,91 +3517,129 @@
 
                                 </tr>
 
+
                             {% endif %}
+
 
                         </tbody>
 
+
                     </table>
 
+
                 </div>
+
 
             </div>
 
 
             <!-- CHAT -->
-            <div class="panel chat-panel">
+
+            <div class="panel chat">
+
 
                 <div class="panel-header">
 
-                    <div>
+                    <div class="panel-header-left">
 
-                        <span class="panel-eyebrow">
+                        <span class="eyebrow">
                             COMUNICAÇÃO
                         </span>
 
-                        <h2>
+                        <h2 class="panel-title">
                             Chat da equipe
                         </h2>
 
-                        <p>
+                        <p class="panel-subtitle">
                             Comunicação interna
                         </p>
 
                     </div>
 
-                    <span class="online-badge">
-                        <span></span>
+
+                    <span
+                        style="
+                            color:#16a34a;
+                            font-size:9px;
+                            font-weight:700;
+                        "
+                    >
+
+                        <i class="fa-solid fa-circle me-1"></i>
+
                         Online
+
                     </span>
 
                 </div>
 
 
-                <div class="chat-messages" id="chatMessages">
+                <div
+                    class="chat-messages"
+                    id="chatMessages"
+                >
+
 
                     {% if chat %}
 
+
                         {% for mensagem in chat %}
 
-                            <div class="chat-message">
 
-                                <div class="chat-avatar">
+                            <div class="message">
+
+
+                                <div class="message-avatar">
 
                                     <i class="fa-solid fa-user"></i>
 
                                 </div>
 
-                                <div class="chat-content">
 
-                                    <div class="chat-meta">
+                                <div class="message-content">
+
+
+                                    <div class="message-head">
 
                                         <strong>
                                             {{ mensagem.usuario }}
                                         </strong>
 
                                         <span>
-                                            {{ converter_para_brasil(mensagem.criado_em).strftime('%d/%m %H:%M') if mensagem.criado_em else '' }}
+
+                                            {% if mensagem.criado_em %}
+
+                                                {{ converter_para_brasil(mensagem.criado_em).strftime('%d/%m %H:%M') }}
+
+                                            {% endif %}
+
                                         </span>
 
                                     </div>
 
-                                    <div class="chat-bubble">
+
+                                    <div class="bubble">
+
                                         {{ mensagem.mensagem }}
+
                                     </div>
+
 
                                 </div>
 
+
                             </div>
+
 
                         {% endfor %}
 
+
                     {% else %}
+
 
                         <div class="chat-empty">
 
-                            <div class="chat-empty-icon">
-                                <i class="fa-regular fa-comments"></i>
-                            </div>
+                            <i class="fa-regular fa-comments"></i>
 
                             <strong>
                                 Nenhuma mensagem ainda
@@ -1312,12 +3651,18 @@
 
                         </div>
 
+
                     {% endif %}
+
 
                 </div>
 
 
-                <form method="POST" class="chat-form">
+                <form
+                    method="POST"
+                    class="chat-form"
+                >
+
 
                     <input
                         type="hidden"
@@ -1325,7 +3670,9 @@
                         value="enviar"
                     >
 
-                    <div class="chat-input-wrapper">
+
+                    <div class="chat-input-box">
+
 
                         <input
                             type="text"
@@ -1336,27 +3683,31 @@
                             required
                         >
 
+
                         <button
                             type="submit"
                             class="chat-send"
-                            title="Enviar mensagem"
+                            title="Enviar"
                         >
 
                             <i class="fa-solid fa-paper-plane"></i>
 
                         </button>
 
+
                     </div>
+
 
                 </form>
 
+
             </div>
+
 
         </section>
 
 
-        <!-- FOOTER -->
-        <footer class="main-footer">
+        <footer>
 
             <span>
                 Almoxarifado Valenet
@@ -1368,92 +3719,77 @@
 
         </footer>
 
+
     </main>
+
 
 </div>
 
 
 <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
-</script>
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+></script>
 
 
 <script>
 
-    // =========================================================
-    // DATA ATUAL
-    // =========================================================
+    /* =====================================================
+       DATA
+    ===================================================== */
 
     function atualizarData() {
 
-        const elemento = document.getElementById("dataAtual");
+        const elemento =
+            document.getElementById("dataAtual");
 
         if (!elemento) {
             return;
         }
 
-        const agora = new Date();
+        const agora =
+            new Date();
 
-        const opcoes = {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-        };
+        let texto =
+            agora.toLocaleDateString(
+                "pt-BR",
+                {
+                    weekday: "long",
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric"
+                }
+            );
 
-        let texto = agora.toLocaleDateString(
-            "pt-BR",
-            opcoes
-        );
+        texto =
+            texto.charAt(0).toUpperCase()
+            + texto.slice(1);
 
-        texto = texto.charAt(0).toUpperCase() + texto.slice(1);
+        elemento.textContent =
+            texto;
 
-        elemento.textContent = texto;
     }
+
 
     atualizarData();
 
 
-    // =========================================================
-    // CHAT — MANTER NO FINAL DA CONVERSA
-    // =========================================================
+    /* =====================================================
+       CHAT — IR PARA ÚLTIMA MENSAGEM
+    ===================================================== */
 
-    const chatMessages = document.getElementById("chatMessages");
+    const chat =
+        document.getElementById("chatMessages");
 
-    if (chatMessages) {
+    if (chat) {
 
-        chatMessages.scrollTop =
-            chatMessages.scrollHeight;
+        chat.scrollTop =
+            chat.scrollHeight;
 
     }
 
-
-    // =========================================================
-    // CONFIRMAÇÃO DOS BOTÕES DE CONCLUSÃO
-    // =========================================================
-
-    document.querySelectorAll(
-        'a[href*="/concluir/"]'
-    ).forEach(function(botao) {
-
-        botao.addEventListener(
-            "click",
-            function(evento) {
-
-                if (!confirm(
-                    "Deseja realmente concluir esta atividade?"
-                )) {
-
-                    evento.preventDefault();
-
-                }
-
-            }
-        );
-
-    });
-
 </script>
 
+
 </body>
+
 </html>

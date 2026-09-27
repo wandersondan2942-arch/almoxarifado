@@ -1,678 +1,1394 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Almoxarifado VALENET</title>
 
+    <!-- Bootstrap -->
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet"
     >
 
+    <!-- Font Awesome -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     >
 
+
     <style>
+
         :root {
+
             --sidebar: #111827;
             --sidebar-hover: #1f2937;
             --sidebar-active: #2563eb;
+
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
+
             --bg: #f3f4f6;
             --card: #ffffff;
+
             --text: #111827;
             --muted: #6b7280;
+
             --border: #e5e7eb;
+
             --success: #16a34a;
             --warning: #d97706;
             --danger: #dc2626;
+
         }
+
 
         * {
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
+
             background: var(--bg);
+
             color: var(--text);
-            font-family: Arial, Helvetica, sans-serif;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
             min-height: 100vh;
+
         }
+
 
         /* =========================================================
            SIDEBAR
         ========================================================= */
 
         .sidebar {
+
             position: fixed;
+
             left: 0;
             top: 0;
             bottom: 0;
+
             width: 255px;
+
             background: var(--sidebar);
+
             color: #fff;
+
             overflow-y: auto;
             overflow-x: hidden;
+
             z-index: 2000;
-            box-shadow: 3px 0 12px rgba(0, 0, 0, .08);
+
+            box-shadow:
+                3px 0 12px rgba(0,0,0,.08);
+
         }
+
 
         .sidebar-brand {
-            padding: 22px 18px 18px;
-            border-bottom: 1px solid rgba(255,255,255,.08);
+
+            padding:
+                22px 18px 18px;
+
+            border-bottom:
+                1px solid rgba(255,255,255,.08);
+
         }
+
 
         .sidebar-brand h4 {
+
             margin: 0;
+
             font-size: 18px;
+
             font-weight: 700;
+
+            line-height: 1.15;
+
         }
+
 
         .sidebar-brand small {
+
             display: block;
-            margin-top: 4px;
+
+            margin-top: 6px;
+
             color: #9ca3af;
+
             font-size: 12px;
+
         }
+
 
         .menu-section {
-            padding: 14px 10px 5px;
+
+            padding:
+                14px 10px 5px;
+
         }
+
 
         .menu-title {
+
             color: #6b7280;
+
             font-size: 10px;
+
             text-transform: uppercase;
+
             letter-spacing: .08em;
+
             font-weight: 700;
-            padding: 0 10px 6px;
+
+            padding:
+                0 10px 6px;
+
         }
 
+
         .menu-link {
+
             position: relative;
+
             z-index: 2001;
+
             pointer-events: auto;
+
             cursor: pointer;
 
             display: flex;
+
             align-items: center;
+
             gap: 12px;
 
             color: #d1d5db;
+
             text-decoration: none;
 
-            padding: 10px 18px;
-            margin: 2px 10px;
+            padding:
+                10px 18px;
+
+            margin:
+                2px 10px;
 
             border-radius: 8px;
+
             font-size: 14px;
 
-            transition: .2s ease;
+            transition:
+                .2s ease;
+
         }
+
 
         .menu-link:hover {
+
             color: #fff;
-            background: var(--sidebar-hover);
-            transform: translateX(2px);
+
+            background:
+                var(--sidebar-hover);
+
+            transform:
+                translateX(2px);
+
         }
+
 
         .menu-link.active {
+
             color: #fff;
-            background: var(--sidebar-active);
+
+            background:
+                var(--sidebar-active);
+
         }
+
 
         .menu-link i {
+
             width: 18px;
+
+            min-width: 18px;
+
             text-align: center;
+
             font-size: 14px;
+
         }
+
 
         .sidebar-user {
+
             position: relative;
+
             z-index: 2002;
-            margin: 15px 10px;
-            padding: 12px;
-            border-top: 1px solid rgba(255,255,255,.08);
+
+            margin:
+                15px 10px;
+
+            padding:
+                12px;
+
+            border-top:
+                1px solid rgba(255,255,255,.08);
+
             color: #d1d5db;
+
         }
+
 
         .sidebar-user strong {
+
             color: #fff;
+
             display: block;
+
             font-size: 13px;
+
         }
+
 
         .sidebar-user small {
+
             color: #9ca3af;
+
             font-size: 11px;
+
         }
+
 
         .logout-link {
+
             margin-top: 8px;
+
             color: #fca5a5;
+
         }
+
 
         .logout-link:hover {
+
             color: #fff;
-            background: rgba(220,38,38,.25);
+
+            background:
+                rgba(220,38,38,.25);
+
         }
 
+
         /* =========================================================
-           MAIN
+           CONTEÚDO PRINCIPAL
         ========================================================= */
 
         .main-content {
+
             margin-left: 255px;
+
             min-height: 100vh;
-            padding: 24px;
+
+            padding:
+                24px;
+
         }
+
 
         .topbar {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             gap: 15px;
+
             margin-bottom: 20px;
+
         }
+
 
         .topbar h1 {
+
             margin: 0;
+
             font-size: 25px;
+
             font-weight: 700;
+
         }
+
 
         .topbar p {
-            margin: 4px 0 0;
+
+            margin:
+                4px 0 0;
+
             color: var(--muted);
+
             font-size: 13px;
+
         }
 
+
         .date-badge {
+
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 10px;
-            padding: 9px 14px;
+
+            padding:
+                9px 14px;
+
             color: var(--muted);
+
             font-size: 13px;
+
             white-space: nowrap;
+
         }
+
 
         /* =========================================================
            ALERTAS
         ========================================================= */
 
         .alert {
+
             border-radius: 10px;
+
             border: 0;
+
         }
+
 
         /* =========================================================
            CARDS
         ========================================================= */
 
         .dashboard-card {
-            background: var(--card);
-            border: 1px solid var(--border);
+
+            background:
+                var(--card);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,.04);
+
             overflow: hidden;
+
         }
+
 
         .card-header-custom {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             gap: 10px;
 
-            padding: 15px 18px;
-            border-bottom: 1px solid var(--border);
+            padding:
+                15px 18px;
+
+            border-bottom:
+                1px solid var(--border);
+
             background: #fff;
+
         }
+
 
         .card-header-custom h5 {
+
             margin: 0;
+
             font-size: 15px;
+
             font-weight: 700;
+
         }
+
 
         .card-header-custom small {
+
+            display: block;
+
+            margin-top: 4px;
+
             color: var(--muted);
+
             font-size: 11px;
+
         }
 
+
         .card-body-custom {
-            padding: 18px;
+
+            padding:
+                18px;
+
         }
+
 
         /* =========================================================
            RESUMO DO DIA
         ========================================================= */
 
         .summary-grid {
+
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(6, minmax(0, 1fr));
+
             gap: 12px;
+
             margin-bottom: 20px;
+
         }
+
 
         .summary-card {
+
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 12px;
+
             padding: 15px;
+
             min-height: 95px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.03);
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,.03);
+
         }
+
 
         .summary-icon {
+
             width: 34px;
+
             height: 34px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             border-radius: 9px;
+
             background: #eff6ff;
+
             color: var(--primary);
+
             margin-bottom: 8px;
+
         }
+
 
         .summary-value {
+
             font-size: 23px;
+
             font-weight: 700;
+
             line-height: 1;
+
         }
+
 
         .summary-label {
+
             margin-top: 5px;
+
             color: var(--muted);
+
             font-size: 11px;
+
         }
 
+
         /* =========================================================
-           ÁREA PRINCIPAL:
-           NOVA ATIVIDADE | INDICADORES
+           LAYOUT SUPERIOR
+           
+           ESQUERDA:
+           NOVA ATIVIDADE
+
+           DIREITA:
+           INDICADORES
+           CHAT
         ========================================================= */
 
         .operational-layout {
+
             display: grid;
-            grid-template-columns: minmax(380px, .95fr) minmax(480px, 1.35fr);
+
+            grid-template-columns:
+                minmax(390px, 1fr)
+                minmax(500px, 1.25fr);
+
             gap: 20px;
+
             align-items: start;
+
             margin-bottom: 20px;
+
         }
+
 
         .left-column,
         .right-column {
+
             display: flex;
+
             flex-direction: column;
+
             gap: 20px;
+
             min-width: 0;
+
         }
+
 
         /* =========================================================
            NOVA ATIVIDADE
         ========================================================= */
 
         .activity-form .form-label {
+
             font-size: 12px;
+
             font-weight: 700;
+
             color: #374151;
+
             margin-bottom: 5px;
+
         }
+
 
         .activity-form .form-control,
         .activity-form .form-select {
+
             font-size: 13px;
+
             border-radius: 8px;
+
             border-color: #d1d5db;
+
         }
+
 
         .activity-form textarea {
-            min-height: 95px;
+
+            min-height: 105px;
+
             resize: vertical;
+
         }
+
 
         .btn-primary-custom {
+
             width: 100%;
+
             border: 0;
+
             border-radius: 8px;
-            padding: 10px 15px;
-            background: var(--primary);
+
+            padding:
+                10px 15px;
+
+            background:
+                var(--primary);
+
             color: #fff;
+
             font-weight: 600;
+
             font-size: 13px;
-            transition: .2s;
+
+            transition:
+                .2s;
+
         }
 
+
         .btn-primary-custom:hover {
-            background: var(--primary-dark);
+
+            background:
+                var(--primary-dark);
+
         }
+
 
         /* =========================================================
            INDICADORES
         ========================================================= */
 
         .indicators-grid {
+
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+
+            grid-template-columns:
+                repeat(3, minmax(0, 1fr));
+
             gap: 14px;
+
         }
+
 
         .indicator-box {
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 12px;
+
             padding: 15px;
+
             background: #fff;
+
         }
+
 
         .indicator-top {
+
             display: flex;
+
             justify-content: space-between;
+
             align-items: center;
+
             gap: 8px;
+
             margin-bottom: 10px;
+
         }
+
 
         .indicator-name {
+
             font-size: 12px;
+
             color: var(--muted);
+
             font-weight: 600;
+
         }
+
 
         .indicator-percent {
+
             font-size: 18px;
+
             font-weight: 700;
+
         }
+
 
         .progress {
+
             height: 7px;
+
             border-radius: 10px;
+
             background: #e5e7eb;
+
         }
+
 
         .progress-bar {
+
             border-radius: 10px;
+
         }
 
+
         .indicator-footer {
+
             display: flex;
+
             justify-content: space-between;
+
             margin-top: 8px;
+
             font-size: 10px;
+
             color: var(--muted);
+
         }
+
 
         /* =========================================================
            CHAT
         ========================================================= */
 
         .chat-box {
-            max-height: 245px;
+
+            height: 220px;
+
+            max-height: 220px;
+
             overflow-y: auto;
+
             padding: 12px;
+
             background: #f9fafb;
+
             border-radius: 10px;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             margin-bottom: 12px;
+
         }
+
 
         .chat-message {
+
             background: #fff;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             border-radius: 9px;
-            padding: 9px 11px;
+
+            padding:
+                9px 11px;
+
             margin-bottom: 8px;
+
         }
+
 
         .chat-message:last-child {
+
             margin-bottom: 0;
+
         }
+
 
         .chat-header {
+
             display: flex;
+
             justify-content: space-between;
+
             gap: 10px;
+
             margin-bottom: 4px;
+
         }
+
 
         .chat-author {
+
             font-size: 12px;
+
             font-weight: 700;
+
         }
+
 
         .chat-time {
+
             color: var(--muted);
+
             font-size: 10px;
+
         }
+
 
         .chat-text {
+
             font-size: 12px;
+
             color: #374151;
+
             white-space: pre-wrap;
+
             word-break: break-word;
+
         }
+
 
         .chat-form {
+
             display: flex;
+
             gap: 8px;
+
         }
+
 
         .chat-form input {
+
             flex: 1;
+
             font-size: 12px;
+
             border-radius: 8px;
+
         }
 
+
         .chat-form button {
+
+            width: 58px;
+
             border: 0;
+
             border-radius: 8px;
-            background: var(--primary);
+
+            background:
+                var(--primary);
+
             color: #fff;
-            padding: 0 15px;
+
         }
+
+
+        .chat-form button:hover {
+
+            background:
+                var(--primary-dark);
+
+        }
+
 
         /* =========================================================
            ATIVIDADES
+           
+           IMPORTANTE:
+           ESTE BLOCO FICA FORA DO operational-layout
+           PARA OCUPAR 100% DA LARGURA.
         ========================================================= */
 
         .activities-card {
+
+            width: 100%;
+
             margin-bottom: 20px;
+
         }
+
+
+        .activities-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .activities-header-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .activities-counter {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            min-width: 28px;
+
+            height: 28px;
+
+            padding:
+                0 8px;
+
+            background:
+                var(--primary);
+
+            color: #fff;
+
+            border-radius: 8px;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+        }
+
 
         .table-wrapper {
+
+            width: 100%;
+
             overflow-x: auto;
+
         }
+
 
         .activities-table {
+
             width: 100%;
+
             border-collapse: collapse;
-            min-width: 850px;
+
+            min-width: 1100px;
+
         }
+
 
         .activities-table th {
-            background: #f9fafb;
+
+            background: #f8fafc;
+
             color: #6b7280;
+
             font-size: 10px;
+
             text-transform: uppercase;
+
             letter-spacing: .03em;
+
             font-weight: 700;
-            padding: 11px 10px;
-            border-bottom: 1px solid var(--border);
+
+            padding:
+                12px 10px;
+
+            border-bottom:
+                1px solid var(--border);
+
             white-space: nowrap;
+
         }
+
 
         .activities-table td {
-            padding: 11px 10px;
-            border-bottom: 1px solid var(--border);
+
+            padding:
+                12px 10px;
+
+            border-bottom:
+                1px solid var(--border);
+
             font-size: 12px;
+
             vertical-align: middle;
+
         }
 
-        .activities-table tr:hover td {
-            background: #fafafa;
+
+        .activities-table tbody tr {
+
+            transition:
+                .15s ease;
+
         }
+
+
+        .activities-table tbody tr:hover {
+
+            background: #f8fafc;
+
+        }
+
+
+        .activities-table tbody tr:hover td {
+
+            background: #f8fafc;
+
+        }
+
+
+        .activity-name {
+
+            font-weight: 600;
+
+            color: #111827;
+
+        }
+
+
+        .activity-description {
+
+            color: var(--muted);
+
+            font-size: 10px;
+
+            margin-top: 3px;
+
+            max-width: 350px;
+
+        }
+
 
         .status-badge {
+
             display: inline-flex;
+
             align-items: center;
+
             gap: 5px;
-            padding: 5px 8px;
+
+            padding:
+                5px 9px;
+
             border-radius: 20px;
+
             font-size: 10px;
+
             font-weight: 700;
+
             white-space: nowrap;
+
         }
+
 
         .status-pendente {
+
             background: #fff7ed;
+
             color: #c2410c;
+
         }
+
 
         .status-concluido {
+
             background: #f0fdf4;
+
             color: #15803d;
+
         }
+
 
         .status-arquivada {
+
             background: #f3f4f6;
+
             color: #6b7280;
+
         }
+
 
         .status-andamento {
+
             background: #eff6ff;
+
             color: #1d4ed8;
+
         }
+
 
         .action-group {
+
             display: flex;
+
             gap: 5px;
+
             align-items: center;
-            flex-wrap: wrap;
+
+            flex-wrap: nowrap;
+
         }
+
 
         .btn-action {
+
             width: 30px;
+
             height: 30px;
+
             display: inline-flex;
+
             align-items: center;
+
             justify-content: center;
+
             border-radius: 7px;
-            border: 1px solid var(--border);
+
+            border:
+                1px solid var(--border);
+
             background: #fff;
+
             text-decoration: none;
-            transition: .2s;
+
+            transition:
+                .2s;
+
+            cursor: pointer;
+
         }
+
 
         .btn-action:hover {
-            transform: translateY(-1px);
+
+            transform:
+                translateY(-1px);
+
         }
+
 
         .btn-edit {
+
             color: #2563eb;
+
         }
+
 
         .btn-edit:hover {
+
             background: #eff6ff;
+
         }
+
 
         .btn-conclude {
+
             color: #16a34a;
+
         }
+
 
         .btn-conclude:hover {
+
             background: #f0fdf4;
+
         }
+
 
         .btn-archive {
+
             color: #6b7280;
+
         }
+
 
         .btn-archive:hover {
+
             background: #f3f4f6;
+
         }
 
+
         /* =========================================================
-           RODAPÉ / EMPTY
+           ESTADO VAZIO
         ========================================================= */
 
         .empty-state {
+
             text-align: center;
-            padding: 35px 20px;
+
+            padding:
+                45px 20px;
+
             color: var(--muted);
+
         }
 
+
         .empty-state i {
-            font-size: 30px;
-            margin-bottom: 10px;
+
+            font-size: 32px;
+
+            margin-bottom: 12px;
+
+            color: #64748b;
+
         }
+
+
+        .empty-state div {
+
+            font-size: 16px;
+
+            margin-bottom: 5px;
+
+        }
+
+
+        .empty-state small {
+
+            font-size: 12px;
+
+        }
+
 
         /* =========================================================
            RESPONSIVO
         ========================================================= */
 
-        @media (max-width: 1200px) {
-            .summary-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
+        @media (max-width: 1350px) {
 
             .operational-layout {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    minmax(340px, 1fr)
+                    minmax(420px, 1.15fr);
+
             }
+
         }
+
+
+        @media (max-width: 1200px) {
+
+            .summary-grid {
+
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+
+            }
+
+
+            .operational-layout {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
 
         @media (max-width: 900px) {
+
             .sidebar {
+
                 width: 220px;
+
             }
 
+
             .main-content {
+
                 margin-left: 220px;
+
                 padding: 18px;
+
             }
+
 
             .indicators-grid {
-                grid-template-columns: 1fr;
+
+                grid-template-columns:
+                    repeat(3, minmax(0, 1fr));
+
             }
+
         }
+
 
         @media (max-width: 700px) {
+
             .sidebar {
+
                 position: relative;
+
                 width: 100%;
+
                 height: auto;
+
                 min-height: auto;
+
             }
+
 
             .main-content {
+
                 margin-left: 0;
+
                 padding: 14px;
+
             }
 
+
             .summary-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+
             }
+
 
             .topbar {
+
                 flex-direction: column;
+
                 align-items: flex-start;
+
             }
+
+
+            .indicators-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
         }
+
 
         @media (max-width: 450px) {
+
             .summary-grid {
+
                 grid-template-columns: 1fr;
+
             }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
 
 <!-- =============================================================
      SIDEBAR
@@ -680,96 +1396,233 @@
 
 <aside class="sidebar">
 
+
     <div class="sidebar-brand">
+
         <h4>
+
             <i class="fa-solid fa-boxes-stacked me-2"></i>
+
             Almoxarifado VALENET
+
         </h4>
-        <small>Painel Operacional</small>
+
+        <small>
+            Painel Operacional
+        </small>
+
     </div>
+
+
+    <!-- PRINCIPAL -->
 
     <div class="menu-section">
 
-        <div class="menu-title">Principal</div>
+        <div class="menu-title">
+            Principal
+        </div>
 
-        <a href="{{ url_for('index') }}" class="menu-link active">
+
+        <a
+            href="{{ url_for('index') }}"
+            class="menu-link active"
+        >
+
             <i class="fa-solid fa-house"></i>
-            <span>Painel</span>
+
+            <span>
+                Painel
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Requisições') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Requisições') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-clipboard-list"></i>
-            <span>Requisições</span>
+
+            <span>
+                Requisições
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Inventário') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Inventário') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-boxes-stacked"></i>
-            <span>Inventário</span>
+
+            <span>
+                Inventário
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Expedição') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Expedição') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-truck-fast"></i>
-            <span>Expedição</span>
+
+            <span>
+                Expedição
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Recebimento') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Recebimento') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-arrow-down"></i>
-            <span>Recebimento</span>
+
+            <span>
+                Recebimento
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Estoque') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Estoque') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-warehouse"></i>
-            <span>Estoque</span>
+
+            <span>
+                Estoque
+            </span>
+
         </a>
 
     </div>
+
+
+    <!-- GESTÃO -->
 
     <div class="menu-section">
 
-        <div class="menu-title">Gestão</div>
+        <div class="menu-title">
+            Gestão
+        </div>
 
-        <a href="{{ url_for('modulo', nome='Cadastros') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Cadastros') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-address-book"></i>
-            <span>Cadastros</span>
+
+            <span>
+                Cadastros
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Melhorias / PDCA') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Melhorias / PDCA') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-lightbulb"></i>
-            <span>Melhorias / PDCA</span>
+
+            <span>
+                Melhorias / PDCA
+            </span>
+
         </a>
 
-        <a href="{{ url_for('indicadores') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('indicadores') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-chart-line"></i>
-            <span>Indicadores</span>
+
+            <span>
+                Indicadores
+            </span>
+
         </a>
 
-        <a href="{{ url_for('relatorios') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('relatorios') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-file-lines"></i>
-            <span>Relatórios</span>
+
+            <span>
+                Relatórios
+            </span>
+
         </a>
 
-        <a href="{{ url_for('modulo', nome='Configurações') }}" class="menu-link">
+
+        <a
+            href="{{ url_for('modulo', nome='Configurações') }}"
+            class="menu-link"
+        >
+
             <i class="fa-solid fa-gear"></i>
-            <span>Configurações</span>
+
+            <span>
+                Configurações
+            </span>
+
         </a>
 
     </div>
+
+
+    <!-- USUÁRIO -->
 
     <div class="sidebar-user">
 
         <strong>
+
             <i class="fa-solid fa-user me-1"></i>
+
             {{ session.get('usuario_atual', 'Usuário') }}
+
         </strong>
 
-        <small>Usuário conectado</small>
 
-        <a href="{{ url_for('logout') }}" class="menu-link logout-link">
+        <small>
+            Usuário conectado
+        </small>
+
+
+        <a
+            href="{{ url_for('logout') }}"
+            class="menu-link logout-link"
+        >
+
             <i class="fa-solid fa-right-from-bracket"></i>
-            <span>Sair</span>
+
+            <span>
+                Sair
+            </span>
+
         </a>
 
     </div>
+
 
 </aside>
 
@@ -780,24 +1633,38 @@
 
 <main class="main-content">
 
+
     <!-- CABEÇALHO -->
 
     <div class="topbar">
 
         <div>
-            <h1>Painel Operacional</h1>
-            <p>Acompanhamento das operações do almoxarifado</p>
+
+            <h1>
+                Painel Operacional
+            </h1>
+
+            <p>
+                Acompanhamento das operações do almoxarifado
+            </p>
+
         </div>
 
+
         <div class="date-badge">
+
             <i class="fa-regular fa-calendar me-1"></i>
+
             Operação diária
+
         </div>
 
     </div>
 
 
-    <!-- MENSAGENS FLASH -->
+    <!-- =========================================================
+         FLASH MESSAGES
+    ========================================================= -->
 
     {% with messages = get_flashed_messages(with_categories=true) %}
 
@@ -805,15 +1672,18 @@
 
             {% for category, message in messages %}
 
-                <div class="alert alert-{{ category if category in ['success','danger','warning','info'] else 'info' }} alert-dismissible fade show">
+                <div
+                    class="alert alert-{{ category if category in ['success','danger','warning','info'] else 'info' }} alert-dismissible fade show"
+                    role="alert"
+                >
 
                     {{ message }}
 
                     <button
                         type="button"
                         class="btn-close"
-                        data-bs-dismiss="alert">
-                    </button>
+                        data-bs-dismiss="alert"
+                    ></button>
 
                 </div>
 
@@ -830,15 +1700,22 @@
 
     <div class="summary-grid">
 
+
+        <!-- REQUISIÇÕES -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-clipboard-list"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ total_req }}
             </div>
+
 
             <div class="summary-label">
                 Requisições pendentes
@@ -847,15 +1724,21 @@
         </div>
 
 
+        <!-- INVENTÁRIO -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-boxes-stacked"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ inv_conc }}
             </div>
+
 
             <div class="summary-label">
                 Inventário concluído
@@ -864,15 +1747,21 @@
         </div>
 
 
+        <!-- EXPEDIÇÃO -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-truck-fast"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ exp_pend }}
             </div>
+
 
             <div class="summary-label">
                 Expedições pendentes
@@ -881,15 +1770,21 @@
         </div>
 
 
+        <!-- RECEBIMENTOS -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-box-open"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ rec_pend }}
             </div>
+
 
             <div class="summary-label">
                 Recebimentos pendentes
@@ -898,15 +1793,21 @@
         </div>
 
 
+        <!-- OCORRÊNCIAS -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-triangle-exclamation"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ total_oco }}
             </div>
+
 
             <div class="summary-label">
                 Ocorrências
@@ -915,15 +1816,21 @@
         </div>
 
 
+        <!-- ATRASADAS -->
+
         <div class="summary-card">
 
             <div class="summary-icon">
+
                 <i class="fa-solid fa-clock"></i>
+
             </div>
+
 
             <div class="summary-value">
                 {{ total_atrasados }}
             </div>
+
 
             <div class="summary-label">
                 Atividades atrasadas
@@ -931,11 +1838,19 @@
 
         </div>
 
+
     </div>
 
 
     <!-- =========================================================
-         NOVA ATIVIDADE | INDICADORES + CHAT
+         BLOCO SUPERIOR
+
+         ESQUERDA:
+         NOVA ATIVIDADE
+
+         DIREITA:
+         INDICADORES
+         CHAT
     ========================================================= -->
 
     <div class="operational-layout">
@@ -948,25 +1863,36 @@
 
         <div class="left-column">
 
+
             <div class="dashboard-card">
+
 
                 <div class="card-header-custom">
 
+
                     <div>
+
                         <h5>
+
                             <i class="fa-solid fa-plus-circle text-primary me-1"></i>
+
                             Nova Atividade
+
                         </h5>
+
 
                         <small>
                             Registre uma nova atividade operacional
                         </small>
+
                     </div>
+
 
                 </div>
 
 
                 <div class="card-body-custom">
+
 
                     <form
                         method="POST"
@@ -974,15 +1900,18 @@
                         class="activity-form"
                     >
 
+
                         <div class="row g-3">
 
-                            <!-- REQUISIÇÃO -->
+
+                            <!-- Nº REQUISIÇÃO -->
 
                             <div class="col-md-6">
 
                                 <label class="form-label">
                                     Nº da Requisição
                                 </label>
+
 
                                 <input
                                     type="text"
@@ -1002,6 +1931,7 @@
                                     Prioridade
                                 </label>
 
+
                                 <select
                                     name="prioridade"
                                     class="form-select"
@@ -1011,7 +1941,10 @@
                                         Baixa
                                     </option>
 
-                                    <option value="Média" selected>
+                                    <option
+                                        value="Média"
+                                        selected
+                                    >
                                         Média
                                     </option>
 
@@ -1032,6 +1965,7 @@
                                     Responsável
                                 </label>
 
+
                                 <select
                                     name="responsavel"
                                     class="form-select"
@@ -1042,13 +1976,17 @@
                                         Selecione o responsável
                                     </option>
 
+
                                     {% for usuario in usuarios %}
 
-                                        <option value="{{ usuario.nome }}">
+                                        <option
+                                            value="{{ usuario.nome }}"
+                                        >
                                             {{ usuario.nome }}
                                         </option>
 
                                     {% endfor %}
+
 
                                 </select>
 
@@ -1062,6 +2000,7 @@
                                 <label class="form-label">
                                     Atividade
                                 </label>
+
 
                                 <input
                                     type="text"
@@ -1081,6 +2020,7 @@
                                 <label class="form-label">
                                     Categoria
                                 </label>
+
 
                                 <select
                                     name="categoria"
@@ -1121,6 +2061,7 @@
                                     Prazo
                                 </label>
 
+
                                 <input
                                     type="datetime-local"
                                     name="prazo"
@@ -1137,6 +2078,7 @@
                                 <label class="form-label">
                                     Descrição
                                 </label>
+
 
                                 <textarea
                                     name="descricao"
@@ -1164,87 +2106,578 @@
 
                             </div>
 
+
                         </div>
+
 
                     </form>
 
+
                 </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =====================================================
+             COLUNA DIREITA
+
+             INDICADORES
+             CHAT
+        ===================================================== -->
+
+        <div class="right-column">
+
+
+            <!-- =================================================
+                 INDICADORES
+            ================================================= -->
+
+            <div class="dashboard-card">
+
+
+                <div class="card-header-custom">
+
+
+                    <div>
+
+                        <h5>
+
+                            <i class="fa-solid fa-chart-line text-primary me-1"></i>
+
+                            Indicadores
+
+                        </h5>
+
+
+                        <small>
+                            Acompanhamento operacional
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="card-body-custom">
+
+
+                    <div class="indicators-grid">
+
+
+                        <!-- ATENDIDAS -->
+
+                        <div class="indicator-box">
+
+
+                            <div class="indicator-top">
+
+                                <span class="indicator-name">
+                                    Atendidas
+                                </span>
+
+
+                                <span class="indicator-percent">
+                                    {{ perc_atendidas }}%
+                                </span>
+
+                            </div>
+
+
+                            <div class="progress">
+
+                                <div
+                                    class="progress-bar bg-success"
+                                    role="progressbar"
+                                    style="width: {{ perc_atendidas }}%;"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="indicator-footer">
+
+                                <span>
+                                    Requisições
+                                </span>
+
+                                <span>
+                                    {{ total_req }}
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- INVENTÁRIO -->
+
+                        <div class="indicator-box">
+
+
+                            <div class="indicator-top">
+
+                                <span class="indicator-name">
+                                    Inventário
+                                </span>
+
+
+                                <span class="indicator-percent">
+                                    {{ perc_inventario }}%
+                                </span>
+
+                            </div>
+
+
+                            <div class="progress">
+
+                                <div
+                                    class="progress-bar bg-warning"
+                                    role="progressbar"
+                                    style="width: {{ perc_inventario }}%;"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="indicator-footer">
+
+                                <span>
+                                    Concluído
+                                </span>
+
+                                <span>
+                                    {{ inv_conc }}/{{ inv_total }}
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- EXPEDIÇÃO -->
+
+                        <div class="indicator-box">
+
+
+                            <div class="indicator-top">
+
+                                <span class="indicator-name">
+                                    Expedição
+                                </span>
+
+
+                                <span class="indicator-percent">
+                                    {{ perc_expedicao }}%
+                                </span>
+
+                            </div>
+
+
+                            <div class="progress">
+
+                                <div
+                                    class="progress-bar bg-primary"
+                                    role="progressbar"
+                                    style="width: {{ perc_expedicao }}%;"
+                                ></div>
+
+                            </div>
+
+
+                            <div class="indicator-footer">
+
+                                <span>
+                                    Atendimento
+                                </span>
+
+                                <span>
+                                    {{ exp_pend }}
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- RESUMO DOS STATUS -->
+
+                    <div class="row g-3 mt-2">
+
+
+                        <div class="col-md-4">
+
+                            <div class="indicator-box">
+
+                                <div class="indicator-name">
+                                    Concluídas
+                                </div>
+
+
+                                <div class="indicator-percent text-success mt-1">
+                                    {{ atividades_concluidas }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="indicator-box">
+
+                                <div class="indicator-name">
+                                    Pendentes
+                                </div>
+
+
+                                <div class="indicator-percent text-warning mt-1">
+                                    {{ atividades_pendentes }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-4">
+
+                            <div class="indicator-box">
+
+                                <div class="indicator-name">
+                                    Arquivadas
+                                </div>
+
+
+                                <div class="indicator-percent text-secondary mt-1">
+                                    {{ atividades_arquivadas }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
 
             </div>
 
 
             <!-- =================================================
-                 ATIVIDADES
+                 CHAT DA EQUIPE
             ================================================= -->
 
-            <div class="dashboard-card activities-card">
+            <div class="dashboard-card">
+
 
                 <div class="card-header-custom">
 
+
                     <div>
+
                         <h5>
-                            <i class="fa-solid fa-list-check text-primary me-1"></i>
-                            Atividades
+
+                            <i class="fa-solid fa-comments text-primary me-1"></i>
+
+                            Chat da Equipe
+
                         </h5>
 
+
                         <small>
-                            Atividades registradas no painel
+                            Comunicação operacional
                         </small>
+
                     </div>
 
-                    <span class="badge bg-primary">
-                        {{ total_atividades }}
-                    </span>
 
                 </div>
 
 
-                <div class="table-wrapper">
+                <div class="card-body-custom">
 
-                    {% if atividades %}
 
-                    <table class="activities-table">
+                    <div class="chat-box">
 
-                        <thead>
+
+                        {% if mensagens_chat %}
+
+
+                            {% for mensagem in mensagens_chat %}
+
+
+                                <div class="chat-message">
+
+
+                                    <div class="chat-header">
+
+
+                                        <span class="chat-author">
+
+                                            <i class="fa-solid fa-user me-1"></i>
+
+                                            {{ mensagem.usuario }}
+
+                                        </span>
+
+
+                                        <span class="chat-time">
+
+                                            {{ mensagem.criado_em }}
+
+                                        </span>
+
+
+                                    </div>
+
+
+                                    <div class="chat-text">
+
+                                        {{ mensagem.mensagem }}
+
+                                    </div>
+
+
+                                </div>
+
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+
+                            <div class="empty-state py-3">
+
+                                <i class="fa-regular fa-comments"></i>
+
+
+                                <div>
+                                    Nenhuma mensagem ainda.
+                                </div>
+
+
+                                <small>
+                                    Envie a primeira mensagem para a equipe.
+                                </small>
+
+                            </div>
+
+
+                        {% endif %}
+
+
+                    </div>
+
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('index') }}"
+                        class="chat-form"
+                    >
+
+
+                        <input
+                            type="hidden"
+                            name="acao_chat"
+                            value="enviar"
+                        >
+
+
+                        <input
+                            type="text"
+                            name="mensagem"
+                            class="form-control"
+                            placeholder="Digite uma mensagem..."
+                            maxlength="500"
+                            required
+                        >
+
+
+                        <button
+                            type="submit"
+                            title="Enviar mensagem"
+                        >
+
+                            <i class="fa-solid fa-paper-plane"></i>
+
+                        </button>
+
+
+                    </form>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =========================================================
+         ATIVIDADES
+
+         IMPORTANTE:
+
+         ESTE BLOCO ESTÁ FORA DO operational-layout.
+
+         Portanto ele ocupa toda a largura disponível.
+    ========================================================= -->
+
+    <div class="dashboard-card activities-card">
+
+
+        <div class="card-header-custom">
+
+
+            <div class="activities-header">
+
+
+                <div class="activities-header-left">
+
+
+                    <div>
+
+                        <h5>
+
+                            <i class="fa-solid fa-list-check text-primary me-1"></i>
+
+                            Atividades
+
+                        </h5>
+
+
+                        <small>
+                            Acompanhamento completo das atividades operacionais
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+
+                <span class="activities-counter">
+
+                    {{ total_atividades }}
+
+                </span>
+
+
+            </div>
+
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+
+            {% if atividades %}
+
+
+                <table class="activities-table">
+
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Nº Req.
+                            </th>
+
+                            <th>
+                                Atividade
+                            </th>
+
+                            <th>
+                                Categoria
+                            </th>
+
+                            <th>
+                                Responsável
+                            </th>
+
+                            <th>
+                                Prioridade
+                            </th>
+
+                            <th>
+                                Início
+                            </th>
+
+                            <th>
+                                Prazo
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Ações
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                        {% for item in atividades %}
+
 
                             <tr>
 
-                                <th>ID</th>
 
-                                <th>Nº Req.</th>
-
-                                <th>Atividade</th>
-
-                                <th>Categoria</th>
-
-                                <th>Responsável</th>
-
-                                <th>Status</th>
-
-                                <th>Ações</th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            {% for item in atividades %}
-
-                            <tr>
+                                <!-- ID -->
 
                                 <td>
-                                    <strong>#{{ item.id }}</strong>
+
+                                    <strong>
+                                        #{{ item.id }}
+                                    </strong>
+
                                 </td>
 
+
+                                <!-- REQUISIÇÃO -->
 
                                 <td>
 
                                     {% if item.num_requisicao %}
 
                                         <span class="fw-semibold">
+
                                             {{ item.num_requisicao }}
+
                                         </span>
 
                                     {% else %}
@@ -1258,16 +2691,23 @@
                                 </td>
 
 
+                                <!-- ATIVIDADE -->
+
                                 <td>
 
-                                    <strong>
+                                    <div class="activity-name">
+
                                         {{ item.atividade }}
-                                    </strong>
+
+                                    </div>
+
 
                                     {% if item.descricao %}
 
-                                        <div class="text-muted small mt-1">
+                                        <div class="activity-description">
+
                                             {{ item.descricao }}
+
                                         </div>
 
                                     {% endif %}
@@ -1275,44 +2715,67 @@
                                 </td>
 
 
+                                <!-- CATEGORIA -->
+
                                 <td>
+
                                     {{ item.categoria }}
+
                                 </td>
 
 
+                                <!-- RESPONSÁVEL -->
+
                                 <td>
+
                                     {{ item.responsavel or '—' }}
+
                                 </td>
 
 
+                                <!-- PRIORIDADE -->
+
                                 <td>
 
-                                    {% if item.status == 'Pendente' %}
 
-                                        <span class="status-badge status-pendente">
-                                            <i class="fa-solid fa-clock"></i>
-                                            Pendente
+                                    {% if item.prioridade == 'Alta' %}
+
+                                        <span class="badge text-bg-danger">
+                                            Alta
                                         </span>
 
-                                    {% elif item.status == 'Concluído' %}
 
-                                        <span class="status-badge status-concluido">
-                                            <i class="fa-solid fa-check"></i>
-                                            Concluído
+                                    {% elif item.prioridade == 'Média' %}
+
+                                        <span class="badge text-bg-warning">
+                                            Média
                                         </span>
 
-                                    {% elif item.status == 'Arquivada' %}
-
-                                        <span class="status-badge status-arquivada">
-                                            <i class="fa-solid fa-box-archive"></i>
-                                            Arquivada
-                                        </span>
 
                                     {% else %}
 
-                                        <span class="status-badge status-andamento">
-                                            <i class="fa-solid fa-spinner"></i>
-                                            {{ item.status }}
+                                        <span class="badge text-bg-secondary">
+                                            Baixa
+                                        </span>
+
+                                    {% endif %}
+
+
+                                </td>
+
+
+                                <!-- INÍCIO -->
+
+                                <td>
+
+                                    {% if item.inicio_em %}
+
+                                        {{ item.inicio_em }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            —
                                         </span>
 
                                     {% endif %}
@@ -1320,7 +2783,88 @@
                                 </td>
 
 
+                                <!-- PRAZO -->
+
                                 <td>
+
+                                    {% if item.prazo %}
+
+                                        {{ item.prazo }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            —
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- STATUS -->
+
+                                <td>
+
+
+                                    {% if item.status == 'Pendente' %}
+
+
+                                        <span class="status-badge status-pendente">
+
+                                            <i class="fa-solid fa-clock"></i>
+
+                                            Pendente
+
+                                        </span>
+
+
+                                    {% elif item.status == 'Concluído' %}
+
+
+                                        <span class="status-badge status-concluido">
+
+                                            <i class="fa-solid fa-check"></i>
+
+                                            Concluído
+
+                                        </span>
+
+
+                                    {% elif item.status == 'Arquivada' %}
+
+
+                                        <span class="status-badge status-arquivada">
+
+                                            <i class="fa-solid fa-box-archive"></i>
+
+                                            Arquivada
+
+                                        </span>
+
+
+                                    {% else %}
+
+
+                                        <span class="status-badge status-andamento">
+
+                                            <i class="fa-solid fa-spinner"></i>
+
+                                            {{ item.status }}
+
+                                        </span>
+
+
+                                    {% endif %}
+
+
+                                </td>
+
+
+                                <!-- AÇÕES -->
+
+                                <td>
+
 
                                     <div class="action-group">
 
@@ -1342,11 +2886,13 @@
 
                                         {% if item.status == 'Pendente' %}
 
+
                                             <form
                                                 method="POST"
                                                 action="{{ url_for('concluir', id=item.id) }}"
                                                 style="display:inline;"
                                             >
+
 
                                                 <button
                                                     type="submit"
@@ -1359,7 +2905,9 @@
 
                                                 </button>
 
+
                                             </form>
+
 
                                         {% endif %}
 
@@ -1367,6 +2915,7 @@
                                         <!-- ARQUIVAR -->
 
                                         {% if item.status == 'Concluído' %}
+
 
                                             <a
                                                 href="{{ url_for('arquivar', id=item.id) }}"
@@ -1379,378 +2928,55 @@
 
                                             </a>
 
+
                                         {% endif %}
 
 
                                     </div>
 
+
                                 </td>
+
 
                             </tr>
 
-                            {% endfor %}
 
-                        </tbody>
+                        {% endfor %}
 
-                    </table>
 
-                    {% else %}
+                    </tbody>
 
-                        <div class="empty-state">
 
-                            <i class="fa-solid fa-clipboard-check"></i>
+                </table>
 
-                            <div>
-                                Nenhuma atividade registrada.
-                            </div>
 
-                            <small>
-                                Crie uma nova atividade pelo formulário acima.
-                            </small>
+            {% else %}
 
-                        </div>
 
-                    {% endif %}
+                <div class="empty-state">
+
+
+                    <i class="fa-solid fa-clipboard-check"></i>
+
+
+                    <div>
+                        Nenhuma atividade registrada.
+                    </div>
+
+
+                    <small>
+                        Crie uma nova atividade pelo formulário acima.
+                    </small>
+
 
                 </div>
 
-            </div>
+
+            {% endif %}
+
 
         </div>
 
-
-        <!-- =====================================================
-             COLUNA DIREITA
-             INDICADORES + CHAT
-        ===================================================== -->
-
-        <div class="right-column">
-
-
-            <!-- =================================================
-                 INDICADORES
-            ================================================= -->
-
-            <div class="dashboard-card">
-
-                <div class="card-header-custom">
-
-                    <div>
-                        <h5>
-                            <i class="fa-solid fa-chart-line text-primary me-1"></i>
-                            Indicadores
-                        </h5>
-
-                        <small>
-                            Acompanhamento operacional
-                        </small>
-                    </div>
-
-                </div>
-
-
-                <div class="card-body-custom">
-
-                    <div class="indicators-grid">
-
-
-                        <!-- ATENDIDAS -->
-
-                        <div class="indicator-box">
-
-                            <div class="indicator-top">
-
-                                <span class="indicator-name">
-                                    Atendidas
-                                </span>
-
-                                <span class="indicator-percent">
-                                    {{ perc_atendidas }}%
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-
-                                <div
-                                    class="progress-bar bg-success"
-                                    role="progressbar"
-                                    style="width: {{ perc_atendidas }}%;"
-                                ></div>
-
-                            </div>
-
-                            <div class="indicator-footer">
-
-                                <span>
-                                    Requisições
-                                </span>
-
-                                <span>
-                                    {{ total_req }}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- INVENTÁRIO -->
-
-                        <div class="indicator-box">
-
-                            <div class="indicator-top">
-
-                                <span class="indicator-name">
-                                    Inventário
-                                </span>
-
-                                <span class="indicator-percent">
-                                    {{ perc_inventario }}%
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-
-                                <div
-                                    class="progress-bar bg-warning"
-                                    role="progressbar"
-                                    style="width: {{ perc_inventario }}%;"
-                                ></div>
-
-                            </div>
-
-                            <div class="indicator-footer">
-
-                                <span>
-                                    Concluído
-                                </span>
-
-                                <span>
-                                    {{ inv_conc }}/{{ inv_total }}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <!-- EXPEDIÇÃO -->
-
-                        <div class="indicator-box">
-
-                            <div class="indicator-top">
-
-                                <span class="indicator-name">
-                                    Expedição
-                                </span>
-
-                                <span class="indicator-percent">
-                                    {{ perc_expedicao }}%
-                                </span>
-
-                            </div>
-
-                            <div class="progress">
-
-                                <div
-                                    class="progress-bar bg-primary"
-                                    role="progressbar"
-                                    style="width: {{ perc_expedicao }}%;"
-                                ></div>
-
-                            </div>
-
-                            <div class="indicator-footer">
-
-                                <span>
-                                    Atendimento
-                                </span>
-
-                                <span>
-                                    {{ exp_pend }}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- RESUMO DE ATIVIDADES -->
-
-                    <div class="row g-3 mt-2">
-
-                        <div class="col-md-4">
-
-                            <div class="indicator-box">
-
-                                <div class="indicator-name">
-                                    Concluídas
-                                </div>
-
-                                <div class="indicator-percent text-success mt-1">
-                                    {{ atividades_concluidas }}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-4">
-
-                            <div class="indicator-box">
-
-                                <div class="indicator-name">
-                                    Pendentes
-                                </div>
-
-                                <div class="indicator-percent text-warning mt-1">
-                                    {{ atividades_pendentes }}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="col-md-4">
-
-                            <div class="indicator-box">
-
-                                <div class="indicator-name">
-                                    Arquivadas
-                                </div>
-
-                                <div class="indicator-percent text-secondary mt-1">
-                                    {{ atividades_arquivadas }}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 CHAT DA EQUIPE
-            ================================================= -->
-
-            <div class="dashboard-card">
-
-                <div class="card-header-custom">
-
-                    <div>
-                        <h5>
-                            <i class="fa-solid fa-comments text-primary me-1"></i>
-                            Chat da Equipe
-                        </h5>
-
-                        <small>
-                            Comunicação operacional
-                        </small>
-                    </div>
-
-                </div>
-
-
-                <div class="card-body-custom">
-
-                    <div class="chat-box">
-
-                        {% if mensagens_chat %}
-
-                            {% for mensagem in mensagens_chat %}
-
-                                <div class="chat-message">
-
-                                    <div class="chat-header">
-
-                                        <span class="chat-author">
-                                            <i class="fa-solid fa-user me-1"></i>
-                                            {{ mensagem.usuario }}
-                                        </span>
-
-                                        <span class="chat-time">
-                                            {{ mensagem.criado_em }}
-                                        </span>
-
-                                    </div>
-
-                                    <div class="chat-text">
-                                        {{ mensagem.mensagem }}
-                                    </div>
-
-                                </div>
-
-                            {% endfor %}
-
-                        {% else %}
-
-                            <div class="empty-state py-3">
-
-                                <i class="fa-regular fa-comments"></i>
-
-                                <div>
-                                    Nenhuma mensagem ainda.
-                                </div>
-
-                                <small>
-                                    Envie a primeira mensagem para a equipe.
-                                </small>
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <form
-                        method="POST"
-                        action="{{ url_for('index') }}"
-                        class="chat-form"
-                    >
-
-                        <input
-                            type="hidden"
-                            name="acao_chat"
-                            value="enviar"
-                        >
-
-                        <input
-                            type="text"
-                            name="mensagem"
-                            class="form-control"
-                            placeholder="Digite uma mensagem..."
-                            maxlength="500"
-                            required
-                        >
-
-                        <button
-                            type="submit"
-                            title="Enviar mensagem"
-                        >
-
-                            <i class="fa-solid fa-paper-plane"></i>
-
-                        </button>
-
-                    </form>
-
-                </div>
-
-            </div>
-
-        </div>
 
     </div>
 
@@ -1758,71 +2984,113 @@
 </main>
 
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
 
 
 <script>
-    /*
-     * Mantém o chat automaticamente na última mensagem.
-     */
-    document.addEventListener("DOMContentLoaded", function () {
 
-        const chatBox = document.querySelector(".chat-box");
 
-        if (chatBox) {
-            chatBox.scrollTop = chatBox.scrollHeight;
+    /* =========================================================
+       CHAT:
+       começa mostrando a mensagem mais recente
+    ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const chatBox =
+                document.querySelector(".chat-box");
+
+
+            if (chatBox) {
+
+                chatBox.scrollTop =
+                    chatBox.scrollHeight;
+
+            }
+
         }
+    );
 
-    });
+
+    /* =========================================================
+       NOVA ATIVIDADE:
+       evita clique duplo no botão
+    ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            const activityForm =
+                document.querySelector(".activity-form");
 
 
-    /*
-     * Evita envio duplo acidental do formulário de nova atividade.
-     */
-    document.addEventListener("DOMContentLoaded", function () {
-
-        const activityForm = document.querySelector(".activity-form");
-
-        if (!activityForm) {
-            return;
-        }
-
-        activityForm.addEventListener("submit", function () {
-
-            const button = activityForm.querySelector("button[type='submit']");
-
-            if (!button) {
+            if (!activityForm) {
                 return;
             }
 
-            button.disabled = true;
 
-            button.innerHTML =
-                '<i class="fa-solid fa-spinner fa-spin me-1"></i> Salvando...';
+            activityForm.addEventListener(
+                "submit",
+                function () {
 
-        });
+                    const button =
+                        activityForm.querySelector(
+                            "button[type='submit']"
+                        );
 
-    });
+
+                    if (!button) {
+                        return;
+                    }
 
 
-    /*
-     * Pequena proteção visual para links do menu.
-     * Não interfere no Flask/url_for.
-     */
-    document.addEventListener("DOMContentLoaded", function () {
+                    button.disabled = true;
 
-        document.querySelectorAll(".menu-link").forEach(function (link) {
 
-            link.addEventListener("click", function () {
+                    button.innerHTML =
+                        '<i class="fa-solid fa-spinner fa-spin me-1"></i> Salvando...';
 
-                this.style.pointerEvents = "auto";
+                }
+            );
 
-            });
+        }
+    );
 
-        });
 
-    });
+    /* =========================================================
+       GARANTE QUE OS LINKS DA SIDEBAR
+       CONTINUEM CLICÁVEIS
+    ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            document
+                .querySelectorAll(".menu-link")
+                .forEach(
+                    function (link) {
+
+                        link.style.pointerEvents =
+                            "auto";
+
+                    }
+                );
+
+        }
+    );
+
+
 </script>
 
+
 </body>
+
 </html>

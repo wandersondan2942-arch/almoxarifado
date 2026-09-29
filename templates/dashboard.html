@@ -1194,20 +1194,120 @@
             <input
                 type="text"
                 name="q"
-                class="form-control"
-                placeholder="Pesquisar atividade, requisição ou responsável..."
-                value="{{ busca or '' }}"
-            >
+            <!-- =====================================================
+     CHAT
+====================================================== -->
 
+<div class="section-card">
+
+    <div class="section-header">
+
+        <h5 class="section-title">
+
+            <i class="fa-solid fa-comments"></i>
+
+            Chat da Equipe
+
+        </h5>
+
+        <span class="small-info">
+            Comunicação interna
+        </span>
+
+    </div>
+
+    <div class="chat-box">
+
+        {% if mensagens or chat %}
+
+            {% set lista_chat = mensagens if mensagens else chat %}
+
+            {% for mensagem in lista_chat %}
+
+                <div class="chat-item">
+
+                    <div class="chat-avatar">
+
+                        {{ (mensagem.remetente or 'U')[0]|upper }}
+
+                    </div>
+
+                    <div class="chat-message">
+
+                        <div>
+
+                            <span class="chat-name">
+
+                                {{ mensagem.remetente or 'Usuário' }}
+
+                            </span>
+
+                            <span class="chat-date">
+
+                                {{ mensagem.criado_em or '' }}
+
+                            </span>
+
+                        </div>
+
+                        <div class="chat-text">
+
+                            {{ mensagem.mensagem }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty-state py-4">
+
+                <i class="fa-solid fa-comments d-block"></i>
+
+                <p>
+                    Nenhuma mensagem ainda.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+    <form
+        method="POST"
+        action="{{ url_for('index') }}"
+        class="chat-form"
+    >
+
+        <input
+            type="hidden"
+            name="acao_chat"
+            value="enviar"
+        >
+
+        <div class="input-group">
+
+            <input
+                type="text"
+                name="mensagem"
+                class="form-control"
+                placeholder="Digite uma mensagem para a equipe..."
+                autocomplete="off"
+                required
+            >
 
             <button
                 class="btn btn-dark"
                 type="submit"
+                title="Enviar mensagem"
             >
 
-                <i class="fa-solid fa-magnifying-glass me-1"></i>
-
-                <span>Pesquisar</span>
+                <i class="fa-solid fa-paper-plane"></i>
 
             </button>
 
@@ -1215,6 +1315,7 @@
 
     </form>
 
+</div>
 
     <!-- =====================================================
          CARDS

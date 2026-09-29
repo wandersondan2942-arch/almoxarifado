@@ -2557,12 +2557,13 @@ if acao_chat == "enviar":
             ),
             commit=True
         )
-    return redirect(url_for("index"))
+        
+        return redirect(url_for("index"))
         # =========================
         # NOVA ATIVIDADE
         # =========================
 
-        num_requisicao = normalizar_requisicao(
+    num_requisicao = normalizar_requisicao(
             request.form.get("num_requisicao")
         )
 

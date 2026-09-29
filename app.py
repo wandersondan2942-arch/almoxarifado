@@ -2520,47 +2520,45 @@ def index():
         usuario_atual = session["usuario_atual"]
         acao_chat = request.form.get("acao_chat")
 
-        # =========================
-        # ENVIO DE MENSAGEM NO CHAT
-        # =========================
-        if acao_chat == "enviar":
+       # ENVIO DE MENSAGEM NO CHAT
+# =========================
+if acao_chat == "enviar":
 
-            mensagem = request.form.get(
-                "mensagem",
-                ""
-            ).strip()
+    mensagem = request.form.get(
+        "mensagem",
+        ""
+    ).strip()
 
-            if mensagem:
+    if mensagem:
 
-                executar(
-                    """
-                    INSERT INTO chat
-                        (usuario, mensagem, criado_em)
-                    VALUES
-                        (%s, %s, %s)
-                    """
+        executar(
+            """
+            INSERT INTO chat
+                (remetente, mensagem, criado_em)
+            VALUES
+                (%s, %s, %s)
+            """
+            if usando_postgresql()
+            else
+            """
+            INSERT INTO chat
+                (remetente, mensagem, criado_em)
+            VALUES
+                (?, ?, ?)
+            """,
+            (
+                usuario_atual,
+                mensagem,
+                (
+                    agora_utc_naive()
                     if usando_postgresql()
-                    else
-                    """
-                    INSERT INTO chat
-                        (usuario, mensagem, criado_em)
-                    VALUES
-                        (?, ?, ?)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem,
-                        (
-                            agora_utc_naive()
-                            if usando_postgresql()
-                            else agora_sqlite()
-                        )
-                    ),
-                    commit=True
+                    else agora_sqlite()
                 )
+            ),
+            commit=True
+        )
 
-            return redirect(url_for("index"))
-
+    return redirect(url_for("index"))
         # =========================
         # NOVA ATIVIDADE
         # =========================

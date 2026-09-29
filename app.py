@@ -2598,51 +2598,50 @@ prazo = request.form.get(
     ""
 ).strip()
 
-        # =========================
-        # VALIDAÇÕES
-        # =========================
+# =========================
+# VALIDAÇÕES
+# =========================
 
-        if categoria not in CATEGORIAS_VALIDAS:
-            categoria = "Separação"
+if categoria not in CATEGORIAS_VALIDAS:
+    categoria = "Separação"
 
-        if prioridade not in PRIORIDADES_VALIDAS:
-            prioridade = "Baixa"
+if prioridade not in PRIORIDADES_VALIDAS:
+    prioridade = "Baixa"
 
-        if not atividade:
+if not atividade:
 
-            flash(
-                "Informe a atividade.",
-                "warning"
-            )
+    flash(
+        "Informe a atividade.",
+        "warning"
+    )
 
-            return redirect(
-                url_for("index")
-            )
+    return redirect(
+        url_for("index")
+    )
 
-        if categoria == "Separação" and not num_requisicao:
+if categoria == "Separação" and not num_requisicao:
 
-            flash(
-                "A Separação precisa de um número de requisição.",
-                "warning"
-            )
+    flash(
+        "A Separação precisa de um número de requisição.",
+        "warning"
+    )
 
-            return redirect(
-                url_for("index")
-            )
+    return redirect(
+        url_for("index")
+    )
 
-        if num_requisicao and requisicao_duplicada(
-            num_requisicao
-        ):
+if num_requisicao and requisicao_duplicada(
+    num_requisicao
+):
 
-            flash(
-                f"A requisição {num_requisicao} já possui uma atividade ativa.",
-                "warning"
-            )
+    flash(
+        f"A requisição {num_requisicao} já possui uma atividade ativa.",
+        "warning"
+    )
 
-            return redirect(
-                url_for("index")
-            )
-
+    return redirect(
+        url_for("index")
+    )
         # =========================
         # HORÁRIO DE INÍCIO
         # =========================

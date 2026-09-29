@@ -2548,56 +2548,55 @@ if acao_chat == "enviar":
             """,
             (
                 usuario_atual,
-                mensagem,
-                (
-                    agora_utc_naive()
-                    if usando_postgresql()
-                    else agora_sqlite()
-                )
-            ),
-            commit=True
+        mensagem,
+        (
+            agora_utc_naive()
+            if usando_postgresql()
+            else agora_sqlite()
         )
-        
-        return redirect(url_for("index"))
+    ),
+    commit=True
+)
 
-    # =========================
-    # NOVA ATIVIDADE
-    # =========================
+return redirect(url_for("index"))
 
-    num_requisicao = normalizar_requisicao(
+# =========================
+# NOVA ATIVIDADE
+# =========================
 
-        request.form.get("num_requisicao")
-        )
+num_requisicao = normalizar_requisicao(
+    request.form.get("num_requisicao")
+)
 
-        atividade = request.form.get(
-            "atividade",
-            ""
-        ).strip()
+atividade = request.form.get(
+    "atividade",
+    ""
+).strip()
 
-        descricao = request.form.get(
-            "descricao",
-            ""
-        ).strip()
-        
-        categoria = request.form.get(
-            "categoria",
-            "Separação"
-        ).strip()
+descricao = request.form.get(
+    "descricao",
+    ""
+).strip()
 
-        responsavel = request.form.get(
-            "responsavel",
-            usuario_atual
-        ).strip()
+categoria = request.form.get(
+    "categoria",
+    "Separação"
+).strip()
 
-        prioridade = request.form.get(
-            "prioridade",
-            "Baixa"
-        ).strip()
+responsavel = request.form.get(
+    "responsavel",
+    usuario_atual
+).strip()
 
-        prazo = request.form.get(
-            "prazo",
-            ""
-        ).strip()
+prioridade = request.form.get(
+    "prioridade",
+    "Baixa"
+).strip()
+
+prazo = request.form.get(
+    "prazo",
+    ""
+).strip()
 
         # =========================
         # VALIDAÇÕES

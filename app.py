@@ -2559,12 +2559,14 @@ if acao_chat == "enviar":
         )
         
         return redirect(url_for("index"))
-        # =========================
-        # NOVA ATIVIDADE
-        # =========================
+
+    # =========================
+    # NOVA ATIVIDADE
+    # =========================
 
     num_requisicao = normalizar_requisicao(
-            request.form.get("num_requisicao")
+
+        request.form.get("num_requisicao")
         )
 
         atividade = request.form.get(
@@ -2576,7 +2578,7 @@ if acao_chat == "enviar":
             "descricao",
             ""
         ).strip()
-
+        
         categoria = request.form.get(
             "categoria",
             "Separação"

@@ -2520,7 +2520,7 @@ def index():
         usuario_atual = session["usuario_atual"]
         acao_chat = request.form.get("acao_chat")
 
-       # ENVIO DE MENSAGEM NO CHAT
+# ENVIO DE MENSAGEM NO CHAT
 # =========================
 if acao_chat == "enviar":
 
@@ -2548,17 +2548,18 @@ if acao_chat == "enviar":
             """,
             (
                 usuario_atual,
-        mensagem,
-        (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
+                mensagem,
+                (
+                    agora_utc_naive()
+                    if usando_postgresql()
+                    else agora_sqlite()
+                )
+            ),
+            commit=True
         )
-    ),
-    commit=True
-)
 
-return redirect(url_for("index"))
+    return redirect(url_for("index"))
+
 
 # =========================
 # NOVA ATIVIDADE
@@ -2597,6 +2598,7 @@ prazo = request.form.get(
     "prazo",
     ""
 ).strip()
+
 
 # =========================
 # VALIDAÇÕES
@@ -2642,101 +2644,105 @@ if num_requisicao and requisicao_duplicada(
     return redirect(
         url_for("index")
     )
-        # =========================
-        # HORÁRIO DE INÍCIO
-        # =========================
 
-        inicio_em = None
 
-        if categoria == "Separação":
+# =========================
+# HORÁRIO DE INÍCIO
+# =========================
 
-            inicio_em = (
-                agora_utc_naive()
-                if usando_postgresql()
-                else agora_sqlite()
-            )
+inicio_em = None
 
-        agora_criacao = (
-            agora_utc_naive()
-            if usando_postgresql()
-            else agora_sqlite()
-        )
+if categoria == "Separação":
 
-        # =========================
-        # SALVAR ATIVIDADE
-        # =========================
-
-        executar(
-            """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            if usando_postgresql()
-            else
-            """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                num_requisicao or None,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo or None,
-                STATUS_PENDENTE,
-                inicio_em,
-                agora_criacao
-            ),
-            commit=True
-        )
-
-        flash(
-            "Atividade criada com sucesso.",
-            "success"
-        )
-
-        return redirect(
-            url_for("index")
-        )
-
-    # =========================
-    # DADOS DO DASHBOARD
-    # =========================
-
-    dados = obter_dados_dashboard()
-
-    return render_template(
-        "index.html",
-        **dados
+    inicio_em = (
+        agora_utc_naive()
+        if usando_postgresql()
+        else agora_sqlite()
     )
+
+agora_criacao = (
+    agora_utc_naive()
+    if usando_postgresql()
+    else agora_sqlite()
+)
+
+
+# =========================
+# SALVAR ATIVIDADE
+# =========================
+
+executar(
+    """
+    INSERT INTO atividades
+    (
+        num_requisicao,
+        atividade,
+        descricao,
+        categoria,
+        responsavel,
+        prioridade,
+        prazo,
+        status,
+        inicio_em,
+        criado_em
+    )
+    VALUES
+    (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    if usando_postgresql()
+    else
+    """
+    INSERT INTO atividades
+    (
+        num_requisicao,
+        atividade,
+        descricao,
+        categoria,
+        responsavel,
+        prioridade,
+        prazo,
+        status,
+        inicio_em,
+        criado_em
+    )
+    VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """,
+    (
+        num_requisicao or None,
+        atividade,
+        descricao,
+        categoria,
+        responsavel,
+        prioridade,
+        prazo or None,
+        STATUS_PENDENTE,
+        inicio_em,
+        agora_criacao
+    ),
+    commit=True
+)
+
+flash(
+    "Atividade criada com sucesso.",
+    "success"
+)
+
+return redirect(
+    url_for("index")
+)
+
+
+# =========================
+# DADOS DO DASHBOARD
+# =========================
+
+dados = obter_dados_dashboard()
+
+return render_template(
+    "index.html",
+    **dados
+)
 @app.route("/editar/<int:id>", methods=["POST"])
 def editar(id):
 

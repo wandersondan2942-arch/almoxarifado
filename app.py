@@ -2040,7 +2040,7 @@ def cadastro_usuario():
         )
 
     return render_template(
-        "cadastro.html"
+        "cadastro_usuario.html"
     )
 
 

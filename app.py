@@ -128,6 +128,10 @@ def get_db():
 
     return g.db
 
+```python
+# ============================================================
+# CONEXÃO / FECHAMENTO DO BANCO
+# ============================================================
 
 @app.teardown_appcontext
 def fechar_db(exception=None):
@@ -137,6 +141,10 @@ def fechar_db(exception=None):
     if db is not None:
         db.close()
 
+
+# ============================================================
+# EXECUÇÃO DE SQL
+# ============================================================
 
 def executar(
     sql,
@@ -188,6 +196,10 @@ def executar(
         raise
 
 
+# ============================================================
+# CONVERSÃO DE LINHAS
+# ============================================================
+
 def linha_para_dict(linha):
 
     if linha is None:
@@ -217,13 +229,23 @@ def obter_valor(
         return padrao
 
     if isinstance(linha, dict):
-        return linha.get(campo, padrao)
+        return linha.get(
+            campo,
+            padrao
+        )
 
     try:
+
         return linha[campo]
+
     except Exception:
+
         return padrao
 
+
+# ============================================================
+# CONTAGEM
+# ============================================================
 
 def contar(
     sql,
@@ -246,8 +268,13 @@ def contar(
     )
 
     try:
-        return int(valor or 0)
+
+        return int(
+            valor or 0
+        )
+
     except Exception:
+
         return 0
 
 
@@ -260,7 +287,9 @@ def normalizar_texto(valor):
     if valor is None:
         return ""
 
-    texto = str(valor).strip().lower()
+    texto = str(
+        valor
+    ).strip().lower()
 
     texto = unicodedata.normalize(
         "NFD",
@@ -270,23 +299,33 @@ def normalizar_texto(valor):
     texto = "".join(
         caractere
         for caractere in texto
-        if unicodedata.category(caractere) != "Mn"
+        if unicodedata.category(
+            caractere
+        ) != "Mn"
     )
 
     return texto
 
 
 def normalizar_status(valor):
-    return normalizar_texto(valor)
+
+    return normalizar_texto(
+        valor
+    )
 
 
 def normalizar_categoria(valor):
-    return normalizar_texto(valor)
+
+    return normalizar_texto(
+        valor
+    )
 
 
 def normalizar_nome_modulo(valor):
 
-    texto = str(valor or "")
+    texto = str(
+        valor or ""
+    )
 
     texto = unicodedata.normalize(
         "NFKD",
@@ -296,7 +335,9 @@ def normalizar_nome_modulo(valor):
     texto = "".join(
         caractere
         for caractere in texto
-        if not unicodedata.combining(caractere)
+        if not unicodedata.combining(
+            caractere
+        )
     )
 
     return texto.strip().lower()
@@ -307,10 +348,15 @@ def normalizar_requisicao(valor):
     if valor is None:
         return ""
 
-    return str(valor).strip().upper()
+    return str(
+        valor
+    ).strip().upper()
 
 
-def categoria_eh(item, categoria):
+def categoria_eh(
+    item,
+    categoria
+):
 
     return (
         normalizar_categoria(
@@ -320,7 +366,10 @@ def categoria_eh(item, categoria):
                 ""
             )
         )
-        == normalizar_categoria(categoria)
+        ==
+        normalizar_categoria(
+            categoria
+        )
     )
 
 
@@ -330,12 +379,17 @@ def categoria_eh(item, categoria):
 
 def status_eh_pendente(valor):
 
-    return normalizar_status(valor) == "pendente"
+    return (
+        normalizar_status(valor)
+        == "pendente"
+    )
 
 
 def status_eh_andamento(valor):
 
-    return normalizar_status(valor) in (
+    return normalizar_status(
+        valor
+    ) in (
         "em andamento",
         "andamento",
         "em processo"
@@ -344,7 +398,9 @@ def status_eh_andamento(valor):
 
 def status_eh_concluido(valor):
 
-    return normalizar_status(valor) in (
+    return normalizar_status(
+        valor
+    ) in (
         "concluido",
         "concluida",
         "finalizado",
@@ -354,7 +410,10 @@ def status_eh_concluido(valor):
 
 def status_eh_arquivado(valor):
 
-    return normalizar_status(valor) == "arquivado"
+    return (
+        normalizar_status(valor)
+        == "arquivado"
+    )
 
 
 def status_eh_finalizado(valor):
@@ -410,7 +469,10 @@ def converter_para_brasil(valor):
     if not valor:
         return None
 
-    if isinstance(valor, datetime):
+    if isinstance(
+        valor,
+        datetime
+    ):
 
         dt = valor
 
@@ -424,7 +486,9 @@ def converter_para_brasil(valor):
             FUSO_BRASIL
         )
 
-    texto = str(valor).strip()
+    texto = str(
+        valor
+    ).strip()
 
     if not texto:
         return None
@@ -486,7 +550,9 @@ def converter_para_brasil(valor):
 
 def formatar_data_hora(valor):
 
-    dt = converter_para_brasil(valor)
+    dt = converter_para_brasil(
+        valor
+    )
 
     if not dt:
         return "-"
@@ -498,7 +564,9 @@ def formatar_data_hora(valor):
 
 def formatar_hora(valor):
 
-    dt = converter_para_brasil(valor)
+    dt = converter_para_brasil(
+        valor
+    )
 
     if not dt:
         return "-"
@@ -521,10 +589,13 @@ def calcular_duracao(
         return "-"
 
     if fim:
+
         fim_dt = converter_para_brasil(
             fim
         )
+
     else:
+
         fim_dt = agora_brasil()
 
     if not fim_dt:
@@ -564,7 +635,10 @@ def prazo_em_datetime(valor):
     if not valor:
         return None
 
-    if isinstance(valor, datetime):
+    if isinstance(
+        valor,
+        datetime
+    ):
 
         dt = valor
 
@@ -578,7 +652,9 @@ def prazo_em_datetime(valor):
             FUSO_BRASIL
         )
 
-    texto = str(valor).strip()
+    texto = str(
+        valor
+    ).strip()
 
     if not texto:
         return None
@@ -634,15 +710,22 @@ def prazo_atrasado(
     status=None
 ):
 
-    if not status_eh_ativo(status):
+    if not status_eh_ativo(
+        status
+    ):
         return False
 
-    dt = prazo_em_datetime(prazo)
+    dt = prazo_em_datetime(
+        prazo
+    )
 
     if not dt:
         return False
 
-    return agora_brasil() > dt
+    return (
+        agora_brasil()
+        > dt
+    )
 
 
 def registro_foi_atrasado(item):
@@ -653,7 +736,9 @@ def registro_foi_atrasado(item):
         ""
     )
 
-    if not status_eh_ativo(status):
+    if not status_eh_ativo(
+        status
+    ):
         return False
 
     prazo = obter_valor(
@@ -672,11 +757,16 @@ def registro_foi_atrasado(item):
 
 def texto_atraso(item):
 
-    if not registro_foi_atrasado(item):
+    if not registro_foi_atrasado(
+        item
+    ):
         return ""
 
     prazo_dt = prazo_em_datetime(
-        obter_valor(item, "prazo")
+        obter_valor(
+            item,
+            "prazo"
+        )
     )
 
     if not prazo_dt:
@@ -718,7 +808,9 @@ def texto_atraso(item):
             f"{mins}min de atraso"
         )
 
-    return f"{mins}min de atraso"
+    return (
+        f"{mins}min de atraso"
+    )
 
 
 # ============================================================
@@ -727,7 +819,9 @@ def texto_atraso(item):
 
 def preparar_atividade(item):
 
-    item = linha_para_dict(item)
+    item = linha_para_dict(
+        item
+    )
 
     if not item:
         return item
@@ -738,28 +832,40 @@ def preparar_atividade(item):
     if not item.get("prioridade"):
         item["prioridade"] = "Baixa"
 
-    item["inicio_formatado"] = formatar_data_hora(
-        item.get("inicio_em")
+    item["inicio_formatado"] = (
+        formatar_data_hora(
+            item.get("inicio_em")
+        )
     )
 
-    item["concluido_formatado"] = formatar_data_hora(
-        item.get("concluido_em")
+    item["concluido_formatado"] = (
+        formatar_data_hora(
+            item.get("concluido_em")
+        )
     )
 
-    item["criado_formatado"] = formatar_data_hora(
-        item.get("criado_em")
+    item["criado_formatado"] = (
+        formatar_data_hora(
+            item.get("criado_em")
+        )
     )
 
-    item["prazo_formatado"] = formatar_data_hora(
-        item.get("prazo")
+    item["prazo_formatado"] = (
+        formatar_data_hora(
+            item.get("prazo")
+        )
     )
 
-    item["foi_atrasada"] = registro_foi_atrasado(
-        item
+    item["foi_atrasada"] = (
+        registro_foi_atrasado(
+            item
+        )
     )
 
-    item["texto_atraso"] = texto_atraso(
-        item
+    item["texto_atraso"] = (
+        texto_atraso(
+            item
+        )
     )
 
     item["duracao"] = calcular_duracao(
@@ -770,7 +876,9 @@ def preparar_atividade(item):
     return item
 
 
-def preparar_lista_atividades(itens):
+def preparar_lista_atividades(
+    itens
+):
 
     return [
         preparar_atividade(item)
@@ -778,21 +886,43 @@ def preparar_lista_atividades(itens):
     ]
 
 
+# ============================================================
+# PREPARAÇÃO DO CHAT
+# ============================================================
+
 def preparar_chat(itens):
 
     resultado = []
 
     for item in itens:
 
-        item = linha_para_dict(item)
+        item = linha_para_dict(
+            item
+        )
 
-        if item:
+        if not item:
+            continue
 
-            item["data_formatada"] = formatar_data_hora(
-                item.get("criado_em")
+        # Compatibilidade com registros
+        # antigos que possam possuir
+        # "usuario" em vez de "remetente".
+
+        if not item.get("remetente"):
+
+            item["remetente"] = (
+                item.get("usuario")
+                or "Usuário"
             )
 
-            resultado.append(item)
+        item["data_formatada"] = (
+            formatar_data_hora(
+                item.get("criado_em")
+            )
+        )
+
+        resultado.append(
+            item
+        )
 
     return resultado
 
@@ -841,7 +971,9 @@ def buscar_atividades_historico():
 # INDICADORES GERAIS
 # ============================================================
 
-def calcular_indicadores(atividades):
+def calcular_indicadores(
+    atividades
+):
 
     atividades = [
         linha_para_dict(item)
@@ -862,19 +994,27 @@ def calcular_indicadores(atividades):
             ""
         )
 
-        if status_eh_pendente(status):
+        if status_eh_pendente(
+            status
+        ):
 
             atividades_pendentes += 1
 
-        elif status_eh_andamento(status):
+        elif status_eh_andamento(
+            status
+        ):
 
             atividades_andamento += 1
 
-        elif status_eh_concluido(status):
+        elif status_eh_concluido(
+            status
+        ):
 
             atividades_concluidas += 1
 
-        elif status_eh_arquivado(status):
+        elif status_eh_arquivado(
+            status
+        ):
 
             atividades_arquivadas += 1
 
@@ -888,7 +1028,9 @@ def calcular_indicadores(atividades):
         + atividades_andamento
     )
 
-    total_geral = len(atividades)
+    total_geral = len(
+        atividades
+    )
 
     if total_geral > 0:
 
@@ -912,7 +1054,9 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    inventario_total = len(inventarios)
+    inventario_total = len(
+        inventarios
+    )
 
     inventario_concluido = sum(
         1
@@ -953,7 +1097,9 @@ def calcular_indicadores(atividades):
         )
     ]
 
-    expedicao_total = len(expedicoes)
+    expedicao_total = len(
+        expedicoes
+    )
 
     expedicao_concluida = sum(
         1
@@ -1012,7 +1158,9 @@ def calcular_indicadores(atividades):
         )
 
         if numero:
-            requisicoes_pendentes.add(numero)
+            requisicoes_pendentes.add(
+                numero
+            )
 
     recebimento_pendente = sum(
         1
@@ -1054,11 +1202,14 @@ def calcular_indicadores(atividades):
     atrasados = sum(
         1
         for item in atividades
-        if registro_foi_atrasado(item)
+        if registro_foi_atrasado(
+            item
+        )
     )
 
     return {
-        "total_geral": total_geral,
+        "total_geral":
+            total_geral,
 
         "atividades_pendentes":
             atividades_pendentes,
@@ -1079,7 +1230,13 @@ def calcular_indicadores(atividades):
             atividades_ativas,
 
         "perc_atendidas":
-            max(0, min(100, perc_atendidas)),
+            max(
+                0,
+                min(
+                    100,
+                    perc_atendidas
+                )
+            ),
 
         "inventario_total":
             inventario_total,
@@ -1091,7 +1248,13 @@ def calcular_indicadores(atividades):
             inventario_pendente,
 
         "perc_inventario":
-            max(0, min(100, perc_inventario)),
+            max(
+                0,
+                min(
+                    100,
+                    perc_inventario
+                )
+            ),
 
         "expedicao_total":
             expedicao_total,
@@ -1103,10 +1266,18 @@ def calcular_indicadores(atividades):
             expedicao_pendente,
 
         "perc_expedicao":
-            max(0, min(100, perc_expedicao)),
+            max(
+                0,
+                min(
+                    100,
+                    perc_expedicao
+                )
+            ),
 
         "requisicoes_pendentes":
-            len(requisicoes_pendentes),
+            len(
+                requisicoes_pendentes
+            ),
 
         "recebimento_pendente":
             recebimento_pendente,
@@ -1121,31 +1292,47 @@ def calcular_indicadores(atividades):
 
 # ============================================================
 # INDICADORES DO DIA
-#
-# IMPORTANTE:
-# Aqui não usamos todo o histórico.
-# Somente atividades do dia atual no horário de Brasília.
 # ============================================================
 
-def atividade_eh_do_dia(item, data_referencia=None):
+def atividade_eh_do_dia(
+    item,
+    data_referencia=None
+):
 
     if data_referencia is None:
-        data_referencia = agora_brasil().date()
+
+        data_referencia = (
+            agora_brasil().date()
+        )
 
     data_valor = (
-        obter_valor(item, "inicio_em")
-        or obter_valor(item, "criado_em")
+        obter_valor(
+            item,
+            "inicio_em"
+        )
+        or
+        obter_valor(
+            item,
+            "criado_em"
+        )
     )
 
-    dt = converter_para_brasil(data_valor)
+    dt = converter_para_brasil(
+        data_valor
+    )
 
     if not dt:
         return False
 
-    return dt.date() == data_referencia
+    return (
+        dt.date()
+        == data_referencia
+    )
 
 
-def calcular_indicadores_do_dia(atividades):
+def calcular_indicadores_do_dia(
+    atividades
+):
 
     hoje = agora_brasil().date()
 
@@ -1275,11 +1462,13 @@ def calcular_indicadores_do_dia(atividades):
         perc_expedicao = 0
 
     return {
-        "data": hoje.strftime(
-            "%d/%m/%Y"
-        ),
+        "data":
+            hoje.strftime(
+                "%d/%m/%Y"
+            ),
 
-        "total": total_dia,
+        "total":
+            total_dia,
 
         "finalizadas":
             finalizadas_dia,
@@ -1361,7 +1550,8 @@ def requisicao_duplicada(
 
         if (
             ignorar_id is not None
-            and int(item_id) == int(ignorar_id)
+            and int(item_id)
+            == int(ignorar_id)
         ):
             continue
 
@@ -1378,7 +1568,8 @@ def requisicao_duplicada(
         if status_eh_ativo(
             obter_valor(
                 item,
-                "status"
+                "status",
+                ""
             )
         ):
             return True
@@ -1398,6 +1589,10 @@ def init_db():
 
         cursor = db.cursor()
 
+        # ====================================================
+        # USUÁRIOS
+        # ====================================================
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
                 id SERIAL PRIMARY KEY,
@@ -1406,6 +1601,10 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # ====================================================
+        # ATIVIDADES
+        # ====================================================
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -1425,14 +1624,65 @@ def init_db():
             )
         """)
 
+        # ====================================================
+        # CHAT
+        #
+        # A coluna oficial será "remetente".
+        # ====================================================
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id SERIAL PRIMARY KEY,
-                usuario TEXT,
+                remetente TEXT,
                 mensagem TEXT,
                 criado_em TIMESTAMP
             )
         """)
+
+        # ====================================================
+        # CORREÇÃO SEGURA DO CHAT
+        #
+        # Se a tabela antiga possuir "usuario",
+        # adicionamos "remetente" sem apagar nada.
+        # ====================================================
+
+        cursor.execute("""
+            ALTER TABLE chat
+            ADD COLUMN IF NOT EXISTS remetente TEXT
+        """)
+
+        # ====================================================
+        # MIGRAÇÃO DE DADOS ANTIGOS
+        #
+        # Só executa se a coluna "usuario" existir.
+        # ====================================================
+
+        cursor.execute("""
+            DO $$
+            BEGIN
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_name = 'chat'
+                    AND column_name = 'usuario'
+                )
+                THEN
+
+                    UPDATE chat
+                    SET remetente = usuario
+                    WHERE remetente IS NULL
+                    AND usuario IS NOT NULL;
+
+                END IF;
+
+            END
+            $$;
+        """)
+
+        # ====================================================
+        # MELHORIAS
+        # ====================================================
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -1446,6 +1696,10 @@ def init_db():
             )
         """)
 
+        # ====================================================
+        # ESTOQUE
+        # ====================================================
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id SERIAL PRIMARY KEY,
@@ -1455,6 +1709,10 @@ def init_db():
                 criado_em TIMESTAMP
             )
         """)
+
+        # ====================================================
+        # COLUNAS DE ATIVIDADES
+        # ====================================================
 
         colunas_atividades = [
             ("num_requisicao", "TEXT"),
@@ -1475,54 +1733,80 @@ def init_db():
             cursor.execute(
                 f"""
                 ALTER TABLE atividades
-                ADD COLUMN IF NOT EXISTS {coluna} {tipo}
+                ADD COLUMN IF NOT EXISTS
+                {coluna} {tipo}
                 """
             )
 
+        # ====================================================
+        # USUÁRIOS
+        # ====================================================
+
         cursor.execute("""
             ALTER TABLE usuarios
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+            ADD COLUMN IF NOT EXISTS
+            criado_em TIMESTAMP
+        """)
+
+        # ====================================================
+        # MELHORIAS
+        # ====================================================
+
+        cursor.execute("""
+            ALTER TABLE melhorias
+            ADD COLUMN IF NOT EXISTS
+            etapa TEXT
         """)
 
         cursor.execute("""
             ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS etapa TEXT
+            ADD COLUMN IF NOT EXISTS
+            autor TEXT
         """)
 
         cursor.execute("""
             ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS autor TEXT
+            ADD COLUMN IF NOT EXISTS
+            status TEXT
         """)
 
         cursor.execute("""
             ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS status TEXT
+            ADD COLUMN IF NOT EXISTS
+            criado_em TIMESTAMP
         """)
 
+        # ====================================================
+        # ESTOQUE
+        # ====================================================
+
         cursor.execute("""
-            ALTER TABLE melhorias
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
+            ALTER TABLE estoque
+            ADD COLUMN IF NOT EXISTS
+            codigo TEXT
         """)
 
         cursor.execute("""
             ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS codigo TEXT
+            ADD COLUMN IF NOT EXISTS
+            descricao TEXT
         """)
 
         cursor.execute("""
             ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS descricao TEXT
+            ADD COLUMN IF NOT EXISTS
+            quantidade INTEGER DEFAULT 0
         """)
 
         cursor.execute("""
             ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS quantidade INTEGER DEFAULT 0
+            ADD COLUMN IF NOT EXISTS
+            criado_em TIMESTAMP
         """)
 
-        cursor.execute("""
-            ALTER TABLE estoque
-            ADD COLUMN IF NOT EXISTS criado_em TIMESTAMP
-        """)
+        # ====================================================
+        # ÍNDICES
+        # ====================================================
 
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1549,9 +1833,14 @@ def init_db():
         """)
 
         db.commit()
+
         cursor.close()
 
     else:
+
+        # ====================================================
+        # SQLITE - USUÁRIOS
+        # ====================================================
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS usuarios (
@@ -1561,6 +1850,10 @@ def init_db():
                 criado_em TEXT
             )
         """)
+
+        # ====================================================
+        # SQLITE - ATIVIDADES
+        # ====================================================
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS atividades (
@@ -1580,14 +1873,55 @@ def init_db():
             )
         """)
 
+        # ====================================================
+        # SQLITE - CHAT
+        # ====================================================
+
         db.execute("""
             CREATE TABLE IF NOT EXISTS chat (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                usuario TEXT,
+                remetente TEXT,
                 mensagem TEXT,
                 criado_em TEXT
             )
         """)
+
+        # ====================================================
+        # SQLITE - CORREÇÃO DO CHAT
+        # ====================================================
+
+        existentes_chat = db.execute(
+            "PRAGMA table_info(chat)"
+        ).fetchall()
+
+        nomes_chat = [
+            coluna["name"]
+            for coluna in existentes_chat
+        ]
+
+        # Se o banco antigo possui "usuario",
+        # mantém a coluna e adiciona "remetente".
+
+        if "remetente" not in nomes_chat:
+
+            db.execute("""
+                ALTER TABLE chat
+                ADD COLUMN remetente TEXT
+            """)
+
+        # Copia os registros antigos, se houver.
+        if "usuario" in nomes_chat:
+
+            db.execute("""
+                UPDATE chat
+                SET remetente = usuario
+                WHERE remetente IS NULL
+                AND usuario IS NOT NULL
+            """)
+
+        # ====================================================
+        # SQLITE - MELHORIAS
+        # ====================================================
 
         db.execute("""
             CREATE TABLE IF NOT EXISTS melhorias (
@@ -1601,6 +1935,10 @@ def init_db():
             )
         """)
 
+        # ====================================================
+        # SQLITE - ESTOQUE
+        # ====================================================
+
         db.execute("""
             CREATE TABLE IF NOT EXISTS estoque (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1610,6 +1948,10 @@ def init_db():
                 criado_em TEXT
             )
         """)
+
+        # ====================================================
+        # COLUNAS
+        # ====================================================
 
         tabelas_colunas = {
 
@@ -1646,7 +1988,9 @@ def init_db():
             ],
         }
 
-        for tabela, colunas in tabelas_colunas.items():
+        for tabela, colunas in (
+            tabelas_colunas.items()
+        ):
 
             existentes = db.execute(
                 f"PRAGMA table_info({tabela})"
@@ -1664,9 +2008,14 @@ def init_db():
                     db.execute(
                         f"""
                         ALTER TABLE {tabela}
-                        ADD COLUMN {coluna} {tipo}
+                        ADD COLUMN
+                        {coluna} {tipo}
                         """
                     )
+
+        # ====================================================
+        # ÍNDICES
+        # ====================================================
 
         db.execute("""
             CREATE INDEX IF NOT EXISTS
@@ -1713,7 +2062,9 @@ def init_db():
         WHERE LOWER(nome) = LOWER(?)
         LIMIT 1
         """,
-        ("Wanderson Fernandes",),
+        (
+            "Wanderson Fernandes",
+        ),
         fetchone=True
     )
 
@@ -1722,17 +2073,33 @@ def init_db():
         executar(
             """
             INSERT INTO usuarios
-                (nome, senha, criado_em)
+                (
+                    nome,
+                    senha,
+                    criado_em
+                )
             VALUES
-                (%s,%s,%s)
+                (
+                    %s,
+                    %s,
+                    %s
+                )
             """
             if usando_postgresql()
             else
             """
             INSERT INTO usuarios
-                (nome, senha, criado_em)
+                (
+                    nome,
+                    senha,
+                    criado_em
+                )
             VALUES
-                (?,?,?)
+                (
+                    ?,
+                    ?,
+                    ?
+                )
             """,
             (
                 "Wanderson Fernandes",
@@ -1755,7 +2122,9 @@ def arquivar_atividades_expiradas():
 
     limite = (
         agora_utc()
-        - timedelta(hours=24)
+        - timedelta(
+            hours=24
+        )
     )
 
     registros = executar(
@@ -1794,9 +2163,12 @@ def arquivar_atividades_expiradas():
         if not dt:
             continue
 
-        if dt.astimezone(
-            timezone.utc
-        ) <= limite:
+        if (
+            dt.astimezone(
+                timezone.utc
+            )
+            <= limite
+        ):
 
             ids.append(
                 obter_valor(
@@ -1820,9 +2192,12 @@ def arquivar_atividades_expiradas():
             SET status = 'Arquivado'
             WHERE id = ?
             """,
-            (item_id,),
+            (
+                item_id,
+            ),
             commit=True
         )
+
 
 
 # ============================================================

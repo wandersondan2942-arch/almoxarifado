@@ -2569,6 +2569,8 @@ def index():
                     commit=True
                 )
 
+                print("CHAT SALVO NO BANCO")
+
             return redirect(
                 url_for("index")
             )

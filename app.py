@@ -2540,6 +2540,7 @@ def index():
             ).strip()
 
             if mensagem:
+                print("CHAT RECEBIDO:", usuario_atual, mensagem)
 
                 executar(
                     """

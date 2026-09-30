@@ -3744,194 +3744,199 @@ def concluir(id):
         commit=True
     )
 
-# --------------------------------------------------------
-# SEPARAÇÃO -> EXPEDIÇÃO
-# --------------------------------------------------------
+    # --------------------------------------------------------
+    # SEPARAÇÃO -> EXPEDIÇÃO
+    # --------------------------------------------------------
 
-num_requisicao = normalizar_requisicao(
-    obter_valor(
-        atividade,
-        "num_requisicao"
-    )
-)
-
-if (
-    categoria_eh(
-        atividade,
-        "Separação"
-    )
-    and num_requisicao
-):
-
-    registros = executar(
-        """
-        SELECT *
-        FROM atividades
-        """,
-        fetchall=True
-    )
-
-    expedicao_existente = None
-
-    for item in registros:
-
-        numero = normalizar_requisicao(
-            obter_valor(
-                item,
-                "num_requisicao"
-            )
-        )
-
-        if numero != num_requisicao:
-            continue
-
-        if not categoria_eh(
-            item,
-            "Expedição"
-        ):
-            continue
-
-        if not status_eh_ativo(
-            obter_valor(
-                item,
-                "status"
-            )
-        ):
-            continue
-
-        expedicao_existente = item
-        break
-
-    if expedicao_existente is None:
-
-        # ------------------------------------------------
-        # MANTÉM O NOME DA PESSOA DA SEPARAÇÃO
-        # NA ATIVIDADE DA EXPEDIÇÃO
-        # ------------------------------------------------
-
-        nome_retirada = obter_valor(
+    num_requisicao = normalizar_requisicao(
+        obter_valor(
             atividade,
-            "atividade",
-            ""
+            "num_requisicao"
         )
+    )
 
-        nome_retirada = (
-            str(nome_retirada).strip()
-            if nome_retirada
-            else ""
+    if (
+        categoria_eh(
+            atividade,
+            "Separação"
         )
+        and num_requisicao
+    ):
 
-        # Se por algum motivo a atividade estiver vazia,
-        # mantém "Expedição" como segurança.
-        if not nome_retirada:
-            nome_retirada = "Expedição"
-
-        # ------------------------------------------------
-        # DESCRIÇÃO FICA VAZIA
-        # ------------------------------------------------
-
-        descricao = ""
-
-        executar(
+        registros = executar(
             """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            """
-            if usando_postgresql()
-            else
-            """
-            INSERT INTO atividades
-            (
-                num_requisicao,
-                atividade,
-                descricao,
-                categoria,
-                responsavel,
-                prioridade,
-                prazo,
-                status,
-                inicio_em,
-                criado_em
-            )
-            VALUES
-            (?,?,?,?,?,?,?,?,?,?)
+            SELECT *
+            FROM atividades
             """,
-            (
-                num_requisicao,
-
-                # NOME DE QUEM IRÁ RETIRAR
-                nome_retirada,
-
-                # NÃO CRIA MAIS A MENSAGEM AUTOMÁTICA
-                descricao,
-
-                "Expedição",
-
-                obter_valor(
-                    atividade,
-                    "responsavel",
-                    session[
-                        "usuario_atual"
-                    ]
-                ),
-
-                obter_valor(
-                    atividade,
-                    "prioridade",
-                    "Baixa"
-                ),
-
-                obter_valor(
-                    atividade,
-                    "prazo"
-                ),
-
-                STATUS_PENDENTE,
-
-                agora,
-
-                agora
-            ),
-            commit=True
+            fetchall=True
         )
 
-        flash(
-            "Separação concluída e Expedição criada automaticamente.",
-            "success"
-        )
+        expedicao_existente = None
+
+        for item in registros:
+
+            numero = normalizar_requisicao(
+                obter_valor(
+                    item,
+                    "num_requisicao"
+                )
+            )
+
+            if numero != num_requisicao:
+                continue
+
+            if not categoria_eh(
+                item,
+                "Expedição"
+            ):
+                continue
+
+            if not status_eh_ativo(
+                obter_valor(
+                    item,
+                    "status"
+                )
+            ):
+                continue
+
+            expedicao_existente = item
+            break
+
+        if expedicao_existente is None:
+
+            # ------------------------------------------------
+            # MANTÉM O NOME DE QUEM IRÁ RETIRAR
+            # ------------------------------------------------
+
+            nome_retirada = obter_valor(
+                atividade,
+                "atividade",
+                ""
+            )
+
+            nome_retirada = (
+                str(nome_retirada).strip()
+                if nome_retirada
+                else ""
+            )
+
+            # Caso a atividade esteja vazia,
+            # utiliza "Expedição" como segurança.
+            if not nome_retirada:
+                nome_retirada = "Expedição"
+
+            # ------------------------------------------------
+            # A EXPEDIÇÃO NÃO RECEBE DESCRIÇÃO AUTOMÁTICA
+            # ------------------------------------------------
+
+            descricao = ""
+
+            executar(
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo,
+                    status,
+                    inicio_em,
+                    criado_em
+                )
+                VALUES
+                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """
+                if usando_postgresql()
+                else
+                """
+                INSERT INTO atividades
+                (
+                    num_requisicao,
+                    atividade,
+                    descricao,
+                    categoria,
+                    responsavel,
+                    prioridade,
+                    prazo,
+                    status,
+                    inicio_em,
+                    criado_em
+                )
+                VALUES
+                (?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    num_requisicao,
+
+                    # Nome de quem irá retirar
+                    nome_retirada,
+
+                    # Descrição vazia
+                    descricao,
+
+                    # Categoria
+                    "Expedição",
+
+                    # Responsável
+                    obter_valor(
+                        atividade,
+                        "responsavel",
+                        session[
+                            "usuario_atual"
+                        ]
+                    ),
+
+                    # Prioridade
+                    obter_valor(
+                        atividade,
+                        "prioridade",
+                        "Baixa"
+                    ),
+
+                    # Prazo
+                    obter_valor(
+                        atividade,
+                        "prazo"
+                    ),
+
+                    # Status inicial
+                    STATUS_PENDENTE,
+
+                    # Início
+                    agora,
+
+                    # Criação
+                    agora
+                ),
+                commit=True
+            )
+
+            flash(
+                "Separação concluída e Expedição criada automaticamente.",
+                "success"
+            )
+
+        else:
+
+            flash(
+                "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
+                "info"
+            )
 
     else:
 
         flash(
-            "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
-            "info"
+            "Atividade concluída com sucesso.",
+            "success"
         )
 
-else:
-
-    flash(
-        "Atividade concluída com sucesso.",
-        "success"
+    return redirect(
+        request.referrer
+        or url_for("index")
     )
-
-return redirect(
-    request.referrer
-    or url_for("index")
-)
-
 # ============================================================
 # ARQUIVAR
 # ============================================================

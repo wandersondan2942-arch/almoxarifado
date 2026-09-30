@@ -3744,161 +3744,193 @@ def concluir(id):
         commit=True
     )
 
-    # --------------------------------------------------------
-    # SEPARAÇÃO -> EXPEDIÇÃO
-    # --------------------------------------------------------
+# --------------------------------------------------------
+# SEPARAÇÃO -> EXPEDIÇÃO
+# --------------------------------------------------------
 
-    num_requisicao = normalizar_requisicao(
-        obter_valor(
-            atividade,
-            "num_requisicao"
-        )
+num_requisicao = normalizar_requisicao(
+    obter_valor(
+        atividade,
+        "num_requisicao"
+    )
+)
+
+if (
+    categoria_eh(
+        atividade,
+        "Separação"
+    )
+    and num_requisicao
+):
+
+    registros = executar(
+        """
+        SELECT *
+        FROM atividades
+        """,
+        fetchall=True
     )
 
-    if (
-        categoria_eh(
-            atividade,
-            "Separação"
-        )
-        and num_requisicao
-    ):
+    expedicao_existente = None
 
-        registros = executar(
-            """
-            SELECT *
-            FROM atividades
-            """,
-            fetchall=True
-        )
+    for item in registros:
 
-        expedicao_existente = None
-
-        for item in registros:
-
-            numero = normalizar_requisicao(
-                obter_valor(
-                    item,
-                    "num_requisicao"
-                )
-            )
-
-            if numero != num_requisicao:
-                continue
-
-            if not categoria_eh(
+        numero = normalizar_requisicao(
+            obter_valor(
                 item,
-                "Expedição"
-            ):
-                continue
+                "num_requisicao"
+            )
+        )
 
-            if not status_eh_ativo(
+        if numero != num_requisicao:
+            continue
+
+        if not categoria_eh(
+            item,
+            "Expedição"
+        ):
+            continue
+
+        if not status_eh_ativo(
+            obter_valor(
+                item,
+                "status"
+            )
+        ):
+            continue
+
+        expedicao_existente = item
+        break
+
+    if expedicao_existente is None:
+
+        # ------------------------------------------------
+        # MANTÉM O NOME DA PESSOA DA SEPARAÇÃO
+        # NA ATIVIDADE DA EXPEDIÇÃO
+        # ------------------------------------------------
+
+        nome_retirada = obter_valor(
+            atividade,
+            "atividade",
+            ""
+        )
+
+        nome_retirada = (
+            str(nome_retirada).strip()
+            if nome_retirada
+            else ""
+        )
+
+        # Se por algum motivo a atividade estiver vazia,
+        # mantém "Expedição" como segurança.
+        if not nome_retirada:
+            nome_retirada = "Expedição"
+
+        # ------------------------------------------------
+        # DESCRIÇÃO FICA VAZIA
+        # ------------------------------------------------
+
+        descricao = ""
+
+        executar(
+            """
+            INSERT INTO atividades
+            (
+                num_requisicao,
+                atividade,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo,
+                status,
+                inicio_em,
+                criado_em
+            )
+            VALUES
+            (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """
+            if usando_postgresql()
+            else
+            """
+            INSERT INTO atividades
+            (
+                num_requisicao,
+                atividade,
+                descricao,
+                categoria,
+                responsavel,
+                prioridade,
+                prazo,
+                status,
+                inicio_em,
+                criado_em
+            )
+            VALUES
+            (?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                num_requisicao,
+
+                # NOME DE QUEM IRÁ RETIRAR
+                nome_retirada,
+
+                # NÃO CRIA MAIS A MENSAGEM AUTOMÁTICA
+                descricao,
+
+                "Expedição",
+
                 obter_valor(
-                    item,
-                    "status"
-                )
-            ):
-                continue
-
-            expedicao_existente = item
-            break
-
-        if expedicao_existente is None:
-
-            descricao = (
-                "Expedição gerada automaticamente "
-                "após conclusão da Separação "
-                f"da requisição {num_requisicao}."
-            )
-
-            executar(
-                """
-                INSERT INTO atividades
-                (
-                    num_requisicao,
                     atividade,
-                    descricao,
-                    categoria,
-                    responsavel,
-                    prioridade,
-                    prazo,
-                    status,
-                    inicio_em,
-                    criado_em
-                )
-                VALUES
-                (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                """
-                if usando_postgresql()
-                else
-                """
-                INSERT INTO atividades
-                (
-                    num_requisicao,
-                    atividade,
-                    descricao,
-                    categoria,
-                    responsavel,
-                    prioridade,
-                    prazo,
-                    status,
-                    inicio_em,
-                    criado_em
-                )
-                VALUES
-                (?,?,?,?,?,?,?,?,?,?)
-                """,
-                (
-                    num_requisicao,
-                    "Expedição",
-                    descricao,
-                    "Expedição",
-                    obter_valor(
-                        atividade,
-                        "responsavel",
-                        session[
-                            "usuario_atual"
-                        ]
-                    ),
-                    obter_valor(
-                        atividade,
-                        "prioridade",
-                        "Baixa"
-                    ),
-                    obter_valor(
-                        atividade,
-                        "prazo"
-                    ),
-                    STATUS_PENDENTE,
-                    agora,
-                    agora
+                    "responsavel",
+                    session[
+                        "usuario_atual"
+                    ]
                 ),
-                commit=True
-            )
 
-            flash(
-                "Separação concluída e Expedição criada automaticamente.",
-                "success"
-            )
+                obter_valor(
+                    atividade,
+                    "prioridade",
+                    "Baixa"
+                ),
 
-        else:
+                obter_valor(
+                    atividade,
+                    "prazo"
+                ),
 
-            flash(
-                "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
-                "info"
-            )
+                STATUS_PENDENTE,
+
+                agora,
+
+                agora
+            ),
+            commit=True
+        )
+
+        flash(
+            "Separação concluída e Expedição criada automaticamente.",
+            "success"
+        )
 
     else:
 
         flash(
-            "Atividade concluída com sucesso.",
-            "success"
+            "Separação concluída. Já existia uma Expedição ativa para essa requisição.",
+            "info"
         )
 
-    return redirect(
-        request.referrer
-        or url_for("index")
+else:
+
+    flash(
+        "Atividade concluída com sucesso.",
+        "success"
     )
 
+return redirect(
+    request.referrer
+    or url_for("index")
+)
 
 # ============================================================
 # ARQUIVAR

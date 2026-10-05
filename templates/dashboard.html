@@ -2383,34 +2383,158 @@
                             {% endif %}
 
 
-                            <!-- AÇÕES -->
+                          <!-- AÇÕES -->
 
-                            {% if item.status != 'Concluído'
-                               and item.status != 'Concluido'
-                               and item.status != 'Arquivado'
-                               and item.status != 'Arquivada' %}
+{% if item.status != 'Concluído'
+   and item.status != 'Concluido'
+   and item.status != 'Arquivado'
+   and item.status != 'Arquivada'
+   and item.status != 'Encerrada' %}
 
-                                <div class="mt-3">
+    <div class="mt-3 d-flex gap-2">
+
+        <!-- =================================================
+             BOTÃO CONCLUIR
+        ================================================== -->
+
+        <a
+            href="{{ url_for('concluir', id=item.id) }}"
+            class="btn btn-sm btn-outline-success btn-action"
+        >
+
+            <i class="fa-solid fa-check me-1"></i>
+
+            Concluir
+
+        </a>
 
 
-                                    <a
-                                        href="{{ url_for('concluir', id=item.id) }}"
-                                        class="btn btn-sm btn-outline-success btn-action"
-                                    >
+        <!-- =================================================
+             BOTÃO ENCERRAR
+        ================================================== -->
 
-                                        <i class="fa-solid fa-check me-1"></i>
+        <a
+            href="{{ url_for('encerrar', id=item.id) }}"
+            class="btn btn-sm btn-outline-danger btn-action"
+            onclick="return confirm('Deseja realmente encerrar esta requisição?');"
+        >
 
-                                        Concluir
+            <i class="fa-solid fa-xmark me-1"></i>
 
-                                    </a>
+            Encerrar
+
+        </a>
+
+    </div>
+
+{% endif %}
 
 
-                                </div>
+</div>
 
-                            {% endif %}
+</div>
 
+</div>
+
+{% endfor %}
+
+
+{% else %}
+
+
+<div class="empty-state">
+
+    <i class="fa-solid fa-inbox d-block"></i>
+
+
+    <p>
+        Nenhuma atividade encontrada.
+    </p>
+
+
+    <small>
+        As novas atividades aparecerão aqui.
+    </small>
+
+</div>
+
+
+{% endif %}
+
+</div>
+
+
+<!-- =====================================================
+     CHAT
+====================================================== -->
+
+<div class="section-card">
+
+    <div class="section-header">
+
+        <h5 class="section-title">
+
+            <i class="fa-solid fa-comments"></i>
+
+            Chat da Equipe
+
+        </h5>
+
+
+        <span class="small-info">
+            Comunicação interna
+        </span>
+
+    </div>
+
+
+    <div class="chat-box">
+
+
+        {% if mensagens or chat %}
+
+            {% set lista_chat = mensagens if mensagens else chat %}
+
+
+            {% for mensagem in lista_chat %}
+
+                <div class="chat-item">
+
+
+                    <div class="chat-avatar">
+
+                        {{ (mensagem.remetente or 'U')[0]|upper }}
+
+                    </div>
+
+
+                    <div class="chat-message">
+
+
+                        <div>
+
+                            <span class="chat-name">
+
+                                {{ mensagem.remetente or 'Usuário' }}
+
+                            </span>
+
+
+                            <span class="chat-date">
+
+                                {{ mensagem.criado_em or '' }}
+
+                            </span>
 
                         </div>
+
+
+                        <div class="chat-text">
+
+                            {{ mensagem.mensagem }}
+
+                        </div>
+
 
                     </div>
 
@@ -2422,172 +2546,67 @@
         {% else %}
 
 
-            <div class="empty-state">
+            <div class="empty-state py-4">
 
-                <i class="fa-solid fa-inbox d-block"></i>
+                <i class="fa-solid fa-comments d-block"></i>
 
 
                 <p>
-                    Nenhuma atividade encontrada.
+                    Nenhuma mensagem ainda.
                 </p>
-
-
-                <small>
-                    As novas atividades aparecerão aqui.
-                </small>
 
             </div>
 
 
         {% endif %}
 
+
     </div>
 
 
-    <!-- =====================================================
-         CHAT
-    ====================================================== -->
-
-    <div class="section-card">
-
-        <div class="section-header">
-
-            <h5 class="section-title">
-
-                <i class="fa-solid fa-comments"></i>
-
-                Chat da Equipe
-
-            </h5>
+    <form
+        method="POST"
+        action="{{ url_for('index') }}"
+        class="chat-form"
+    >
 
 
-            <span class="small-info">
-                Comunicação interna
-            </span>
-
-        </div>
-
-
-        <div class="chat-box">
-
-
-            {% if mensagens or chat %}
-
-                {% set lista_chat = mensagens if mensagens else chat %}
-
-
-                {% for mensagem in lista_chat %}
-
-                    <div class="chat-item">
-
-
-                        <div class="chat-avatar">
-
-                            {{ (mensagem.usuario or 'U')[0]|upper }}
-
-                        </div>
-
-
-                        <div class="chat-message">
-
-
-                            <div>
-
-                                <span class="chat-name">
-
-                                    {{ mensagem.usuario or 'Usuário' }}
-
-                                </span>
-
-
-                                <span class="chat-date">
-
-                                    {{ mensagem.criado_em or '' }}
-
-                                </span>
-
-                            </div>
-
-
-                            <div class="chat-text">
-
-                                {{ mensagem.mensagem }}
-
-                            </div>
-
-
-                        </div>
-
-                    </div>
-
-                {% endfor %}
-
-
-            {% else %}
-
-
-                <div class="empty-state py-4">
-
-                    <i class="fa-solid fa-comments d-block"></i>
-
-
-                    <p>
-                        Nenhuma mensagem ainda.
-                    </p>
-
-                </div>
-
-
-            {% endif %}
-
-
-        </div>
-
-
-        <form
-            method="POST"
-            action="{{ url_for('index') }}"
-            class="chat-form"
+        <input
+            type="hidden"
+            name="acao_chat"
+            value="enviar"
         >
 
 
+        <div class="input-group">
+
+
             <input
-                type="hidden"
-                name="acao_chat"
-                value="enviar"
+                type="text"
+                name="mensagem"
+                class="form-control"
+                placeholder="Digite uma mensagem para a equipe..."
+                autocomplete="off"
+                required
             >
 
 
-            <div class="input-group">
+            <button
+                class="btn btn-dark"
+                type="submit"
+                title="Enviar mensagem"
+            >
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+            </button>
 
 
-                <input
-                    type="text"
-                    name="mensagem"
-                    class="form-control"
-                    placeholder="Digite uma mensagem para a equipe..."
-                    autocomplete="off"
-                    required
-                >
+        </div>
 
+    </form>
 
-                <button
-                    class="btn btn-dark"
-                    type="submit"
-                    title="Enviar mensagem"
-                >
-
-                    <i class="fa-solid fa-paper-plane"></i>
-
-                </button>
-
-
-            </div>
-
-        </form>
-
-    </div>
-
+</div>
 
     <!-- =====================================================
          RODAPÉ

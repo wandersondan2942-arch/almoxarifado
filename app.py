@@ -3143,26 +3143,6 @@ def index():
         "index.html",
         **dados
     )
-    # =====================================================
-    # LIMPEZA TEMPORÁRIA DO CHAT
-    # =====================================================
-
-@app.route("/limpar-chat")
-def limpar_chat():
-
-    if "usuario_atual" not in session:
-        return redirect(url_for("login"))
-
-    executar(
-        "DELETE FROM chat",
-        commit=True
-    )
-
-    return """
-        <h2>Chat limpo com sucesso.</h2>
-        <p>Todas as mensagens do chat foram removidas.</p>
-        <a href="/">Voltar para o painel</a>
-    """
 
 @app.route("/editar/<int:id>", methods=["POST"])
 def editar(id):

@@ -2414,52 +2414,34 @@
                     <div class="chat-box">
 
 
-                        {% if mensagens_chat %}
+            {% if chat %}
 
+    {% for mensagem in chat %}
 
-                            {% for mensagem in mensagens_chat %}
+        <div class="chat-message">
 
+            <div class="chat-header">
 
-                                <div class="chat-message">
+                <span class="chat-author">
+                    <i class="fa-solid fa-user me-1"></i>
+                    {{ mensagem.remetente }}
+                </span>
 
+                <span class="chat-time">
+                    {{ mensagem.criado_em }}
+                </span>
 
-                                    <div class="chat-header">
+            </div>
 
+            <div class="chat-text">
+                {{ mensagem.mensagem }}
+            </div>
 
-                                        <span class="chat-author">
+        </div>
 
-                                            <i class="fa-solid fa-user me-1"></i>
+    {% endfor %}
 
-                                            {{ mensagem.usuario }}
-
-                                        </span>
-
-
-                                        <span class="chat-time">
-
-                                            {{ mensagem.criado_em }}
-
-                                        </span>
-
-
-                                    </div>
-
-
-                                    <div class="chat-text">
-
-                                        {{ mensagem.mensagem }}
-
-                                    </div>
-
-
-                                </div>
-
-
-                            {% endfor %}
-
-
-                        {% else %}
-
+{% else %}
 
                             <div class="empty-state py-3">
 

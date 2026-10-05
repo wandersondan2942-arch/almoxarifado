@@ -416,6 +416,18 @@ def status_eh_arquivado(valor):
     )
 
 
+# ============================================================
+# NOVO STATUS: ENCERRADA
+# ============================================================
+
+def status_eh_encerrada(valor):
+
+    return (
+        normalizar_status(valor)
+        == "encerrada"
+    )
+
+
 def status_eh_finalizado(valor):
 
     return (
@@ -430,7 +442,6 @@ def status_eh_ativo(valor):
         status_eh_pendente(valor)
         or status_eh_andamento(valor)
     )
-
 
 # ============================================================
 # DATA / HORA

@@ -2914,38 +2914,46 @@ def index():
                 ""
             ).strip()
 
-            if mensagem:
-                print("CHAT RECEBIDO:", usuario_atual, mensagem)
+          
+    if mensagem:
+        print("CHAT RECEBIDO:", usuario_atual, mensagem)
 
-                executar(
-                    """
-                    INSERT INTO chat
-                        (remetente, mensagem, criado_em)
-                    VALUES
-                        (%s, %s, %s)
-                    """
-                    if usando_postgresql()
-                    else
-                    """
-                    INSERT INTO chat
-                        (remetente, mensagem, criado_em)
-                    VALUES
-                        (?, ?, ?)
-                    """,
-                    (
-                        usuario_atual,
-                        mensagem,
-                        (
-                            agora_utc_naive()
-                            if usando_postgresql()
-                            else agora_sqlite()
-                        )
-                    ),
-                    commit=True
-                )
+    # =====================================================
+    # HORÁRIO DO CHAT
+    # Sempre utiliza o horário de Brasília
+    # =====================================================
 
-                print("CHAT SALVO NO BANCO")
+    agora_chat = agora_brasil().replace(
+        tzinfo=None
+    )
 
+    executar(
+        """
+        INSERT INTO chat
+            (remetente, mensagem, criado_em)
+        VALUES
+            (%s, %s, %s)
+        """
+        if usando_postgresql()
+        else
+        """
+        INSERT INTO chat
+            (remetente, mensagem, criado_em)
+        VALUES
+            (?, ?, ?)
+        """,
+        (
+            usuario_atual,
+            mensagem,
+            agora_chat
+        ),
+        commit=True
+    )
+
+    print(
+        "CHAT SALVO NO BANCO:",
+        agora_chat
+    )
             return redirect(
                 url_for("index")
             )

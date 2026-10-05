@@ -2914,7 +2914,6 @@ def index():
                 ""
             ).strip()
 
-          
     if mensagem:
         print("CHAT RECEBIDO:", usuario_atual, mensagem)
 
@@ -2953,7 +2952,8 @@ def index():
     print(
         "CHAT SALVO NO BANCO:",
         agora_chat
-    )
+    )      
+  
             return redirect(
                 url_for("index")
             )

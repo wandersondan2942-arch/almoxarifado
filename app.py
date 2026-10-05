@@ -4339,6 +4339,146 @@ def concluir(id):
         request.referrer
         or url_for("index")
     )
+
+# ============================================================
+# ENCERRAR REQUISIÇÃO MANUALMENTE
+# ============================================================
+
+@app.route(
+    "/encerrar/<int:id>",
+    methods=["POST", "GET"]
+)
+def encerrar(id):
+
+    if "usuario_atual" not in session:
+
+        return redirect(
+            url_for("login")
+        )
+
+    atividade = executar(
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        SELECT *
+        FROM atividades
+        WHERE id = ?
+        """,
+        (
+            id,
+        ),
+        fetchone=True
+    )
+
+    if atividade is None:
+
+        flash(
+            "Atividade não encontrada.",
+            "warning"
+        )
+
+        return redirect(
+            request.referrer
+            or url_for("index")
+        )
+
+    status_atual = normalizar_status(
+        obter_valor(
+            atividade,
+            "status",
+            ""
+        )
+    )
+
+    # --------------------------------------------------------
+    # NÃO PERMITE ENCERRAR O QUE JÁ FOI CONCLUÍDO
+    # OU ARQUIVADO
+    # --------------------------------------------------------
+
+    if status_atual in (
+        "concluido",
+        "concluida",
+        "arquivado",
+        "encerrada"
+    ):
+
+        flash(
+            "Essa atividade já está finalizada.",
+            "info"
+        )
+
+        return redirect(
+            request.referrer
+            or url_for("index")
+        )
+
+    # --------------------------------------------------------
+    # SOMENTE ATIVIDADES ATIVAS PODEM SER ENCERRADAS
+    # --------------------------------------------------------
+
+    if not status_eh_ativo(
+        status_atual
+    ):
+
+        flash(
+            "Essa atividade não pode ser encerrada.",
+            "warning"
+        )
+
+        return redirect(
+            request.referrer
+            or url_for("index")
+        )
+
+    agora = (
+        agora_utc_naive()
+        if usando_postgresql()
+        else agora_sqlite()
+    )
+
+    executar(
+        """
+        UPDATE atividades
+        SET
+            status = 'Encerrada',
+            concluido_em = %s,
+            encerrado_por = %s
+        WHERE id = %s
+        """
+        if usando_postgresql()
+        else
+        """
+        UPDATE atividades
+        SET
+            status = 'Encerrada',
+            concluido_em = ?,
+            encerrado_por = ?
+        WHERE id = ?
+        """,
+        (
+            agora,
+            session[
+                "usuario_atual"
+            ],
+            id
+        ),
+        commit=True
+    )
+
+    flash(
+        "Requisição encerrada manualmente.",
+        "success"
+    )
+
+    return redirect(
+        request.referrer
+        or url_for("index")
+    )
 # ============================================================
 # ARQUIVAR
 # ============================================================

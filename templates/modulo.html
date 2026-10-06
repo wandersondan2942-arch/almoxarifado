@@ -1074,59 +1074,74 @@
 
                                     Editar
 
-                                </a>
+        <!-- ENCERRAR -->
+
+{% if item.status == 'Pendente' %}
+
+    <a
+        href="{{ url_for('encerrar', id=item.id) }}"
+        class="btn btn-danger btn-sm btn-encerrar"
+        onclick="return confirmarConclusao('{{ item.id }}');"
+        title="Encerrar esta atividade"
+    >
+
+        <i
+            class="fa-solid fa-circle-xmark me-1"
+        ></i>
+
+        Encerrar
+
+    </a>
 
 
+{% elif item.status == 'Encerrada' %}
 
-                                <!-- CONCLUIR -->
+    <span
+        class="text-danger"
+        title="Atividade encerrada"
+    >
 
-                                {% if item.status == 'Pendente' %}
+        <i
+            class="fa-solid fa-circle-xmark status-icon"
+        ></i>
 
-                                    <a
-                                        href="{{ url_for('concluir', id=item.id) }}"
-                                        class="btn btn-success btn-sm btn-encerrar"
-                                        onclick="return confirmarConclusao('{{ item.id }}');"
-                                        title="Encerrar esta atividade"
-                                    >
+        Encerrada
 
-                                        <i
-                                            class="fa-solid fa-circle-check me-1"
-                                        ></i>
-
-                                        Encerrar
-
-                                    </a>
+    </span>
 
 
-                                {% elif item.status == 'Concluído' %}
+{% elif item.status == 'Concluído' %}
 
-                                    <span
-                                        class="text-success"
-                                        title="Atividade concluída"
-                                    >
+    <span
+        class="text-success"
+        title="Atividade concluída"
+    >
 
-                                        <i
-                                            class="fa-solid fa-check-double status-icon"
-                                        ></i>
+        <i
+            class="fa-solid fa-check-double status-icon"
+        ></i>
 
-                                        Concluída
+        Concluída
 
-                                    </span>
+    </span>
 
 
-                                {% elif item.status == 'Arquivada' %}
+{% elif item.status == 'Arquivada' %}
 
-                                    <span
-                                        class="text-muted"
-                                        title="Atividade arquivada e preservada no histórico"
-                                    >
+    <span
+        class="text-muted"
+        title="Atividade arquivada e preservada no histórico"
+    >
 
-                                        <i
-                                            class="fa-solid fa-box-archive status-icon"
-                                        ></i>
+        <i
+            class="fa-solid fa-box-archive status-icon"
+        ></i>
 
-                                        Arquivada
+        Arquivada
 
+    </span>
+
+{% endif %}
                                     </span>
 
 

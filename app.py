@@ -2914,9 +2914,9 @@ def index():
             ""
         ).strip()
 
-        # =========================
+        # =====================================================
         # ENVIO DE MENSAGEM NO CHAT
-        # =========================
+        # =====================================================
 
         if acao_chat == "enviar":
 
@@ -2925,58 +2925,58 @@ def index():
                 ""
             ).strip()
 
+            if mensagem:
 
-        if mensagem:
-            print(
-                "CHAT RECEBIDO:",
-                usuario_atual,
-                mensagem
-            )
-
-            # =====================================================
-            # HORÁRIO DO CHAT
-            # Sempre utiliza o horário de Brasília
-            # =====================================================
-
-            agora_chat = agora_brasil().replace(
-                tzinfo=None
-            )
-
-            executar(
-                """
-                INSERT INTO chat
-                    (remetente, mensagem, criado_em)
-                VALUES
-                    (%s, %s, %s)
-                """
-                if usando_postgresql()
-                else
-                """
-                INSERT INTO chat
-                    (remetente, mensagem, criado_em)
-                VALUES
-                    (?, ?, ?)
-                """,
-                (
+                print(
+                    "CHAT RECEBIDO:",
                     usuario_atual,
-                    mensagem,
+                    mensagem
+                )
+
+                # =================================================
+                # HORÁRIO DO CHAT
+                # Sempre utiliza o horário de Brasília
+                # =================================================
+
+                agora_chat = agora_brasil().replace(
+                    tzinfo=None
+                )
+
+                executar(
+                    """
+                    INSERT INTO chat
+                        (remetente, mensagem, criado_em)
+                    VALUES
+                        (%s, %s, %s)
+                    """
+                    if usando_postgresql()
+                    else
+                    """
+                    INSERT INTO chat
+                        (remetente, mensagem, criado_em)
+                    VALUES
+                        (?, ?, ?)
+                    """,
+                    (
+                        usuario_atual,
+                        mensagem,
+                        agora_chat
+                    ),
+                    commit=True
+                )
+
+                print(
+                    "CHAT SALVO NO BANCO:",
                     agora_chat
-                ),
-                commit=True
+                )
+
+            return redirect(
+                url_for("index")
             )
 
-            print(
-                "CHAT SALVO NO BANCO:",
-                agora_chat
-            )
-
-        return redirect(
-            url_for("index")
-        )
-
-        # =========================
+        # =====================================================
         # NOVA ATIVIDADE
-        # =========================
+        # =====================================================
 
         num_requisicao = normalizar_requisicao(
             request.form.get(
@@ -3019,9 +3019,11 @@ def index():
         # =========================
 
         if categoria not in CATEGORIAS_VALIDAS:
+
             categoria = "Separação"
 
         if prioridade not in PRIORIDADES_VALIDAS:
+
             prioridade = "Baixa"
 
         if not atividade:
@@ -3154,7 +3156,6 @@ def index():
         "index.html",
         **dados
     )
-
 @app.route("/editar/<int:id>", methods=["POST"])
 def editar(id):
 
